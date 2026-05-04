@@ -4,23 +4,34 @@ using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProviderGetCustomerEmailsTests
+    public class MySqlDbProvider_GetCustomerEmails_Tests
     {
         [Fact]
-        public void GetCustomerEmails_UsesLikeParameterAndAppendsWildcard()
+        public void GetCustomerEmails_WithInjectionLikeEmail_DoesNotThrowFromMalformedSqlConstruction()
         {
             // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("GetCustomerEmails");
-            Assert.NotNull(method);
+            var provider = new MySqlDbProvider(new ConfigFileStub());
 
             // Act
-            const string expectedSql = "select email from CustomerLogin where email like @email";
-            string expectedParamValue = "test" + "%";
+            // With parameterized LIKE, quotes should not break SQL string construction.
+            var ex = Record.Exception(() => provider.GetCustomerEmails("a%' OR '1'='1"));
 
             // Assert
-            Assert.Contains("like @email", expectedSql, StringComparison.OrdinalIgnoreCase);
-            Assert.EndsWith("%", expectedParamValue, StringComparison.Ordinal);
-            Assert.DoesNotContain("like '", expectedSql, StringComparison.OrdinalIgnoreCase);
+            Assert.Null(ex);
+        }
+
+        private sealed class ConfigFileStub : ConfigFile
+        {
+            public override string Get(string key)
+            {
+                if (key == DbConstants.KEY_PWD) return string.Empty;
+                if (key == DbConstants.KEY_HOST) return "localhost";
+                if (key == DbConstants.KEY_PORT) return "3306";
+                if (key == DbConstants.KEY_DATABASE) return "test";
+                if (key == DbConstants.KEY_UID) return "root";
+                if (key == DbConstants.KEY_CLIENT_EXEC) return "mysql";
+                return string.Empty;
+            }
         }
     }
 }

@@ -88,9 +88,10 @@ namespace OWASP.WebGoat.NET
 			return output;
 		}
 		
-		private string DoScalar (String SQL, SqliteConnection conn)
+		private string DoScalar (String SQL, SqliteConnection conn, params SqliteParameter[] parameters)
 		{
 			var cmd = new SqliteCommand (SQL, conn);
+			foreach(SqliteParameter param in parameters) { cmd.Parameters.Add(param); }
 			var output = string.Empty;
 			
 			try {
@@ -141,9 +142,10 @@ namespace OWASP.WebGoat.NET
 			return result;
 		}
 		*/
-		private DataTable DoQuery (string SQL, SqliteConnection conn)
+		private DataTable DoQuery (string SQL, SqliteConnection conn, params SqliteParameter[] parameters)
 		{
 			var cmd = new SqliteCommand (SQL, conn);
+			foreach(SqliteParameter param in parameters) { cmd.Parameters.Add(param); }
 			DataTable dt = new DataTable ();
 			using (var reader = cmd.ExecuteReader ()) {
 				
@@ -201,7 +203,7 @@ namespace OWASP.WebGoat.NET
 		{
 			if (userid.Length > 4)
 				userid = userid.Substring (0, 4);
-			String output = (String)DoScalar ("SELECT Email FROM UserList WHERE UserID = '" + userid + "'", GetGoatDBConnection ());
+			String output = (String)DoScalar ("SELECT Email FROM UserList WHERE UserID = @UserID", GetGoatDBConnection(), new SqliteParameter("@UserID", userid));
 			if (output != null)
 				return output;
 			else 
@@ -210,8 +212,8 @@ namespace OWASP.WebGoat.NET
 
 		public DataTable GetMailingListInfoByEmailAddress (string email)
 		{
-			string sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = '" + email + "'";
-			DataTable result = DoQuery (sql, GetGoatDBConnection ());
+			string sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = @Email";
+			DataTable result = DoQuery (sql, GetGoatDBConnection (), new SqliteParameter("@Email", email));
 			return result;
 		}
 

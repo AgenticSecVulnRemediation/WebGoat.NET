@@ -15,10 +15,18 @@ namespace OWASP.WebGoat.NET
         {
             if (Request.QueryString["Cookie"] != null)
             {
-                HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
-
-                Response.Cookies.Add(cookie);
+                string validatedValue = ValidateCookieValue(Request.QueryString["Cookie"]);
+                if (validatedValue == null)
+                {
+                    // TODO: Handle invalid cookie value (e.g., log the incident and do not set the cookie)
+                }
+                else
+                {
+                    HttpCookie cookie = new HttpCookie("UserAddedCookie", validatedValue);
+                    cookie.HttpOnly = true;
+                    cookie.Secure = true;
+                    Response.Cookies.Add(cookie);
+                }
             }
             else if (Request.QueryString["Header"] != null)
             {

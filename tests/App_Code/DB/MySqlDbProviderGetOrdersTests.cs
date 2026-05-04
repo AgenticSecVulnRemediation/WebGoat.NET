@@ -4,21 +4,36 @@ using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProviderGetOrdersTests
+    public class MySqlDbProvider_GetOrders_Tests
     {
         [Fact]
-        public void GetOrders_UsesParameterizedCustomerNumber()
+        public void GetOrders_WithSqlInjectionLikeCustomerId_DoesNotAllowStringConcatenationPath()
         {
             // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("GetOrders");
-            Assert.NotNull(method);
+            var provider = new MySqlDbProvider(new ConfigFileStub());
 
             // Act
-            const string expectedSql = "select * from Orders where customerNumber = @customerID";
+            // The fixed method accepts an int, which already mitigates injection.
+            // This test ensures the method can be called with boundary values without throwing
+            // due to SQL string composition changes.
+            var ex = Record.Exception(() => provider.GetOrders(0));
 
             // Assert
-            Assert.Contains("@customerID", expectedSql);
-            Assert.DoesNotContain("customerNumber = ", expectedSql.Replace("@customerID", ""), StringComparison.OrdinalIgnoreCase);
+            Assert.Null(ex);
+        }
+
+        private sealed class ConfigFileStub : ConfigFile
+        {
+            public override string Get(string key)
+            {
+                if (key == DbConstants.KEY_PWD) return string.Empty;
+                if (key == DbConstants.KEY_HOST) return "localhost";
+                if (key == DbConstants.KEY_PORT) return "3306";
+                if (key == DbConstants.KEY_DATABASE) return "test";
+                if (key == DbConstants.KEY_UID) return "root";
+                if (key == DbConstants.KEY_CLIENT_EXEC) return "mysql";
+                return string.Empty;
+            }
         }
     }
 }

@@ -115,29 +115,29 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             string encoded_password = Encoder.Encode(password);
             
             //check email/password
-            string sql = "select * from CustomerLogin where email = '" + email + 
-                "' and password = '" + encoded_password + "';";
+            string sql = "select * from CustomerLogin where email = @email and password = @password";
                         
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
-            
-                //TODO: User reader instead (for all calls)
-                DataSet ds = new DataSet();
-            
-                da.Fill(ds);
-                
-                try
+                using (MySqlCommand cmd = new MySqlCommand(sql, connection))
                 {
-                    return ds.Tables[0].Rows.Count != 0;
+                    cmd.Parameters.AddWithValue("@email", email);
+                    cmd.Parameters.AddWithValue("@password", encoded_password);
+                    MySqlDataAdapter da = new MySqlDataAdapter(cmd);
+                    DataSet ds = new DataSet();
+                    da.Fill(ds);
+                    try
+                    {
+                        return ds.Tables[0].Rows.Count != 0;
 
-                }
-                catch (Exception ex)
-                {
-                    //Log this and pass the ball along.
-                    log.Error("Error checking login", ex);
-                    
-                    throw new Exception("Error checking login", ex);
+                    }
+                    catch (Exception ex)
+                    {
+                        //Log this and pass the ball along.
+                        log.Error("Error checking login", ex);
+                        
+                        throw new Exception("Error checking login", ex);
+                    }
                 }
             }
         }

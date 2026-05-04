@@ -640,7 +640,9 @@ namespace TechInfoSystems.Data.SQLite
 						userId = cmd.ExecuteScalar () as string;
 					}
 
-					cmd.CommandText = "DELETE FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+					// If USER_TB_NAME is a fixed, validated constant, consider embedding it directly or ensure that it is sanitized
+                    cmd.CommandText = "DELETE FROM [aspnet_Users] WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+                    cmd.Parameters.Clear();
 
 					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
 					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);

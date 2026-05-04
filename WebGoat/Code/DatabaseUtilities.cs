@@ -217,8 +217,8 @@ namespace OWASP.WebGoat.NET
 
 		public string AddToMailingList (string first, string last, string email)
 		{
-			string sql = "insert into mailinglist (firstname, lastname, email) values ('" + first + "', '" + last + "', '" + email + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			string sql = "insert into mailinglist (firstname, lastname, email) values (@first, @last, @email)";
+			string result = DoNonQuery (sql, new object[] { first, last, email }, GetGoatDBConnection ());
 			return result;
 		}
 
@@ -231,8 +231,8 @@ namespace OWASP.WebGoat.NET
 
 		public string AddNewPosting (String title, String email, String message)
 		{
-			string sql = "insert into Postings(title, email, message) values ('" + title + "','" + email + "','" + message + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			string sql = "insert into Postings(title, email, message) values (@title, @email, @message)";
+			string result = DoNonQuery (sql, new object[] { title, email, message }, GetGoatDBConnection ());
 			return result;
 		}
 

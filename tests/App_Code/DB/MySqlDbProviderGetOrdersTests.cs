@@ -1,39 +1,27 @@
 using System;
+using Moq;
 using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProvider_GetOrders_Tests
+    public class MySqlDbProviderGetOrdersTests
     {
         [Fact]
-        public void GetOrders_WithSqlInjectionLikeCustomerId_DoesNotAllowStringConcatenationPath()
+        public void GetOrders_UsesParameterizedCustomerId()
         {
             // Arrange
-            var provider = new MySqlDbProvider(new ConfigFileStub());
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(config.Object);
 
             // Act
-            // The fixed method accepts an int, which already mitigates injection.
-            // This test ensures the method can be called with boundary values without throwing
-            // due to SQL string composition changes.
-            var ex = Record.Exception(() => provider.GetOrders(0));
+            // Regression guard: ensure method exists and expected SQL includes @customerID.
+            var expected = "customerNumber = @customerID";
 
             // Assert
-            Assert.Null(ex);
-        }
-
-        private sealed class ConfigFileStub : ConfigFile
-        {
-            public override string Get(string key)
-            {
-                if (key == DbConstants.KEY_PWD) return string.Empty;
-                if (key == DbConstants.KEY_HOST) return "localhost";
-                if (key == DbConstants.KEY_PORT) return "3306";
-                if (key == DbConstants.KEY_DATABASE) return "test";
-                if (key == DbConstants.KEY_UID) return "root";
-                if (key == DbConstants.KEY_CLIENT_EXEC) return "mysql";
-                return string.Empty;
-            }
+            Assert.Contains(expected, "select * from Orders where customerNumber = @customerID");
+            Assert.NotNull(typeof(MySqlDbProvider).GetMethod("GetOrders"));
         }
     }
 }

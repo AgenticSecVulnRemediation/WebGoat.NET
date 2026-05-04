@@ -201,7 +201,10 @@ namespace OWASP.WebGoat.NET
 		{
 			if (userid.Length > 4)
 				userid = userid.Substring (0, 4);
-			String output = (String)DoScalar ("SELECT Email FROM UserList WHERE UserID = '" + userid + "'", GetGoatDBConnection ());
+			string sql = "SELECT Email FROM UserList WHERE UserID = @UserID";
+			var cmd = new SqliteCommand(sql, GetGoatDBConnection());
+			cmd.Parameters.AddWithValue("@UserID", userid); // @UserID is a placeholder; adjust parameter binding if necessary.
+			String output = (string)cmd.ExecuteScalar();
 			if (output != null)
 				return output;
 			else 
@@ -210,8 +213,28 @@ namespace OWASP.WebGoat.NET
 
 		public DataTable GetMailingListInfoByEmailAddress (string email)
 		{
-			string sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = '" + email + "'";
-			DataTable result = DoQuery (sql, GetGoatDBConnection ());
+			string sql = "SELECT FirstName, LastName, Email FROM MailingList WHERE Email = @Email";
+			var cmd = new SqliteCommand(sql, GetGoatDBConnection());
+			cmd.Parameters.AddWithValue("@Email", email); // @Email is a placeholder; adjust parameter binding if necessary.
+			DataTable result = new DataTable();
+			using(var reader = cmd.ExecuteReader()) {
+				// Add all the columns similar to DoQuery implementation
+				for (int i = 0; i < reader.FieldCount; i++) {
+					DataColumn col = new DataColumn();
+					col.DataType = reader.GetFieldType(i);
+					col.ColumnName = reader.GetName(i);
+					result.Columns.Add(col);
+				}
+				while(reader.Read()) {
+					DataRow row = result.NewRow();
+					for (int i = 0; i < reader.FieldCount; i++) {
+						if (!reader.IsDBNull(i)) {
+							row[i] = reader.GetValue(i);
+						}
+					}
+					result.Rows.Add(row);
+				}
+			}
 			return result;
 		}
 

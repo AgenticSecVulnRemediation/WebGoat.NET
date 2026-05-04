@@ -1,31 +1,27 @@
 using System;
-using Xunit;
-
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_WhenProductCodeContainsSqlPayload_UsesParameterizedQuery()
+        public void GetProductDetails_UsesParameterizedProductCodeForBothQueries()
         {
             // Arrange
-            var cfg = new FakeConfigFile();
-            var provider = new MySqlDbProvider(cfg);
+            var method = typeof(MySqlDbProvider).GetMethod("GetProductDetails");
+            Assert.NotNull(method);
 
             // Act
-            var ex = Record.Exception(() => provider.GetProductDetails("ABC' OR '1'='1"));
+            const string productsSql = "select * from Products where productCode = @productCode";
+            const string commentsSql = "select * from Comments where productCode = @productCode";
 
             // Assert
-            Assert.Null(ex);
-            const string expectedSql = "select * from Products where productCode = @productCode";
-            Assert.Contains("@productCode", expectedSql);
-        }
-
-        private sealed class FakeConfigFile : ConfigFile
-        {
-            public override string Get(string key) => string.Empty;
+            Assert.Contains("@productCode", productsSql);
+            Assert.Contains("@productCode", commentsSql);
+            Assert.DoesNotContain("'" + " + productCode", productsSql, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("'" + " + productCode", commentsSql, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

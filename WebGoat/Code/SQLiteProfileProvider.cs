@@ -807,6 +807,7 @@ namespace TechInfoSystems.Data.SQLite
 				cn.Open ();
 
 			using (SqliteCommand cmd = cn.CreateCommand()) {
+				// USER_TB_NAME is a safe, constant value
 				cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
 
 				cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
@@ -819,7 +820,7 @@ namespace TechInfoSystems.Data.SQLite
 				if (userId != null) {
 					cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
 					cmd.Parameters.Clear ();
-					cmd.Parameters.Add ("$UserId", DbType.String, 36).Value = userId;
+					cmd.Parameters.AddWithValue("$UserId", userId);
 
 					deleteSuccessful = (cmd.ExecuteNonQuery () != 0);
 				}

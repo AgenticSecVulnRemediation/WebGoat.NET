@@ -6,6 +6,8 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using OWASP.WebGoat.NET.App_Code;
 using OWASP.WebGoat.NET.App_Code.DB;
+using System.Text;
+using System.Web.Security;
 
 namespace OWASP.WebGoat.NET
 {
@@ -40,11 +42,13 @@ namespace OWASP.WebGoat.NET
             
                    
             HttpCookie cookie = new HttpCookie("encr_sec_qu_ans");
-
-            //encode twice for more security!
-
-            cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
-
+            byte[] tokenBytes = Encoding.UTF8.GetBytes(result[1]);
+            byte[] protectedBytes = MachineKey.Protect(tokenBytes, "encr_sec_qu_ans");
+            string secureToken = Convert.ToBase64String(protectedBytes);
+            cookie.Value = secureToken;
+            cookie.HttpOnly = true;
+            cookie.Secure = true;
+            cookie.SameSite = SameSiteMode.Strict;
             Response.Cookies.Add(cookie); 
         }
 

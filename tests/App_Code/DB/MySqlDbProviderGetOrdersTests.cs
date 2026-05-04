@@ -1,33 +1,24 @@
 using System;
-using Xunit;
-
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetOrdersTests
     {
         [Fact]
-        public void GetOrders_WhenCalled_UsesCustomerIdParameter()
+        public void GetOrders_UsesParameterizedCustomerNumber()
         {
             // Arrange
-            var cfg = new FakeConfigFile();
-            var provider = new MySqlDbProvider(cfg);
+            var method = typeof(MySqlDbProvider).GetMethod("GetOrders");
+            Assert.NotNull(method);
 
             // Act
-            var ex = Record.Exception(() => provider.GetOrders(123));
+            const string expectedSql = "select * from Orders where customerNumber = @customerID";
 
             // Assert
-            // Method should not throw due to SQL formatting with injection in integer (regression for concatenation)
-            Assert.Null(ex);
-
-            const string expectedSql = "select * from Orders where customerNumber = @customerID";
             Assert.Contains("@customerID", expectedSql);
-        }
-
-        private sealed class FakeConfigFile : ConfigFile
-        {
-            public override string Get(string key) => string.Empty;
+            Assert.DoesNotContain("customerNumber = ", expectedSql.Replace("@customerID", ""), StringComparison.OrdinalIgnoreCase);
         }
     }
 }

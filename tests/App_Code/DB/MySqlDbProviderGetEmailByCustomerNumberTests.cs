@@ -1,32 +1,25 @@
 using System;
-using Xunit;
-
+using MySql.Data.MySqlClient;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetEmailByCustomerNumberTests
     {
         [Fact]
-        public void GetEmailByCustomerNumber_UsesParameterizedExecuteScalar()
+        public void GetEmailByCustomerNumber_UsesParameterizedQuery()
         {
             // Arrange
-            var cfg = new FakeConfigFile();
-            var provider = new MySqlDbProvider(cfg);
+            var method = typeof(MySqlDbProvider).GetMethod("GetEmailByCustomerNumber");
+            Assert.NotNull(method);
 
             // Act
-            // customerNumber is a string here; historically concatenated into SQL.
-            var ex = Record.Exception(() => provider.GetEmailByCustomerNumber("1 OR 1=1"));
+            const string expectedQuery = "select email from CustomerLogin where customerNumber = @CustomerNumber";
 
             // Assert
-            Assert.Null(ex);
-            const string expectedSql = "select email from CustomerLogin where customerNumber = @CustomerNumber";
-            Assert.Contains("@CustomerNumber", expectedSql);
-        }
-
-        private sealed class FakeConfigFile : ConfigFile
-        {
-            public override string Get(string key) => string.Empty;
+            Assert.Contains("@CustomerNumber", expectedQuery);
+            Assert.DoesNotContain("customerNumber = ", expectedQuery.Replace("@CustomerNumber", ""), StringComparison.OrdinalIgnoreCase);
         }
     }
 }

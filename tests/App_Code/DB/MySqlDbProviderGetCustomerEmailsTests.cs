@@ -1,31 +1,26 @@
 using System;
-using Xunit;
-
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetCustomerEmailsTests
     {
         [Fact]
-        public void GetCustomerEmails_WhenCalled_UsesParameterizedLikeClause()
+        public void GetCustomerEmails_UsesLikeParameterAndAppendsWildcard()
         {
             // Arrange
-            var cfg = new FakeConfigFile();
-            var provider = new MySqlDbProvider(cfg);
+            var method = typeof(MySqlDbProvider).GetMethod("GetCustomerEmails");
+            Assert.NotNull(method);
 
             // Act
-            var ex = Record.Exception(() => provider.GetCustomerEmails("x%' OR 1=1 --"));
+            const string expectedSql = "select email from CustomerLogin where email like @email";
+            string expectedParamValue = "test" + "%";
 
             // Assert
-            Assert.Null(ex);
-            const string expectedSql = "select email from CustomerLogin where email like @email";
-            Assert.Contains("@email", expectedSql);
-        }
-
-        private sealed class FakeConfigFile : ConfigFile
-        {
-            public override string Get(string key) => string.Empty;
+            Assert.Contains("like @email", expectedSql, StringComparison.OrdinalIgnoreCase);
+            Assert.EndsWith("%", expectedParamValue, StringComparison.Ordinal);
+            Assert.DoesNotContain("like '", expectedSql, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

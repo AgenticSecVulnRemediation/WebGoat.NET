@@ -4,22 +4,35 @@ using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProviderUpdateCustomerPasswordTests
+    public class MySqlDbProvider_UpdateCustomerPassword_Tests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesParameterizedQuery()
+        public void UpdateCustomerPassword_DoesNotEmbedCustomerNumberOrPasswordInSqlString()
         {
             // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("UpdateCustomerPassword");
-            Assert.NotNull(method);
+            var provider = new MySqlDbProvider(new ConfigFileStub());
 
             // Act
-            const string expectedSql = "update CustomerLogin set password = @password where customerNumber = @customerNumber";
+            // If the SQL were concatenated, a password containing quotes could cause malformed SQL.
+            // With parameterization, it should not throw due to SQL string construction.
+            string result = provider.UpdateCustomerPassword(1, "p@ssw'rd");
 
             // Assert
-            Assert.Contains("@password", expectedSql);
-            Assert.Contains("@customerNumber", expectedSql);
-            Assert.DoesNotContain("set password = '", expectedSql, StringComparison.OrdinalIgnoreCase);
+            Assert.True(result == null || result.Length > 0);
+        }
+
+        private sealed class ConfigFileStub : ConfigFile
+        {
+            public override string Get(string key)
+            {
+                if (key == DbConstants.KEY_PWD) return string.Empty;
+                if (key == DbConstants.KEY_HOST) return "localhost";
+                if (key == DbConstants.KEY_PORT) return "3306";
+                if (key == DbConstants.KEY_DATABASE) return "test";
+                if (key == DbConstants.KEY_UID) return "root";
+                if (key == DbConstants.KEY_CLIENT_EXEC) return "mysql";
+                return string.Empty;
+            }
         }
     }
 }

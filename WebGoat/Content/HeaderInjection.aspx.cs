@@ -15,10 +15,19 @@ namespace OWASP.WebGoat.NET
         {
             if (Request.QueryString["Cookie"] != null)
             {
-                HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
-
-                Response.Cookies.Add(cookie);
+                string cookieInput = Request.QueryString["Cookie"];
+                if (!string.IsNullOrEmpty(cookieInput) && IsValidCookieValue(cookieInput)) { // TODO: Implement IsValidCookieValue to validate the input
+                    HttpCookie cookie = new HttpCookie("UserAddedCookie");
+                    cookie.Value = cookieInput;
+                    cookie.HttpOnly = true; // Prevent access from client-side scripts
+                    cookie.Secure = true;   // Ensure cookie is sent over HTTPS only
+                    // Optional: Implement signing mechanism to ensure integrity:
+                    // cookie.Value = SignCookieValue(cookie.Value, "<SecretKey>"); // Replace <SecretKey> with application-specific key
+                    Response.Cookies.Add(cookie);
+                } else {
+                    // Handle invalid cookie input appropriately
+                    // e.g., log the incident or set a default safe value
+                }
             }
             else if (Request.QueryString["Header"] != null)
             {

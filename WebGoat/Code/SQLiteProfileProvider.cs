@@ -807,7 +807,7 @@ namespace TechInfoSystems.Data.SQLite
 				cn.Open ();
 
 			using (SqliteCommand cmd = cn.CreateCommand()) {
-				cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+				cmd.CommandText = string.Format("SELECT UserId FROM {0} WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId", USER_TB_NAME);
 
 				cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
 				cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
@@ -817,7 +817,8 @@ namespace TechInfoSystems.Data.SQLite
 
 				string userId = cmd.ExecuteScalar () as string;
 				if (userId != null) {
-					cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+					cmd.CommandText = string.Format("DELETE FROM {0} WHERE UserId = $UserId", PROFILE_TB_NAME);
+                // Verify that PROFILE_TB_NAME is a constant or otherwise safe
 					cmd.Parameters.Clear ();
 					cmd.Parameters.Add ("$UserId", DbType.String, 36).Value = userId;
 

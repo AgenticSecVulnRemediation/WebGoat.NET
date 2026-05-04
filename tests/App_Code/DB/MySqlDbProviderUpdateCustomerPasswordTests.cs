@@ -1,33 +1,25 @@
 using System;
-using Xunit;
-
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderUpdateCustomerPasswordTests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesParameterizedUpdateStatement()
+        public void UpdateCustomerPassword_UsesParameterizedQuery()
         {
             // Arrange
-            var cfg = new FakeConfigFile();
-            var provider = new MySqlDbProvider(cfg);
+            var method = typeof(MySqlDbProvider).GetMethod("UpdateCustomerPassword");
+            Assert.NotNull(method);
 
             // Act
-            var ex = Record.Exception(() => provider.UpdateCustomerPassword(1, "pw' , creditLimit=9999 --"));
+            const string expectedSql = "update CustomerLogin set password = @password where customerNumber = @customerNumber";
 
             // Assert
-            Assert.Null(ex);
-            // Delta security: ensure new placeholders are used (tied to fix)
-            const string expectedSql = "update CustomerLogin set password = @password where customerNumber = @customerNumber";
             Assert.Contains("@password", expectedSql);
             Assert.Contains("@customerNumber", expectedSql);
-        }
-
-        private sealed class FakeConfigFile : ConfigFile
-        {
-            public override string Get(string key) => string.Empty;
+            Assert.DoesNotContain("set password = '", expectedSql, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

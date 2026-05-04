@@ -556,12 +556,18 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public DataSet GetCustomerEmails(string email)
         {
-            string sql = "select email from CustomerLogin where email like '" + email + "%'";
+            string sql = "select email from CustomerLogin where email like CONCAT(@email, '%')";
             
             
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
+                // Create command using parameterized SQL query
+                MySqlCommand command = new MySqlCommand(sql, connection);
+                // Add the parameter value for '@email'
+                command.Parameters.AddWithValue("@email", email);
+                
+                // Use the command with MySqlDataAdapter
+                MySqlDataAdapter da = new MySqlDataAdapter(command);
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 

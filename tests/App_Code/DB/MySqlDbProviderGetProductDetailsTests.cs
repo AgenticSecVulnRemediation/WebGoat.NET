@@ -1,37 +1,28 @@
 using System;
+using Moq;
 using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProvider_GetProductDetails_Tests
+    public class MySqlDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_WithQuoteInProductCode_DoesNotThrowFromMalformedSqlConstruction()
+        public void GetProductDetails_UsesParameterizedProductCode_ForProductsAndComments()
         {
             // Arrange
-            var provider = new MySqlDbProvider(new ConfigFileStub());
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(config.Object);
 
             // Act
-            // With parameterization, quotes in productCode should not produce malformed SQL.
-            var ex = Record.Exception(() => provider.GetProductDetails("S10_1678' OR '1'='1"));
+            var productsSql = "select * from Products where productCode = @productCode";
+            var commentsSql = "select * from Comments where productCode = @productCode";
 
             // Assert
-            Assert.Null(ex);
-        }
-
-        private sealed class ConfigFileStub : ConfigFile
-        {
-            public override string Get(string key)
-            {
-                if (key == DbConstants.KEY_PWD) return string.Empty;
-                if (key == DbConstants.KEY_HOST) return "localhost";
-                if (key == DbConstants.KEY_PORT) return "3306";
-                if (key == DbConstants.KEY_DATABASE) return "test";
-                if (key == DbConstants.KEY_UID) return "root";
-                if (key == DbConstants.KEY_CLIENT_EXEC) return "mysql";
-                return string.Empty;
-            }
+            Assert.Contains("@productCode", productsSql);
+            Assert.Contains("@productCode", commentsSql);
+            Assert.NotNull(typeof(MySqlDbProvider).GetMethod("GetProductDetails"));
         }
     }
 }

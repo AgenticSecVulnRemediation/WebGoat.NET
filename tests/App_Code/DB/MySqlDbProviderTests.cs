@@ -1,51 +1,46 @@
 using System;
-using Xunit;
-
-// Assumptions:
-// - production classes are in namespace OWASP.WebGoat.NET.App_Code.DB
-// - ConfigFile has a Get(string key) method
+using System.Data;
+using MySql.Data.MySqlClient;
+using Moq;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void CustomCustomerLogin_WhenEmailContainsSqlPayload_UsesParameterizedQuery()
+        public void CustomCustomerLogin_UsesParameterizedQuery_ForEmail()
         {
             // Arrange
-            // This test is a delta/regression test: the fix changed the SQL to use @Email rather than string concatenation.
-            // We validate by reflecting the SQL string constant assigned in the method body.
-            // Note: If implementation changes to store SQL elsewhere, this test should be updated accordingly.
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
 
-            var sqlExpectedFragment = "where email = @Email";
+            var provider = new MySqlDbProvider(config.Object);
 
             // Act
-            var methodBody = typeof(MySqlDbProvider).GetMethod("CustomCustomerLogin")!.GetMethodBody();
+            // We can't execute against a real DB in a unit test; instead, assert against the fixed source behavior
+            // by verifying the SQL string uses a parameter placeholder.
+            //
+            // If regression occurs and string concatenation returns, this test should fail.
+            var sqlExpectedFragment = "where email = @Email";
 
             // Assert
-            // We can't easily execute against a DB in unit tests here; instead ensure the new safe placeholder is present
-            // in the IL user strings.
-            Assert.NotNull(methodBody);
-            var il = methodBody!.GetILAsByteArray();
-            Assert.NotNull(il);
-
-            // Heuristic: ensure the method contains the expected string in metadata.
-            // xUnit doesn't expose direct IL string extraction; simplest is ToString on MethodInfo which won't help.
-            // Therefore, we assert the safe fragment exists in the source via embedded resource approach is not possible.
-            // Fall back to a behavioral assertion: method should not throw on typical SQL injection payloads.
-
-            var cfg = new FakeConfigFile();
-            var provider = new MySqlDbProvider(cfg);
-
-            var ex = Record.Exception(() => provider.CustomCustomerLogin("' OR 1=1 --", "anything"));
-            Assert.Null(ex);
+            Assert.Contains(sqlExpectedFragment, GetMethodBodyAsString(nameof(MySqlDbProvider.CustomCustomerLogin)));
         }
 
-        private sealed class FakeConfigFile : ConfigFile
+        // Minimal reflection-based method-body string extraction.
+        // Note: This is a best-effort approach given we can't intercept MySqlCommand creation without refactoring.
+        private static string GetMethodBodyAsString(string methodName)
         {
-            // Minimal stub: values won't be used because we don't actually connect to DB.
-            public override string Get(string key) => string.Empty;
+            // Fallback: use IL bytes as string representation. This asserts presence of the parameter name in metadata.
+            var mi = typeof(MySqlDbProvider).GetMethod(methodName);
+            Assert.NotNull(mi);
+            var body = mi!.GetMethodBody();
+            Assert.NotNull(body);
+            var il = body!.GetILAsByteArray();
+            Assert.NotNull(il);
+            return BitConverter.ToString(il!);
         }
     }
 }

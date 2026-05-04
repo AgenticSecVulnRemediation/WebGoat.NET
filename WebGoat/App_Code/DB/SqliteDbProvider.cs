@@ -568,14 +568,16 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public DataSet GetCustomerEmails(string email)
         {
-            string sql = "select email from CustomerLogin where email like '" + email + "%'";
+            string sql = "select email from CustomerLogin where email like @email";
             
             
             using (SqliteConnection connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
 
-                SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
+                SqliteDataAdapter da = new SqliteDataAdapter();
+                da.SelectCommand = new SqliteCommand(sql, connection);
+                da.SelectCommand.Parameters.AddWithValue("@email", email + "%");
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 

@@ -3,15 +3,13 @@ using System.Web;
 using System.Web.Security;
 using Xunit;
 
-// Assumption: source assembly exposes OWASP.WebGoat.NET.App_Code.CookieManager
-using OWASP.WebGoat.NET.App_Code;
-
+// Assumption: production namespace is OWASP.WebGoat.NET.App_Code as in source file.
 namespace OWASP.WebGoat.NET.App_Code.Tests
 {
     public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_SetsHttpOnly_True()
+        public void SetCookie_CreatesAuthCookie_WithHttpOnlyEnabled()
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(
@@ -20,14 +18,14 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
                 DateTime.UtcNow,
                 DateTime.UtcNow.AddMinutes(30),
                 false,
-                "userdata",
-                "/");
+                "userdata");
 
             // Act
-            HttpCookie cookie = CookieManager.SetCookie(ticket, "ignored", "ignored");
+            HttpCookie cookie = CookieManager.SetCookie(ticket, "ignoredId", "ignoredValue");
 
             // Assert
             Assert.NotNull(cookie);
+            Assert.Equal(FormsAuthentication.FormsCookieName, cookie.Name);
             Assert.True(cookie.HttpOnly);
         }
     }

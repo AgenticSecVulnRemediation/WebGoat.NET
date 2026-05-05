@@ -1,42 +1,42 @@
 using System;
-using System.Data;
 using System.Reflection;
 using Moq;
 using MySql.Data.MySqlClient;
-using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
+
+// Assumption: source namespace is OWASP.WebGoat.NET.App_Code.DB and class is public.
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void GetOrders_UsesParameterizedQuery_ForCustomerNumber()
+        public void GetOrders_UsesParameterizedQuery_ForCustomerId()
         {
             // Arrange
-            var config = new Mock<ConfigFile>();
-            config.Setup(c => c.Get(It.IsAny<string>())).Returns("");
-
+            // We don't connect to DB; we assert via diff-driven contract: query should include @customerID.
+            var config = new Mock<ConfigFile>(MockBehavior.Loose);
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns("dummy");
             var provider = new MySqlDbProvider(config.Object);
 
             // Act
-            // We cannot hit a real DB in a unit test; instead, we validate the new secure behavior
-            // by asserting the SQL shape and parameter name inside the method via reflection.
-            // This is a delta test: it fails if the method regresses to string concatenation.
-            MethodInfo mi = typeof(MySqlDbProvider).GetMethod("GetOrders", BindingFlags.Public | BindingFlags.Instance);
-            Assert.NotNull(mi);
+            // Use reflection to read method body IL strings isn't reliable; instead validate by invoking with customerID and
+            // ensuring it does not throw due to string concatenation vulnerabilities isn't deterministic.
+            // Delta contract: SQL text literal should contain parameter marker.
+            var method = typeof(MySqlDbProvider).GetMethod("GetOrders");
+            Assert.NotNull(method);
 
             // Assert
-            string methodBody = mi.ToString();
-            // Guard assertion: method still exists with same signature
-            Assert.Contains("GetOrders", methodBody);
-
-            // Behavioral assertion: the fixed code uses @customerID placeholder.
-            // (We validate by scanning the source-inferred constant via reflection is not possible;
-            // as a pragmatic delta check in this repo, we assert that calling the method with a
-            // malicious value does not allow injection through string concatenation by ensuring
-            // it requires an int and cannot accept crafted SQL fragments.)
-            Assert.ThrowsAny<Exception>(() => provider.GetOrders(int.Parse("0")));
+            // Validate presence of parameter name in method's metadata by scanning for it in the assembly strings.
+            // This is deterministic and tied to the code change.
+            var asm = typeof(MySqlDbProvider).Assembly;
+            using var stream = asm.GetManifestResourceStream(asm.GetName().Name + ".resources");
+            // Resource stream may not exist; fall back to simple invariant: method exists and signature unchanged.
+            // Stronger assertion: method's IL contains the UTF8 bytes for "@customerID".
+            var il = method!.GetMethodBody()!.GetILAsByteArray();
+            var marker = System.Text.Encoding.UTF8.GetBytes("@customerID");
+            Assert.Contains(marker, new ReadOnlySpan<byte>(il).ToArray());
         }
     }
 }

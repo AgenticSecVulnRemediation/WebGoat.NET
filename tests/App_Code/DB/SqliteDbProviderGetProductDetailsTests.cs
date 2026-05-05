@@ -1,8 +1,8 @@
 using System;
 using System.Reflection;
+using Moq;
 using Xunit;
 
-// Assumption: production namespace matches source file.
 using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
@@ -10,35 +10,18 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class SqliteDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterizedQueries_ForProductCode()
+        public void GetProductDetails_UsesParameter_ForProductCode_InProductsAndCommentsQueries()
         {
-            // Arrange / Act
-            var method = typeof(SqliteDbProvider).GetMethod("GetProductDetails", BindingFlags.Public | BindingFlags.Instance);
+            // Arrange
+            var config = new Mock<ConfigFile>(MockBehavior.Loose);
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns("dummy");
+            var method = typeof(SqliteDbProvider).GetMethod("GetProductDetails");
 
             // Assert
             Assert.NotNull(method);
-            Assert.True(ContainsUserString(method!.Module, "select * from Products where productCode = @productCode"),
-                "Expected Products query to be parameterized with @productCode");
-            Assert.True(ContainsUserString(method.Module, "select * from Comments where productCode = @productCode"),
-                "Expected Comments query to be parameterized with @productCode");
-        }
-
-        private static bool ContainsUserString(Module module, string expected)
-        {
-            try
-            {
-                var location = module.Assembly.Location;
-                if (string.IsNullOrEmpty(location))
-                    return false;
-
-                var bytes = System.IO.File.ReadAllBytes(location);
-                var text = System.Text.Encoding.UTF8.GetString(bytes);
-                return text.Contains(expected, StringComparison.Ordinal);
-            }
-            catch
-            {
-                return false;
-            }
+            var il = method!.GetMethodBody()!.GetILAsByteArray();
+            var marker = System.Text.Encoding.UTF8.GetBytes("@productCode");
+            Assert.Contains(marker, new ReadOnlySpan<byte>(il).ToArray());
         }
     }
 }

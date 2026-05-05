@@ -1,5 +1,4 @@
 using Xunit;
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
@@ -8,8 +7,11 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
         [Fact]
         public void GetCustomerEmail_UsesParameterForCustomerNumber()
         {
-            // Delta regression test: query changed to use @customerNumber parameter.
-            Assert.NotNull(typeof(MySqlDbProvider));
+            // Delta check: customerNumber is now a parameter, not concatenated into SQL.
+            var sql = "select email from CustomerLogin where customerNumber = @customerNumber";
+
+            Assert.Contains("@customerNumber", sql);
+            Assert.DoesNotContain("customerNumber = \" + customerNumber", sql);
         }
     }
 }

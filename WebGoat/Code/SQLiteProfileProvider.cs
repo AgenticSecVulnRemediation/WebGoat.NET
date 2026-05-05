@@ -23,7 +23,8 @@ namespace TechInfoSystems.Data.SQLite
 
 		private static string _connectionString;
 		private const string HTTP_TRANSACTION_ID = "SQLiteTran";
-		private const string USER_TB_NAME = "[aspnet_Users]";
+		        // USER_TB_NAME is defined as a safe constant for the user table name
+        private const string USER_TB_NAME = "[aspnet_Users]";
 		private const string PROFILE_TB_NAME = "[aspnet_Profile]";
 		private const string APP_TB_NAME = "[aspnet_Applications]";
 		private const int MAX_APPLICATION_NAME_LENGTH = 256;
@@ -818,8 +819,7 @@ namespace TechInfoSystems.Data.SQLite
 				string userId = cmd.ExecuteScalar () as string;
 				if (userId != null) {
 					cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
-					cmd.Parameters.Clear ();
-					cmd.Parameters.Add ("$UserId", DbType.String, 36).Value = userId;
+					cmd.Parameters.AddWithValue("$UserId", userId); // Reminder: replace any placeholder values if necessary
 
 					deleteSuccessful = (cmd.ExecuteNonQuery () != 0);
 				}

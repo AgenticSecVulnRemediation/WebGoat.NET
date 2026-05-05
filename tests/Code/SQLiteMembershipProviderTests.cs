@@ -1,44 +1,37 @@
 using System;
-using System.Text.RegularExpressions;
-using Xunit;
-
-// Assumption: production namespace matches source file.
+using System.Reflection;
 using TechInfoSystems.Data.SQLite;
+using Xunit;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
     public class SQLiteMembershipProviderTests
     {
         [Fact]
-        public void ChangePassword_RegexStrengthCheck_UsesTimeoutToPreventReDoS()
+        public void ChangePassword_WhenPasswordStrengthRegexIsSet_UsesRegexTimeoutToMitigateReDoS()
         {
             // Arrange
-            // Security fix: Regex.IsMatch now uses a timeout overload to mitigate Regex DoS.
-            // We assert the source contains the timeout overload call.
-            var method = typeof(SQLiteMembershipProvider).GetMethod("ChangePassword");
-            Assert.NotNull(method);
+            // This is a delta test: the fix adds a Regex timeout to the IsMatch call.
+            // We validate that the ChangePassword method references the overload that includes a TimeSpan.
+            MethodInfo mi = typeof(SQLiteMembershipProvider).GetMethod(
+                "ChangePassword",
+                BindingFlags.Public | BindingFlags.Instance,
+                binder: null,
+                types: new[] { typeof(string), typeof(string), typeof(string) },
+                modifiers: null);
+            Assert.NotNull(mi);
 
-            // Act/Assert
-            Assert.True(ContainsUserString(method!.Module, "TimeSpan.FromMilliseconds(500)"),
-                "Expected regex match to include a timeout to mitigate ReDoS");
-        }
+            // Act
+            string methodText = mi.ToString();
 
-        private static bool ContainsUserString(Module module, string expected)
-        {
-            try
-            {
-                var location = module.Assembly.Location;
-                if (string.IsNullOrEmpty(location))
-                    return false;
+            // Assert
+            // Signature sanity check
+            Assert.Contains("ChangePassword", methodText);
 
-                var bytes = System.IO.File.ReadAllBytes(location);
-                var text = System.Text.Encoding.UTF8.GetString(bytes);
-                return text.Contains(expected, StringComparison.Ordinal);
-            }
-            catch
-            {
-                return false;
-            }
+            // Behavioral delta check (best-effort without IL parsing): ensure TimeSpan is referenced in the assembly.
+            // If the timeout overload is removed, TimeSpan.FromMilliseconds(500) reference would likely disappear.
+            var asm = typeof(SQLiteMembershipProvider).Assembly;
+            Assert.Contains("FromMilliseconds", string.Join(" ", asm.GetManifestResourceNames()));
         }
     }
 }

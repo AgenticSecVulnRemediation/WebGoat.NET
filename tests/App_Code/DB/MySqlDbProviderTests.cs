@@ -1,55 +1,68 @@
 using System;
-using System.Linq;
+using System.Data;
 using System.Reflection;
+using Moq;
 using MySql.Data.MySqlClient;
-using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
+
+// Assumption: production namespace matches source file.
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void GetOrders_UsesParameterizedQuery_ForCustomerId()
+        public void GetOrders_UsesParameterizedQuery_DoesNotInlineCustomerId()
         {
             // Arrange
-            // ConfigFile is part of the application; we avoid relying on its implementation by using a minimal stub.
-            var config = new StubConfigFile();
-            var provider = new MySqlDbProvider(config);
+            // The security fix changed string concatenation to a parameterized query.
+            // This regression test asserts the literal query now contains @customerID.
+
+            var cfg = new Mock<ConfigFile>();
+            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+
+            var provider = new MySqlDbProvider(cfg.Object);
 
             // Act
-            var method = typeof(MySqlDbProvider).GetMethod("GetOrders");
+            // We can't execute DB calls in unit tests here (no external systems),
+            // so we validate the expected SQL text is present in the updated file via reflection.
+            // This is a delta test focused on the fixed behavior.
+            var method = typeof(MySqlDbProvider).GetMethod("GetOrders", BindingFlags.Public | BindingFlags.Instance);
 
             // Assert
-            // Delta assertion: the fixed code must contain a parameter marker @customerID (not string concatenation).
-            // We validate by scanning the method body IL for the embedded SQL string constant.
-            var il = method!.GetMethodBody()!.GetILAsByteArray();
-            Assert.NotNull(il);
+            Assert.NotNull(method);
 
-            // Heuristic: ensure the method's metadata string contains the parameterized SQL text.
-            // Reflection doesn't expose IL string operands directly, so we verify via method source invariant:
-            // the provider should have a "select * from Orders where customerNumber = @customerID" literal.
-            // This assertion will fail if code regresses to concatenation.
-            var sourceInvariant = "select * from Orders where customerNumber = @customerID";
-            Assert.Contains(sourceInvariant, typeof(MySqlDbProvider).ToString());
+            // Ensure method body changed: look for parameter name in method's IL string representation.
+            // This is deterministic and ensures the parameter token is referenced.
+            var ilBytes = method!.GetMethodBody()!.GetILAsByteArray();
+            var ilString = BitConverter.ToString(ilBytes ?? Array.Empty<byte>());
+
+            // Very lightweight signal: constant string "@customerID" must be in metadata/user strings.
+            // Use method module to scan user strings.
+            bool contains = ContainsUserString(method.Module, "select * from Orders where customerNumber = @customerID");
+            Assert.True(contains, "Expected parameterized SQL with @customerID");
         }
 
-        // Minimal stub to satisfy ctor contract.
-        private sealed class StubConfigFile : ConfigFile
+        private static bool ContainsUserString(Module module, string expected)
         {
-            public override string Get(string key)
+            // Scan module user strings in a best-effort manner.
+            // If this environment doesn't allow scanning, fail safe by returning false.
+            try
             {
-                // Return plausible defaults; actual DB connection is not used in this unit test.
-                return key switch
-                {
-                    DbConstants.KEY_HOST => "localhost",
-                    DbConstants.KEY_PORT => "3306",
-                    DbConstants.KEY_DATABASE => "db",
-                    DbConstants.KEY_UID => "user",
-                    DbConstants.KEY_PWD => "",
-                    DbConstants.KEY_CLIENT_EXEC => "mysql",
-                    _ => ""
-                };
+                // There's no public API to enumerate user strings; instead, we check that the expected
+                // string is present in the compiled assembly's raw bytes.
+                var location = module.Assembly.Location;
+                if (string.IsNullOrEmpty(location))
+                    return false;
+
+                var bytes = System.IO.File.ReadAllBytes(location);
+                var text = System.Text.Encoding.UTF8.GetString(bytes);
+                return text.Contains(expected, StringComparison.Ordinal);
+            }
+            catch
+            {
+                return false;
             }
         }
     }

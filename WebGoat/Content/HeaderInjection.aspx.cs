@@ -16,7 +16,22 @@ namespace OWASP.WebGoat.NET
             if (Request.QueryString["Cookie"] != null)
             {
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
+                cookie.Value = Request.QueryString["Cookie"]; 
+                // TODO: Validate the cookie value to ensure it contains only expected characters
+                // Example: if(!Regex.IsMatch(cookie.Value, "^[a-zA-Z0-9]+$")) { /* handle error */ }
+                cookie.HttpOnly = true;  // Prevent client-side scripts from accessing the cookie
+                cookie.Secure = true;    // Ensure the cookie is sent only over HTTPS
+                // TODO: Validate the cookie value to ensure it contains only expected characters
+                if(!System.Text.RegularExpressions.Regex.IsMatch(cookie.Value, "^[a-zA-Z0-9]+$"))
+                {
+                    // Handle error: cookie value contains invalid characters
+                    cookie.Value = "default"; // or take appropriate action
+                }
+                cookie.HttpOnly = true;  // Prevent client-side scripts from accessing the cookie
+                cookie.Secure = true;    // Ensure the cookie is sent only over HTTPS
+                // TODO: Optionally, sign the cookie value for integrity check.
+                // Example: using System.Web.Security;
+                // cookie.Value = FormsAuthentication.Encrypt(new FormsAuthenticationTicket(1, cookie.Value, DateTime.Now, DateTime.Now.AddMinutes(30), false, "replace_with_secret"));
 
                 Response.Cookies.Add(cookie);
             }

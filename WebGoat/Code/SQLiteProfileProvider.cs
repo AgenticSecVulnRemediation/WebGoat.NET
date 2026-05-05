@@ -202,7 +202,7 @@ namespace TechInfoSystems.Data.SQLite
 					tran = cn.BeginTransaction ();
 
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId;";
+					cmd.CommandText = $"SELECT UserId FROM {USER_TB_NAME} WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
 
 					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
 					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
@@ -641,7 +641,7 @@ namespace TechInfoSystems.Data.SQLite
 			SqliteConnection cn = GetDbConnectionForProfile ();
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $UserName AND ApplicationId = $ApplicationId";
+					cmd.CommandText = $"SELECT UserId FROM {USER_TB_NAME} WHERE LoweredUsername = $UserName AND ApplicationId = $ApplicationId";
 					cmd.Parameters.AddWithValue ("$UserName", username.ToLowerInvariant ());
 					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
 

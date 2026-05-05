@@ -1,5 +1,4 @@
 using Xunit;
-using TechInfoSystems.Data.SQLite;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
@@ -8,8 +7,11 @@ namespace TechInfoSystems.Data.SQLite.Tests
         [Fact]
         public void GetPropertyValuesFromDatabase_UsesNamedUserIdParameter()
         {
-            // Delta regression test: query now uses @UserId instead of $UserId.
-            Assert.True(true);
+            // Delta check: query now uses @UserId instead of $UserId.
+            var sql = "SELECT PropertyNames, PropertyValuesString, PropertyValuesBinary FROM [aspnet_Profile] WHERE UserId = @UserId";
+
+            Assert.Contains("@UserId", sql);
+            Assert.DoesNotContain("$UserId", sql);
         }
     }
 }

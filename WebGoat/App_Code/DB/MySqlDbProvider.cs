@@ -391,8 +391,11 @@ namespace OWASP.WebGoat.NET.App_Code.DB
         
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                string sql = "select * from Orders where customerNumber = " + customerID;
-                MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
+                string sql = "select * from Orders where customerNumber = @customerID";
+                MySqlCommand command = new MySqlCommand(sql, connection);
+                // Replace '@customerID' parameter with the actual customerID value securely
+                command.Parameters.AddWithValue("@customerID", customerID);
+                MySqlDataAdapter da = new MySqlDataAdapter(command);
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 

@@ -1,40 +1,51 @@
 using System;
-using OWASP.WebGoat.NET.App_Code.DB;
+using System.Reflection;
+using Moq;
 using Xunit;
+
+// Assumption: production namespace matches source file.
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetEmailByNameTests
     {
         [Fact]
-        public void GetEmailByName_UsesParameterizedLike_WithTrailingWildcard()
+        public void GetEmailByName_UsesLikeParameterWithWildcard_NotStringConcatenation()
         {
             // Arrange
-            var provider = new MySqlDbProvider(new StubConfigFile());
+            // Security fix: name was concatenated into LIKE clauses; now SQL uses @name and adds % in parameter value.
+            var cfg = new Mock<ConfigFile>();
+            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+
+            var provider = new MySqlDbProvider(cfg.Object);
 
             // Act
-            var method = typeof(MySqlDbProvider).GetMethod("GetEmailByName");
+            var method = typeof(MySqlDbProvider).GetMethod("GetEmailByName", BindingFlags.Public | BindingFlags.Instance);
 
             // Assert
             Assert.NotNull(method);
-            // Delta behavior: SQL uses parameter @name rather than interpolating name into query.
-            // We assert the method exists; detailed DB behavior is covered by integration tests.
+            Assert.True(ContainsUserString(method!.Module, "where firstName like @name or lastName like @name"),
+                "Expected @name parameterized LIKE SQL");
+            Assert.True(ContainsUserString(method.Module, "name + \"%\""),
+                "Expected code to append wildcard to parameter value (name + '%')");
         }
 
-        private sealed class StubConfigFile : ConfigFile
+        private static bool ContainsUserString(Module module, string expected)
         {
-            public override string Get(string key)
+            try
             {
-                return key switch
-                {
-                    DbConstants.KEY_HOST => "localhost",
-                    DbConstants.KEY_PORT => "3306",
-                    DbConstants.KEY_DATABASE => "db",
-                    DbConstants.KEY_UID => "user",
-                    DbConstants.KEY_PWD => "",
-                    DbConstants.KEY_CLIENT_EXEC => "mysql",
-                    _ => ""
-                };
+                var location = module.Assembly.Location;
+                if (string.IsNullOrEmpty(location))
+                    return false;
+
+                var bytes = System.IO.File.ReadAllBytes(location);
+                var text = System.Text.Encoding.UTF8.GetString(bytes);
+                return text.Contains(expected, StringComparison.Ordinal);
+            }
+            catch
+            {
+                return false;
             }
         }
     }

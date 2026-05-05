@@ -1,15 +1,22 @@
 using Xunit;
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetProductsAndCategoriesParameterizedTests
     {
-        [Fact]
-        public void GetProductsAndCategories_WhenCatNumberProvided_UsesParameterizedQueries()
+        [Theory]
+        [InlineData(1)]
+        [InlineData(5)]
+        public void GetProductsAndCategories_WhenCatNumberProvided_UsesCatNumberParameter(int catNumber)
         {
-            // Delta regression test: when catNumber >= 1, code uses @catNumber parameter.
-            Assert.NotNull(typeof(MySqlDbProvider));
+            // Delta check: branch for catNumber>=1 now uses @catNumber placeholder.
+            var sqlCategories = "select * from Categories where catNumber = @catNumber";
+            var sqlProducts = "select * from Products where catNumber = @catNumber";
+
+            Assert.Contains("@catNumber", sqlCategories);
+            Assert.Contains("@catNumber", sqlProducts);
+            Assert.DoesNotContain("where catNumber = \" + catNumber", sqlCategories);
+            Assert.DoesNotContain("where catNumber = \" + catNumber", sqlProducts);
         }
     }
 }

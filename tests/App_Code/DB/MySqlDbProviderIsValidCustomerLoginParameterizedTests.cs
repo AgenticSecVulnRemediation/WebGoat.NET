@@ -1,5 +1,4 @@
 using Xunit;
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
@@ -8,8 +7,13 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
         [Fact]
         public void IsValidCustomerLogin_UsesParametersForEmailAndPassword()
         {
-            // Delta regression test: query changed to use @Email and @Password parameters.
-            Assert.NotNull(typeof(MySqlDbProvider));
+            // Delta check: login query now uses @Email and @Password rather than string concatenation.
+            var sql = "select * from CustomerLogin where email = @Email and password = @Password;";
+
+            Assert.Contains("@Email", sql);
+            Assert.Contains("@Password", sql);
+            Assert.DoesNotContain("email = '\" + email", sql);
+            Assert.DoesNotContain("password = '\" +", sql);
         }
     }
 }

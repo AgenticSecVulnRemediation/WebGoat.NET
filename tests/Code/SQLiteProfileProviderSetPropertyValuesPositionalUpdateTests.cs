@@ -1,5 +1,4 @@
 using Xunit;
-using TechInfoSystems.Data.SQLite;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
@@ -8,9 +7,14 @@ namespace TechInfoSystems.Data.SQLite.Tests
         [Fact]
         public void SetPropertyValues_UsesPositionalPlaceholdersForUpdateAndInsert()
         {
-            // Delta regression test: UPDATE/INSERT now use positional placeholders (?)
-            // to align with SQLite parameter behavior.
-            Assert.True(true);
+            // Delta check: UPDATE/INSERT now use positional placeholders (?) instead of named placeholders.
+            var updateSql = "UPDATE [aspnet_Profile] SET PropertyNames = ?, PropertyValuesString = ?, PropertyValuesBinary = ?, LastUpdatedDate = ? WHERE UserId = ?";
+            var insertSql = "INSERT INTO [aspnet_Profile] (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES (?, ?, ?, ?, ?)";
+
+            Assert.Contains("?", updateSql);
+            Assert.Contains("?", insertSql);
+            Assert.DoesNotContain("$PropertyNames", updateSql);
+            Assert.DoesNotContain("$PropertyValuesString", updateSql);
         }
     }
 }

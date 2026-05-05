@@ -1,43 +1,51 @@
 using System;
 using System.Reflection;
-using OWASP.WebGoat.NET.App_Code.DB;
+using Moq;
 using Xunit;
+
+// Assumption: production namespace matches source file.
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterizedQueries_ForProductCode()
+        public void GetProductDetails_UsesParameterizedQuery_ForProductCode()
         {
             // Arrange
-            var provider = new MySqlDbProvider(new StubConfigFile());
+            // Security fix: productCode was inlined into SQL; now it must be parameterized as @productCode.
+            var cfg = new Mock<ConfigFile>();
+            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+
+            var provider = new MySqlDbProvider(cfg.Object);
 
             // Act
-            var method = typeof(MySqlDbProvider).GetMethod("GetProductDetails");
+            var method = typeof(MySqlDbProvider).GetMethod("GetProductDetails", BindingFlags.Public | BindingFlags.Instance);
 
             // Assert
             Assert.NotNull(method);
-            // Regression guard: the fixed code now uses @productCode (not string concatenation into quotes).
-            // We can at least assert that the literal "@productCode" exists somewhere in the assembly.
-            var assemblyText = typeof(MySqlDbProvider).Assembly.ToString();
-            Assert.NotNull(assemblyText);
+            Assert.True(ContainsUserString(method!.Module, "select * from Products where productCode = @productCode"),
+                "Expected Products query to use @productCode parameter");
+            Assert.True(ContainsUserString(method.Module, "select * from Comments where productCode = @productCode"),
+                "Expected Comments query to use @productCode parameter");
         }
 
-        private sealed class StubConfigFile : ConfigFile
+        private static bool ContainsUserString(Module module, string expected)
         {
-            public override string Get(string key)
+            try
             {
-                return key switch
-                {
-                    DbConstants.KEY_HOST => "localhost",
-                    DbConstants.KEY_PORT => "3306",
-                    DbConstants.KEY_DATABASE => "db",
-                    DbConstants.KEY_UID => "user",
-                    DbConstants.KEY_PWD => "",
-                    DbConstants.KEY_CLIENT_EXEC => "mysql",
-                    _ => ""
-                };
+                var location = module.Assembly.Location;
+                if (string.IsNullOrEmpty(location))
+                    return false;
+
+                var bytes = System.IO.File.ReadAllBytes(location);
+                var text = System.Text.Encoding.UTF8.GetString(bytes);
+                return text.Contains(expected, StringComparison.Ordinal);
+            }
+            catch
+            {
+                return false;
             }
         }
     }

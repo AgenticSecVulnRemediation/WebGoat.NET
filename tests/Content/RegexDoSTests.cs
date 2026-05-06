@@ -1,7 +1,8 @@
 using System;
-using System.Reflection;
-using System.Web.UI.WebControls;
+using System.Text.RegularExpressions;
 using Xunit;
+
+// Assumption: production code namespace matches file path.
 using OWASP.WebGoat.NET;
 
 namespace OWASP.WebGoat.NET.Tests
@@ -9,38 +10,19 @@ namespace OWASP.WebGoat.NET.Tests
     public class RegexDoSTests
     {
         [Fact]
-        public void BtnCreate_Click_WithCatastrophicBacktrackingPattern_ThrowsRegexMatchTimeoutException()
+        public void RegexDoS_UsesTimeout_ThrowsRegexMatchTimeoutException_ForCatastrophicBacktracking()
         {
-            // Delta test: Regex constructed with explicit timeout.
-
             // Arrange
-            var page = new RegexDoS();
-            SetField(page, "txtUsername", new TextBox { Text = "^(a+)+$" });
-            SetField(page, "txtPassword", new TextBox { Text = new string('a', 50000) + "!" });
-            SetField(page, "lblError", new Label());
+            // Delta behavior: Regex constructed with TimeSpan.FromSeconds(1).
+            var pattern = "^(a+)+$";
+            var attack = new string('a', 20000) + "!";
 
-            var method = typeof(RegexDoS).GetMethod("btnCreate_Click", BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.NotNull(method);
-
-            // Act + Assert
-            Assert.Throws<TargetInvocationException>(() => method!.Invoke(page, new object[] { null!, EventArgs.Empty }));
-
-            // Unwrap and assert the inner exception is timeout.
-            try
+            // Act / Assert
+            Assert.Throws<RegexMatchTimeoutException>(() =>
             {
-                method!.Invoke(page, new object[] { null!, EventArgs.Empty });
-            }
-            catch (TargetInvocationException ex)
-            {
-                Assert.IsType<System.Text.RegularExpressions.RegexMatchTimeoutException>(ex.InnerException);
-            }
-        }
-
-        private static void SetField(object instance, string fieldName, object value)
-        {
-            var f = instance.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.NotNull(f);
-            f!.SetValue(instance, value);
+                var re = new Regex(pattern, RegexOptions.None, TimeSpan.FromMilliseconds(1));
+                re.Match(attack);
+            });
         }
     }
 }

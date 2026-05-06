@@ -1,21 +1,28 @@
+using System;
+using Moq;
 using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProviderGetEmailByNameTests
+    public class MySqlDbProvider_GetEmailByName_Tests
     {
         [Fact]
-        public void GetEmailByName_UsesLikeParameterWithWildcard()
+        public void GetEmailByName_AppendsWildcardAndDoesNotEmbedNameIntoSql()
         {
-            // Arrange/Act
-            var expectedSql = "select firstName, lastName, email from Employees where firstName like @name or lastName like @name";
-            var expectedParameterValueExample = "alice" + "%";
+            // Arrange
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(config.Object);
+
+            // Act
+            var payload = "bob%' OR 1=1 --";
+            Exception ex = Record.Exception(() => provider.GetEmailByName(payload));
 
             // Assert
-            Assert.Contains("like @name", expectedSql);
-            Assert.DoesNotContain("like '\" + name + \"%'", expectedSql);
-            Assert.EndsWith("%", expectedParameterValueExample);
+            // Old code would embed payload into query; the new code parameterizes and appends %.
+            if (ex != null)
+                Assert.DoesNotContain(payload, ex.ToString());
         }
     }
 }

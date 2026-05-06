@@ -1,6 +1,4 @@
-using System;
 using System.Web;
-using OWASP.WebGoat.NET.WebGoatCoins;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.WebGoatCoins.Tests

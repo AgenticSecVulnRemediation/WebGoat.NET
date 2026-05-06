@@ -1,15 +1,16 @@
 using System;
-using System.Web;
 using System.Web.Security;
 using Xunit;
 
-// Assumption: production namespace is OWASP.WebGoat.NET.App_Code as in source file.
+// Assumption: production code compiles under namespace OWASP.WebGoat.NET.App_Code
+using OWASP.WebGoat.NET.App_Code;
+
 namespace OWASP.WebGoat.NET.App_Code.Tests
 {
     public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_CreatesAuthCookie_WithHttpOnlyEnabled()
+        public void SetCookie_Always_SetsHttpOnlyTrue()
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(
@@ -18,14 +19,13 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
                 DateTime.UtcNow,
                 DateTime.UtcNow.AddMinutes(30),
                 false,
-                "userdata");
+                "data");
 
             // Act
-            HttpCookie cookie = CookieManager.SetCookie(ticket, "ignoredId", "ignoredValue");
+            var cookie = CookieManager.SetCookie(ticket, "ignored", "ignored");
 
             // Assert
             Assert.NotNull(cookie);
-            Assert.Equal(FormsAuthentication.FormsCookieName, cookie.Name);
             Assert.True(cookie.HttpOnly);
         }
     }

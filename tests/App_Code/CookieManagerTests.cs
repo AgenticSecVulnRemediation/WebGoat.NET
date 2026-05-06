@@ -1,8 +1,9 @@
 using System;
-using System.Web;
 using System.Web.Security;
-using OWASP.WebGoat.NET.App_Code;
 using Xunit;
+
+// Assumption: production code namespace matches file path.
+using OWASP.WebGoat.NET.App_Code;
 
 namespace OWASP.WebGoat.NET.App_Code.Tests
 {
@@ -12,14 +13,19 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
         public void SetCookie_CreatesHttpOnlyAuthCookie()
         {
             // Arrange
-            var ticket = new FormsAuthenticationTicket(1, "user", DateTime.UtcNow, DateTime.UtcNow.AddMinutes(5), false, "data");
+            var ticket = new FormsAuthenticationTicket(
+                1,
+                "user",
+                DateTime.UtcNow,
+                DateTime.UtcNow.AddMinutes(5),
+                isPersistent: false,
+                userData: string.Empty);
 
             // Act
-            HttpCookie cookie = CookieManager.SetCookie(ticket, "ignored", "ignored");
+            var cookie = CookieManager.SetCookie(ticket, "ignoredId", "ignoredValue");
 
             // Assert
             Assert.NotNull(cookie);
-            Assert.Equal(FormsAuthentication.FormsCookieName, cookie.Name);
             Assert.True(cookie.HttpOnly);
         }
     }

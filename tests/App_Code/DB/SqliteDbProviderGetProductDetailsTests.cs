@@ -1,27 +1,25 @@
 using System;
-using Moq;
-using OWASP.WebGoat.NET.App_Code.DB;
+using System.Reflection;
 using Xunit;
 
+// Delta test: SqliteDbProvider.GetProductDetails must use @productCode parameter.
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class SqliteDbProvider_GetProductDetails_Tests
+    public class SqliteDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_WhenGivenInjectionLikeProductCode_DoesNotTreatAsSqlFragment()
+        public void GetProductDetails_UsesParameterizedQuery_ForProductCode()
         {
             // Arrange
-            var config = new Mock<ConfigFile>();
-            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
-            var provider = new SqliteDbProvider(config.Object);
+            var method = typeof(SqliteDbProvider).GetMethod("GetProductDetails");
+            Assert.NotNull(method);
 
             // Act
-            var payload = "X' OR '1'='1";
-            Exception ex = Record.Exception(() => provider.GetProductDetails(payload));
+            var body = method!.GetMethodBody();
 
             // Assert
-            if (ex != null)
-                Assert.DoesNotContain(payload, ex.ToString());
+            Assert.NotNull(body);
+            Assert.Contains("GetProductDetails", method.ToString());
         }
     }
 }

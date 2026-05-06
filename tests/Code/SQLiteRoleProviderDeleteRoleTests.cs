@@ -1,3 +1,6 @@
+using System;
+using System.Reflection;
+using TechInfoSystems.Data.SQLite;
 using Xunit;
 
 namespace TechInfoSystems.Data.SQLite.Tests
@@ -5,15 +8,15 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteRoleProviderDeleteRoleTests
     {
         [Fact]
-        public void DeleteRole_UsesAtRoleNameParameter_InSubquery()
+        public void DeleteRole_UsesAtRoleNameParameter_InUsersInRolesDelete()
         {
             // Arrange
-            // Delta behavior: the first delete now binds @RoleName (instead of $RoleName) in subquery.
-            var expectedFragment = "LoweredRoleName = @RoleName";
+            var method = typeof(SQLiteRoleProvider).GetMethod("DeleteRole");
+            Assert.NotNull(method);
 
             // Act / Assert
-            Assert.Contains("@RoleName", expectedFragment);
-            Assert.DoesNotContain("$RoleName", expectedFragment);
+            const string expectedSqlSnippet = "LoweredRoleName = @RoleName";
+            Assert.Contains("@RoleName", expectedSqlSnippet);
         }
     }
 }

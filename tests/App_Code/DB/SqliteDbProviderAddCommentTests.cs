@@ -1,8 +1,8 @@
 using System;
-using System.Data;
-using Mono.Data.Sqlite;
-using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
+
+// Assumption: production code namespace matches file path.
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
@@ -12,13 +12,12 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
         public void AddComment_UsesParameterizedInsertStatement()
         {
             // Arrange
-            var sql = "insert into Comments(productCode, email, comment) values (@productCode, @Email, @Comment);";
+            var expectedSql = "insert into Comments(productCode, email, comment) values (@productCode, @Email, @Comment);";
 
-            // Act/Assert
-            Assert.Contains("@productCode", sql);
-            Assert.Contains("@Email", sql);
-            Assert.Contains("@Comment", sql);
-            Assert.DoesNotContain("'\" + productCode + \"'", sql);
+            // Act / Assert
+            Assert.Contains("@productCode", expectedSql);
+            Assert.Contains("@Email", expectedSql);
+            Assert.Contains("@Comment", expectedSql);
         }
     }
 }

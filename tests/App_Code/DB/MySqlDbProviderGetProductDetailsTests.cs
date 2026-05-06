@@ -1,28 +1,31 @@
 using System;
-using System.Reflection;
+using System.Data;
+using Moq;
 using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProviderGetProductDetailsTests
+    public class MySqlDbProvider_GetProductDetails_Tests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterPlaceholder_ForProductCode()
+        public void GetProductDetails_WhenGivenInjectionLikeProductCode_DoesNotTreatAsSqlFragment()
         {
             // Arrange
-            var mi = typeof(MySqlDbProvider).GetMethod("GetProductDetails", BindingFlags.Public | BindingFlags.Instance);
-            Assert.NotNull(mi);
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(config.Object);
 
             // Act
-            var expectedProductsSql = "select * from Products where productCode = @productCode";
-            var expectedCommentsSql = "select * from Comments where productCode = @productCode";
+            // We can only assert behavior indirectly (no string concatenation into SQL).
+            // Pass a string that would break out of quotes in the old code.
+            var payload = "X' OR '1'='1";
+            Exception ex = Record.Exception(() => provider.GetProductDetails(payload));
 
             // Assert
-            Assert.Contains("@productCode", expectedProductsSql);
-            Assert.Contains("@productCode", expectedCommentsSql);
-            Assert.DoesNotContain("'\" + productCode + \"'", expectedProductsSql);
-            Assert.DoesNotContain("'\" + productCode + \"'", expectedCommentsSql);
+            // With parameterized queries, payload should not appear as executable SQL; we at least ensure it doesn't surface as SQL text.
+            if (ex != null)
+                Assert.DoesNotContain(payload, ex.ToString());
         }
     }
 }

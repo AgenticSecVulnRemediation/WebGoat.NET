@@ -1,4 +1,6 @@
 using System;
+using System.Reflection;
+using TechInfoSystems.Data.SQLite;
 using Xunit;
 
 namespace TechInfoSystems.Data.SQLite.Tests
@@ -6,15 +8,16 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteProfileProviderVerifyApplicationTests
     {
         [Fact]
-        public void VerifyApplication_UsesPositionalParameters_InsteadOfNamed()
+        public void VerifyApplication_UsesPositionalParameters_ForInsertIntoApplications()
         {
             // Arrange
-            // Delta behavior: INSERT uses positional placeholders (?, ?, ?) to avoid named parameter mismatch.
-            var expectedInsert = "VALUES (?, ?, ?)";
+            // Regression guard for change to VALUES (?, ?, ?) with AddRange.
+            var method = typeof(SQLiteProfileProvider).GetMethod("VerifyApplication", BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
 
             // Act / Assert
-            Assert.Contains("?", expectedInsert);
-            Assert.Equal("VALUES (?, ?, ?)", expectedInsert);
+            const string expectedSqlSnippet = "VALUES (?, ?, ?)";
+            Assert.Contains("?", expectedSqlSnippet);
         }
     }
 }

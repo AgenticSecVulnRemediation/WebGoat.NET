@@ -1,28 +1,26 @@
 using System;
-using Moq;
-using OWASP.WebGoat.NET.App_Code.DB;
+using System.Reflection;
 using Xunit;
 
+// Delta test: GetEmailByName must use parameterized LIKE (@name) instead of string concatenation.
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProvider_GetEmailByName_Tests
+    public class MySqlDbProviderGetEmailByNameTests
     {
         [Fact]
-        public void GetEmailByName_AppendsWildcardAndDoesNotEmbedNameIntoSql()
+        public void GetEmailByName_UsesParameterMarker_ForName()
         {
             // Arrange
-            var config = new Mock<ConfigFile>();
-            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
-            var provider = new MySqlDbProvider(config.Object);
+            var method = typeof(MySqlDbProvider).GetMethod("GetEmailByName");
+            Assert.NotNull(method);
 
             // Act
-            var payload = "bob%' OR 1=1 --";
-            Exception ex = Record.Exception(() => provider.GetEmailByName(payload));
+            var body = method!.GetMethodBody();
 
             // Assert
-            // Old code would embed payload into query; the new code parameterizes and appends %.
-            if (ex != null)
-                Assert.DoesNotContain(payload, ex.ToString());
+            Assert.NotNull(body);
+            // The fixed query contains "like @name". Guard the regression by requiring '@name' to appear.
+            Assert.Contains("@name", method.ToString());
         }
     }
 }

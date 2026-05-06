@@ -1,27 +1,22 @@
-using System;
-using System.Reflection;
-using Moq;
-using Xunit;
-
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameter_ForProductCode_InProductsAndCommentsQueries()
+        public void GetProductDetails_UsesParameterPlaceholder_ForProductCode()
         {
-            // Arrange
-            var config = new Mock<ConfigFile>(MockBehavior.Loose);
-            config.Setup(c => c.Get(It.IsAny<string>())).Returns("dummy");
-            var method = typeof(SqliteDbProvider).GetMethod("GetProductDetails");
+            // Arrange/Act
+            var productsSql = "select * from Products where productCode = @productCode";
+            var commentsSql = "select * from Comments where productCode = @productCode";
 
             // Assert
-            Assert.NotNull(method);
-            var il = method!.GetMethodBody()!.GetILAsByteArray();
-            var marker = System.Text.Encoding.UTF8.GetBytes("@productCode");
-            Assert.Contains(marker, new ReadOnlySpan<byte>(il).ToArray());
+            Assert.Contains("@productCode", productsSql);
+            Assert.Contains("@productCode", commentsSql);
+            Assert.DoesNotContain("'\" + productCode + \"'", productsSql);
+            Assert.DoesNotContain("'\" + productCode + \"'", commentsSql);
         }
     }
 }

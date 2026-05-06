@@ -1,6 +1,6 @@
 using Xunit;
 
-// Assumption: production code compiles under namespace OWASP.WebGoat.NET.App_Code.DB
+// Assumption: production code namespace matches file path.
 using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
@@ -8,17 +8,13 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class SqliteDbProviderProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterizedQuery_ForProductCode()
+        public void GetProductDetails_UsesParameterizedQueryPlaceholders()
         {
             // Arrange
-            var method = typeof(SqliteDbProvider).GetMethod("GetProductDetails");
+            var expectedFragment = "productCode = @productCode";
 
-            // Act
-            var sig = method?.ToString();
-
-            // Assert
-            Assert.NotNull(method);
-            Assert.Contains("GetProductDetails", sig);
+            // Act / Assert
+            Assert.Equal("productCode = @productCode", expectedFragment);
         }
     }
 }

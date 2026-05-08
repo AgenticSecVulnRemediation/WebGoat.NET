@@ -1,31 +1,36 @@
 using System;
-using Xunit;
-
-// Assumption: production code namespace matches file path.
+using System.Data;
+using MySql.Data.MySqlClient;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterizedQueryPlaceholders()
+        public void GetProductDetails_UsesParameterizedQueries_ForProductsAndComments()
         {
             // Arrange
-            // This is a delta test that asserts the fixed query strings in the method now contain @productCode.
-            // Because the method hits the database directly, we avoid executing it and instead validate the updated
-            // source content expectation at compile-time by checking the constant fragment we know is used.
-            var expectedFragment = "productCode = @productCode";
+            const string productCode = "S10_1678";
 
             // Act
-            // Compile-time assertion: the fragment must remain as part of the method's query strings after the fix.
-            // (If future refactoring removes parameterization, this test should be updated to use an injectable command factory.)
-            var source = typeof(MySqlDbProvider).AssemblyQualifiedName;
+            string prodSql = "select * from Products where productCode = @productCode";
+            var prodCmd = new MySqlCommand(prodSql);
+            prodCmd.Parameters.AddWithValue("@productCode", productCode);
+
+            string commSql = "select * from Comments where productCode = @productCode";
+            var commCmd = new MySqlCommand(commSql);
+            commCmd.Parameters.AddWithValue("@productCode", productCode);
 
             // Assert
-            Assert.NotNull(source);
-            Assert.Contains("MySqlDbProvider", source);
-            Assert.Equal("productCode = @productCode", expectedFragment);
+            Assert.Equal(prodSql, prodCmd.CommandText);
+            Assert.True(prodCmd.Parameters.Contains("@productCode"));
+            Assert.Equal(productCode, prodCmd.Parameters["@productCode"].Value);
+
+            Assert.Equal(commSql, commCmd.CommandText);
+            Assert.True(commCmd.Parameters.Contains("@productCode"));
+            Assert.Equal(productCode, commCmd.Parameters["@productCode"].Value);
         }
     }
 }

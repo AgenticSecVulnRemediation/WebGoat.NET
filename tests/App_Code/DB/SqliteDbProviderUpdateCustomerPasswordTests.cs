@@ -1,7 +1,7 @@
 using System;
+using System.Text;
 using Xunit;
 
-// Assumption: production namespace matches file path.
 using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
@@ -9,17 +9,13 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class SqliteDbProviderUpdateCustomerPasswordTests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesParameters_IncludesPasswordAndCustomerNumberPlaceholders()
+        public void UpdateCustomerPassword_UsesParametersInsteadOfStringConcatenation()
         {
-            // Arrange
-            // Delta behavior: SQL changed from string concatenation to parameterized statement.
-            const string sql = "UPDATE CustomerLogin SET password = @password WHERE customerNumber = @customerNumber";
+            // Delta regression test: SQL changed to use @password and @customerNumber parameters.
+            var asmText = Encoding.UTF8.GetString(System.IO.File.ReadAllBytes(typeof(SqliteDbProvider).Assembly.Location));
 
-            // Assert
-            Assert.Contains("@password", sql);
-            Assert.Contains("@customerNumber", sql);
-            Assert.DoesNotContain("Encoder.Encode(password)", sql, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("+ customerNumber", sql, StringComparison.Ordinal);
+            Assert.Contains("SET password = @password", asmText);
+            Assert.Contains("customerNumber = @customerNumber", asmText);
         }
     }
 }

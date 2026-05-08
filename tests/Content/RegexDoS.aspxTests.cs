@@ -7,24 +7,18 @@ namespace OWASP.WebGoat.NET.Tests
     public class RegexDoSTests
     {
         [Fact]
-        public void RegexConstructor_WithUserSuppliedPattern_UsesTimeout_AndThrowsOnCatastrophicBacktracking()
+        public void RegexCreation_WithUserProvidedPattern_UsesTimeoutToMitigateReDoS()
         {
             // Arrange
-            // This is the classic catastrophic backtracking pattern.
-            var userSuppliedPattern = "^(a+)+$";
-            var longInput = new string('a', 20000) + "!";
+            // This pattern is known to cause catastrophic backtracking on non-matching input.
+            string userProvidedPattern = "^(a+)+$";
+            string password = new string('a', 5000) + "!";
 
             // Act
-            // Delta: Regex is now constructed with a timeout; we should get a RegexMatchTimeoutException
-            // instead of hanging.
-            var ex = Assert.Throws<RegexMatchTimeoutException>(() =>
-            {
-                var regex = new Regex(userSuppliedPattern, RegexOptions.None, TimeSpan.FromSeconds(1));
-                regex.Match(longInput);
-            });
+            var regex = new Regex(userProvidedPattern, RegexOptions.None, TimeSpan.FromSeconds(1));
 
             // Assert
-            Assert.NotNull(ex);
+            Assert.Throws<RegexMatchTimeoutException>(() => regex.Match(password));
         }
     }
 }

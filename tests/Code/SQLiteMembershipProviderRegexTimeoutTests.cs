@@ -7,15 +7,16 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteMembershipProviderRegexTimeoutTests
     {
         [Fact]
-        public void ChangePassword_WhenPasswordStrengthRegexIsCatastrophic_ThrowsWithinTimeout()
+        public void RegexIsMatch_WithTimeout_ThrowsRegexMatchTimeoutException_OnCatastrophicBacktracking()
         {
             // Arrange
-            // The code change added Regex.IsMatch(..., TimeSpan.FromMilliseconds(500)).
-            // We validate that a catastrophic regex triggers a RegexMatchTimeoutException rather than hanging.
-            var regex = new Regex("^(a+)+$", RegexOptions.None, TimeSpan.FromMilliseconds(50));
+            // Catastrophic pattern and a near-match input; without a timeout this can take very long.
+            var pattern = "^(a+)+$";
+            var input = new string('a', 50_000) + "!";
 
-            // Act / Assert
-            Assert.Throws<RegexMatchTimeoutException>(() => regex.IsMatch(new string('a', 50000) + "!"));
+            // Act/Assert
+            Assert.Throws<RegexMatchTimeoutException>(() =>
+                Regex.IsMatch(input, pattern, RegexOptions.None, TimeSpan.FromMilliseconds(1)));
         }
     }
 }

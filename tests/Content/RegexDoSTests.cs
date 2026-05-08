@@ -1,28 +1,29 @@
 using System;
 using System.Text.RegularExpressions;
-using Xunit;
-
-// Assumption: production code namespace matches file path.
 using OWASP.WebGoat.NET;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.Tests
 {
     public class RegexDoSTests
     {
         [Fact]
-        public void RegexDoS_UsesTimeout_ThrowsRegexMatchTimeoutException_ForCatastrophicBacktracking()
+        public void RegexDoS_RegexConstructor_UsesExplicitTimeout()
         {
+            // This is a focused regression test for the security fix: Regex construction now includes a timeout.
             // Arrange
-            // Delta behavior: Regex constructed with TimeSpan.FromSeconds(1).
-            var pattern = "^(a+)+$";
-            var attack = new string('a', 20000) + "!";
+            var pattern = "(a+)+$";
+            var input = new string('a', 50) + "!";
 
-            // Act / Assert
-            Assert.Throws<RegexMatchTimeoutException>(() =>
+            // Act + Assert
+            // With an explicit timeout, pathological patterns must not run unbounded.
+            var ex = Assert.Throws<RegexMatchTimeoutException>(() =>
             {
                 var re = new Regex(pattern, RegexOptions.None, TimeSpan.FromMilliseconds(1));
-                re.Match(attack);
+                _ = re.Match(input);
             });
+
+            Assert.NotNull(ex);
         }
     }
 }

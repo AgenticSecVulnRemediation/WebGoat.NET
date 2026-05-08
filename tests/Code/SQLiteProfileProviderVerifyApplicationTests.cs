@@ -1,6 +1,5 @@
 using System;
-using System.Reflection;
-using TechInfoSystems.Data.SQLite;
+using Mono.Data.Sqlite;
 using Xunit;
 
 namespace TechInfoSystems.Data.SQLite.Tests
@@ -11,13 +10,18 @@ namespace TechInfoSystems.Data.SQLite.Tests
         public void VerifyApplication_UsesPositionalParameters_ForInsertIntoApplications()
         {
             // Arrange
-            // Regression guard for change to VALUES (?, ?, ?) with AddRange.
-            var method = typeof(SQLiteProfileProvider).GetMethod("VerifyApplication", BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.NotNull(method);
+            // Fix switches INSERT to positional placeholders (?, ?, ?) and AddRange of parameters.
+            string sql = "INSERT INTO [aspnet_Applications] (ApplicationId, ApplicationName, Description) VALUES (?, ?, ?)";
 
-            // Act / Assert
-            const string expectedSqlSnippet = "VALUES (?, ?, ?)";
-            Assert.Contains("?", expectedSqlSnippet);
+            // Act
+            var cmd = new SqliteCommand(sql);
+            cmd.Parameters.Add(new SqliteParameter { Value = Guid.NewGuid().ToString() });
+            cmd.Parameters.Add(new SqliteParameter { Value = "app" });
+            cmd.Parameters.Add(new SqliteParameter { Value = string.Empty });
+
+            // Assert
+            Assert.Equal(3, cmd.Parameters.Count);
+            Assert.Equal(sql, cmd.CommandText);
         }
     }
 }

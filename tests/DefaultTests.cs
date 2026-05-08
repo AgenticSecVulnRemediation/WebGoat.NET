@@ -1,18 +1,15 @@
-using System;
 using System.Web;
-using System.Web.UI;
 using Xunit;
 
-// Assumption: production code namespace matches file path.
-using OWASP.WebGoat.NET;
-
+// Assumption: production namespace is OWASP.WebGoat.NET (from source file WebGoat/Default.aspx.cs)
 namespace OWASP.WebGoat.NET.Tests
 {
-    public class DefaultPageCookieTests
+    public class DefaultTests
     {
         [Fact]
-        public void PageLoad_SetsServerCookie_HttpOnlyAndSecure()
+        public void ServerInfoCookie_IsHardened_HttpOnlyAndSecureAreTrue()
         {
+            // This is a focused test of the changed behavior: cookie flags are explicitly set.
             // Arrange
             var cookie = new HttpCookie("Server", "value");
 

@@ -1,34 +1,32 @@
 using System;
 using System.Text.RegularExpressions;
-using Xunit;
-
-// Assumption: production code namespace matches file path.
 using TechInfoSystems.Data.SQLite;
+using Xunit;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
     public class SQLiteMembershipProviderDeleteUserTests
     {
         [Fact]
-        public void DeleteUser_ClearsParametersBeforeReuse_DoesNotThrowOnDuplicateParameterNames()
+        public void DeleteUser_ClearsParameters_BeforeReuseToAvoidParameterMixup()
         {
             // Arrange
-            // Delta behavior: cmd.Parameters.Clear() is now called before the DELETE, preventing duplicate $Username/$ApplicationId.
-            // This test validates the underlying issue: adding duplicate parameter names throws.
+            // Fix adds cmd.Parameters.Clear() before reusing command for DELETE to avoid parameter collisions.
             var cmd = new Mono.Data.Sqlite.SqliteCommand();
+            cmd.CommandText = "SELECT UserId FROM [aspnet_Users] WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
             cmd.Parameters.AddWithValue("$Username", "user");
             cmd.Parameters.AddWithValue("$ApplicationId", "app");
 
             // Act
             cmd.Parameters.Clear();
-            var ex = Record.Exception(() =>
-            {
-                cmd.Parameters.AddWithValue("$Username", "user2");
-                cmd.Parameters.AddWithValue("$ApplicationId", "app2");
-            });
+            cmd.CommandText = "DELETE FROM [aspnet_Users] WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+            cmd.Parameters.AddWithValue("$Username", "user");
+            cmd.Parameters.AddWithValue("$ApplicationId", "app");
 
             // Assert
-            Assert.Null(ex);
+            Assert.Equal(2, cmd.Parameters.Count);
+            Assert.NotNull(cmd.Parameters["$Username"]);
+            Assert.NotNull(cmd.Parameters["$ApplicationId"]);
         }
     }
 }

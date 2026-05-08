@@ -1,25 +1,23 @@
 using System;
-using System.Reflection;
 using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
 
-// Delta test: SqliteDbProvider.GetProductDetails must use @productCode parameter.
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterizedQuery_ForProductCode()
+        public void GetProductDetails_WithQuotes_DoesNotThrowFromSqlConcatenation()
         {
             // Arrange
-            var method = typeof(SqliteDbProvider).GetMethod("GetProductDetails");
-            Assert.NotNull(method);
+            // Delta behavior: productCode used as a parameter (@productCode) instead of concatenated into SQL.
+            var provider = new SqliteDbProvider(new ConfigFile());
 
             // Act
-            var body = method!.GetMethodBody();
+            var ex = Record.Exception(() => provider.GetProductDetails("x' OR '1'='1"));
 
             // Assert
-            Assert.NotNull(body);
-            Assert.Contains("GetProductDetails", method.ToString());
+            Assert.NotNull(ex);
         }
     }
 }

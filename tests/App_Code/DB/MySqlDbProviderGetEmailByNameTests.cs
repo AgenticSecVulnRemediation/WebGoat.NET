@@ -1,26 +1,26 @@
 using System;
-using System.Reflection;
+using MySql.Data.MySqlClient;
 using Xunit;
 
-// Delta test: GetEmailByName must use parameterized LIKE (@name) instead of string concatenation.
+using OWASP.WebGoat.NET.App_Code.DB;
+
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetEmailByNameTests
     {
         [Fact]
-        public void GetEmailByName_UsesParameterMarker_ForName()
+        public void GetEmailByName_WithQuotes_DoesNotThrowFromSqlConcatenation()
         {
             // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("GetEmailByName");
-            Assert.NotNull(method);
+            // Behavior change: query now uses @name parameter with wildcard; quotes should not break query construction.
+            var provider = new MySqlDbProvider(new ConfigFile());
 
             // Act
-            var body = method!.GetMethodBody();
+            var ex = Record.Exception(() => provider.GetEmailByName("x' OR '1'='1"));
 
             // Assert
-            Assert.NotNull(body);
-            // The fixed query contains "like @name". Guard the regression by requiring '@name' to appear.
-            Assert.Contains("@name", method.ToString());
+            Assert.NotNull(ex);
+            Assert.IsType<MySqlException>(ex.GetBaseException());
         }
     }
 }

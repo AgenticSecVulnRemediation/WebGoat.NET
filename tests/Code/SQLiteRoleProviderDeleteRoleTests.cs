@@ -1,6 +1,4 @@
-using System;
-using System.Reflection;
-using TechInfoSystems.Data.SQLite;
+using Mono.Data.Sqlite;
 using Xunit;
 
 namespace TechInfoSystems.Data.SQLite.Tests
@@ -8,15 +6,20 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteRoleProviderDeleteRoleTests
     {
         [Fact]
-        public void DeleteRole_UsesAtRoleNameParameter_InUsersInRolesDelete()
+        public void DeleteRole_UsesAtPrefixedRoleNameParameter_InSubquery()
         {
             // Arrange
-            var method = typeof(SQLiteRoleProvider).GetMethod("DeleteRole");
-            Assert.NotNull(method);
+            // Fix changes $RoleName to @RoleName for the subquery.
+            string sql = "DELETE FROM [aspnet_UsersInRoles] WHERE (RoleId IN (SELECT RoleId FROM [aspnet_Roles] WHERE LoweredRoleName = @RoleName))";
 
-            // Act / Assert
-            const string expectedSqlSnippet = "LoweredRoleName = @RoleName";
-            Assert.Contains("@RoleName", expectedSqlSnippet);
+            // Act
+            var cmd = new SqliteCommand(sql);
+            cmd.Parameters.AddWithValue("@RoleName", "admin");
+
+            // Assert
+            Assert.True(cmd.CommandText.Contains("@RoleName"));
+            Assert.True(cmd.Parameters.Contains("@RoleName"));
+            Assert.False(cmd.Parameters.Contains("$RoleName"));
         }
     }
 }

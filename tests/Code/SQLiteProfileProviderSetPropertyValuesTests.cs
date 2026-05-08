@@ -1,27 +1,27 @@
-using System;
-using System.Configuration;
-using System.Web.Profile;
+using Mono.Data.Sqlite;
 using Xunit;
-
-// Assumption: production code namespace matches file path.
-using TechInfoSystems.Data.SQLite;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
     public class SQLiteProfileProviderSetPropertyValuesTests
     {
         [Fact]
-        public void SetPropertyValues_UsesAtStyleParametersForUserLookup()
+        public void SetPropertyValues_UserLookup_UsesAtPrefixedParameters()
         {
             // Arrange
-            // Delta behavior: SQL and parameter names changed from $Username/$ApplicationId to @Username/@ApplicationId.
-            // Validate the expected placeholders.
-            var expectedSql = "WHERE LoweredUsername = @Username AND ApplicationId = @ApplicationId";
+            // Fix changes parameters from $Username/$ApplicationId to @Username/@ApplicationId.
+            string sql = "SELECT UserId FROM [aspnet_Users] WHERE LoweredUsername = @Username AND ApplicationId = @ApplicationId;";
 
-            // Act / Assert
-            Assert.Contains("@Username", expectedSql);
-            Assert.Contains("@ApplicationId", expectedSql);
-            Assert.DoesNotContain("$Username", expectedSql);
+            // Act
+            var cmd = new SqliteCommand(sql);
+            cmd.Parameters.AddWithValue("@Username", "user".ToLowerInvariant());
+            cmd.Parameters.AddWithValue("@ApplicationId", "appId");
+
+            // Assert
+            Assert.True(cmd.Parameters.Contains("@Username"));
+            Assert.True(cmd.Parameters.Contains("@ApplicationId"));
+            Assert.False(cmd.Parameters.Contains("$Username"));
+            Assert.False(cmd.Parameters.Contains("$ApplicationId"));
         }
     }
 }

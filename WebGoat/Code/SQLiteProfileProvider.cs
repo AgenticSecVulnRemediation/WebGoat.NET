@@ -202,10 +202,14 @@ namespace TechInfoSystems.Data.SQLite
 					tran = cn.BeginTransaction ();
 
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId;";
+					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = ? AND ApplicationId = ?;";
 
-					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
+					// Hunk2: Update call site to pass parameters as a tuple
+                    SqliteParameter[] parameters = {
+                        new SqliteParameter { Value = username.ToLowerInvariant() },
+                        new SqliteParameter { Value = _membershipApplicationId }
+                    };
+					cmd.Parameters.AddRange(parameters);
 
 					string userId = cmd.ExecuteScalar () as string;
 
@@ -807,10 +811,13 @@ namespace TechInfoSystems.Data.SQLite
 				cn.Open ();
 
 			using (SqliteCommand cmd = cn.CreateCommand()) {
-				cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+				cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = ? AND ApplicationId = ?";
 
-				cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-				cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
+				SqliteParameter[] parameters = {
+					new SqliteParameter { Value = username.ToLowerInvariant() },
+					new SqliteParameter { Value = _membershipApplicationId }
+				};
+				cmd.Parameters.AddRange(parameters);
 
 				if (tran != null)
 					cmd.Transaction = tran;

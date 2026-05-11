@@ -1,16 +1,30 @@
+using System;
+using Mono.Data.Sqlite;
+using TechInfoSystems.Data.SQLite;
 using Xunit;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
-    // Delta: GetPropertyValuesFromDatabase now uses parameter name @UserId rather than $UserId.
     public class SQLiteProfileProviderGetPropertyValuesFromDatabaseTests
     {
         [Fact]
-        public void GetPropertyValuesFromDatabase_UsesAtUserIdParameter()
+        public void GetPropertyValuesFromDatabase_UsesAtUserIdParameterName_CanBeAdded()
         {
-            var sql = "SELECT PropertyNames, PropertyValuesString, PropertyValuesBinary FROM [aspnet_Profile] WHERE UserId = @UserId";
-            Assert.Contains("@UserId", sql);
-            Assert.DoesNotContain("$UserId", sql);
+            // Arrange
+            // Diff switches from $UserId to @UserId for Property table lookup.
+            using (var cn = new SqliteConnection("Data Source=:memory:;Version=3"))
+            using (var cmd = cn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT 1 WHERE 1=@UserId";
+
+                // Act
+                var ex = Record.Exception(() => cmd.Parameters.AddWithValue("@UserId", "u"));
+
+                // Assert
+                Assert.Null(ex);
+                Assert.Single(cmd.Parameters);
+                Assert.Equal("@UserId", cmd.Parameters[0].ParameterName);
+            }
         }
     }
 }

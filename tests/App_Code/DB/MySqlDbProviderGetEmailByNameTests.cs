@@ -1,20 +1,27 @@
 using System;
-using OWASP.WebGoat.NET.App_Code.DB;
+using Moq;
 using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetEmailByNameTests
     {
-        [Fact]
-        public void GetEmailByName_UsesSingleLikeParameter_WithTrailingWildcard()
+        [Theory]
+        [InlineData("Alice")]
+        [InlineData("A%")]
+        public void GetEmailByName_AcceptsInput_DoesNotThrow(string name)
         {
-            // Delta behavior: query now uses @name parameter and adds trailing '%'.
-            // Without a DB, we can only assert method exists (compile-time) and document expectation.
-            // This test guards against accidental removal/renaming.
+            // Arrange
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(config.Object);
 
-            var method = typeof(MySqlDbProvider).GetMethod("GetEmailByName");
-            Assert.NotNull(method);
+            // Act
+            var ex = Record.Exception(() => provider.GetEmailByName(name));
+
+            // Assert
+            Assert.Null(ex);
         }
     }
 }

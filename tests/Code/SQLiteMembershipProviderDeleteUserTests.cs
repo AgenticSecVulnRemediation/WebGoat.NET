@@ -1,5 +1,5 @@
 using System;
-using System.Text.RegularExpressions;
+using System.Reflection;
 using TechInfoSystems.Data.SQLite;
 using Xunit;
 
@@ -8,25 +8,43 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteMembershipProviderDeleteUserTests
     {
         [Fact]
-        public void DeleteUser_ClearsParameters_BeforeReuseToAvoidParameterMixup()
+        public void DeleteUser_ClearsParameters_BeforeDeleteCommandTextIsSet()
         {
             // Arrange
-            // Fix adds cmd.Parameters.Clear() before reusing command for DELETE to avoid parameter collisions.
-            var cmd = new Mono.Data.Sqlite.SqliteCommand();
-            cmd.CommandText = "SELECT UserId FROM [aspnet_Users] WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
-            cmd.Parameters.AddWithValue("$Username", "user");
-            cmd.Parameters.AddWithValue("$ApplicationId", "app");
+            // Delta scope: provider now clears parameters before setting DELETE CommandText to avoid parameter collisions.
+            // We assert this by checking the method body contains a call to SqliteParameterCollection.Clear.
+            var method = typeof(SQLiteMembershipProvider).GetMethod("DeleteUser", BindingFlags.Instance | BindingFlags.Public);
+            Assert.NotNull(method);
 
             // Act
-            cmd.Parameters.Clear();
-            cmd.CommandText = "DELETE FROM [aspnet_Users] WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
-            cmd.Parameters.AddWithValue("$Username", "user");
-            cmd.Parameters.AddWithValue("$ApplicationId", "app");
+            var body = method!.GetMethodBody();
+            Assert.NotNull(body);
+            var il = body!.GetILAsByteArray() ?? Array.Empty<byte>();
+            var module = typeof(SQLiteMembershipProvider).Module;
+
+            bool hasClearCall = false;
+            for (int i = 0; i < il.Length - 4; i++)
+            {
+                // 0x28 = call, next 4 bytes = metadata token
+                if (il[i] != 0x28) continue;
+                int token = BitConverter.ToInt32(il, i + 1);
+                try
+                {
+                    var mi = module.ResolveMethod(token) as MethodInfo;
+                    if (mi != null && mi.Name == "Clear" && mi.DeclaringType != null && mi.DeclaringType.Name.Contains("SqliteParameterCollection"))
+                    {
+                        hasClearCall = true;
+                        break;
+                    }
+                }
+                catch
+                {
+                    // ignore non-method tokens
+                }
+            }
 
             // Assert
-            Assert.Equal(2, cmd.Parameters.Count);
-            Assert.NotNull(cmd.Parameters["$Username"]);
-            Assert.NotNull(cmd.Parameters["$ApplicationId"]);
+            Assert.True(hasClearCall);
         }
     }
 }

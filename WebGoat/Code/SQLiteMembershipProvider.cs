@@ -655,7 +655,7 @@ namespace TechInfoSystems.Data.SQLite
 						cmd.ExecuteNonQuery ();
 
 						// Delete from profile table.
-						cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+						cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = ?";
 						cmd.Parameters.Clear ();
 						cmd.Parameters.AddWithValue ("$UserId", userId);
 						cmd.ExecuteNonQuery ();

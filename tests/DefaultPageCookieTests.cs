@@ -1,5 +1,6 @@
 using System;
 using System.Web;
+using OWASP.WebGoat.NET;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.Tests
@@ -12,7 +13,7 @@ namespace OWASP.WebGoat.NET.Tests
             // Arrange
             var cookie = new HttpCookie("Server", "value");
 
-            // Act (apply same flags required by fix)
+            // Act
             cookie.HttpOnly = true;
             cookie.Secure = true;
 

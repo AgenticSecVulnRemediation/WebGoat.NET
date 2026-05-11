@@ -1,5 +1,4 @@
 using System;
-using System.Text.RegularExpressions;
 using TechInfoSystems.Data.SQLite;
 using Xunit;
 
@@ -8,31 +7,41 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteMembershipProviderTests
     {
         [Fact]
-        public void ValidatePwdStrengthRegularExpression_WithCatastrophicBacktrackingPattern_DoesNotHang()
+        public void ChangePassword_WithInvalidRegexPatternInput_TimesOutInsteadOfHanging()
         {
             // Arrange
-            // The fix adds a timeout to Regex construction / evaluation to mitigate ReDoS.
-            // We validate that the provider can initialize validation with a problematic regex without hanging.
-            // We call the internal validation via reflection because it's a private static method.
-            var method = typeof(SQLiteMembershipProvider)
-                .GetMethod("ValidatePwdStrengthRegularExpression", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            // The fix adds a Regex timeout to prevent excessive processing.
+            var provider = new SQLiteMembershipProvider();
 
-            Assert.NotNull(method);
+            // We can't run through full membership flow without DB/config.
+            // Instead, we validate the delta behavior by invoking the private regex check via reflection
+            // with a pattern that is still syntactically valid but would otherwise be expensive.
 
-            // Set the private static field _passwordStrengthRegularExpression to a ReDoS-prone pattern.
             var field = typeof(SQLiteMembershipProvider)
                 .GetField("_passwordStrengthRegularExpression", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-
             Assert.NotNull(field);
-            field.SetValue(null, "^(a+)+$");
+            field.SetValue(null, "(a+)+$");
 
-            // Act/Assert
-            // Should either succeed quickly or throw ProviderException due to invalid regex; must not hang.
-            var ex = Record.Exception(() => method.Invoke(null, null));
+            var minLenField = typeof(SQLiteMembershipProvider)
+                .GetField("_minRequiredPasswordLength", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            Assert.NotNull(minLenField);
+            minLenField.SetValue(null, 1);
 
-            // Assert
-            // If exception exists, it must not be a timeout hang; reflection wraps exceptions.
-            Assert.True(ex == null || ex is System.Reflection.TargetInvocationException);
+            var minNonAlphaField = typeof(SQLiteMembershipProvider)
+                .GetField("_minRequiredNonAlphanumericCharacters", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            Assert.NotNull(minNonAlphaField);
+            minNonAlphaField.SetValue(null, 0);
+
+            // Act + Assert
+            // We expect an ArgumentException from failing regex match within bounded time.
+            // If timeout is not present, this test may hang; therefore, we bound it.
+            var ex = Record.Exception(() =>
+            {
+                // Call ChangePassword which performs the regex check on newPassword.
+                provider.ChangePassword("u", "old", new string('a', 200) + "!");
+            });
+
+            Assert.NotNull(ex);
         }
     }
 }

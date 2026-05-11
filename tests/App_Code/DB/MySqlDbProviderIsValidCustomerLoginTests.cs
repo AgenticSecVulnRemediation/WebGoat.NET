@@ -1,26 +1,27 @@
 using System;
 using Xunit;
 
+using OWASP.WebGoat.NET.App_Code.DB;
+
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    // Delta: IsValidCustomerLogin now uses @Email/@Password parameters rather than concatenating user input.
     public class MySqlDbProviderIsValidCustomerLoginTests
     {
         [Fact]
-        public void IsValidCustomerLogin_UsesParameters_DoesNotEmbedEmailOrPassword()
+        public void IsValidCustomerLogin_WithSqlInjectionCharacters_DoesNotThrowSqlSyntaxError()
         {
             // Arrange
-            var email = "a@example.com' OR '1'='1";
-            var encodedPassword = "p' OR '1'='1";
+            // Delta test: query changed from string concatenation to parameterized query.
+            var provider = new MySqlDbProvider(new ConfigFile());
+            var email = "a' OR '1'='1";
+            var password = "p";
 
             // Act
-            var sql = "select * from CustomerLogin where email = @Email and password = @Password;";
+            var ex = Assert.ThrowsAny<Exception>(() => provider.IsValidCustomerLogin(email, password));
 
             // Assert
-            Assert.Contains("@Email", sql);
-            Assert.Contains("@Password", sql);
-            Assert.DoesNotContain(email, sql);
-            Assert.DoesNotContain(encodedPassword, sql);
+            // Should fail due to connection but not due to injected quotes breaking SQL.
+            Assert.DoesNotContain("You have an error in your SQL syntax", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

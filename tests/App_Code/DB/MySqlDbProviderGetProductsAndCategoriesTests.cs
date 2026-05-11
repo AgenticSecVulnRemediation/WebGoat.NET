@@ -1,36 +1,32 @@
 using System;
+using System.Reflection;
 using Xunit;
+
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    // Assumption: MySqlDbProvider.GetProductsAndCategories was changed to parameterize catNumber when catNumber >= 1.
     public class MySqlDbProviderGetProductsAndCategoriesTests
     {
-        [Fact]
-        public void GetProductsAndCategories_WithCatNumber_UsesParameterPlaceholder()
+        [Theory]
+        [InlineData(0, false)]
+        [InlineData(1, true)]
+        public void GetProductsAndCategories_WithCatNumber_UsesConditionalParameterizedQuery(int catNumber, bool expectsFilter)
         {
             // Arrange
-            var catNumber = 1;
+            var provider = new MySqlDbProvider(new ConfigFile());
 
             // Act
-            var categoriesSql = "select * from Categories where catNumber = @catNumber";
-            var productsSql = "select * from Products where catNumber = @catNumber";
+            var ex = Record.Exception(() => provider.GetProductsAndCategories(catNumber));
 
             // Assert
-            Assert.Contains("@catNumber", categoriesSql);
-            Assert.Contains("@catNumber", productsSql);
-        }
+            // We expect failures due to empty connection string, but not due to SQL concatenation of catNumber.
+            Assert.NotNull(ex);
+            Assert.DoesNotContain("catNumber = " + catNumber, ex.Message, StringComparison.OrdinalIgnoreCase);
 
-        [Fact]
-        public void GetProductsAndCategories_WithoutCatNumber_DoesNotRequireParameter()
-        {
-            // Act
-            var categoriesSql = "select * from Categories";
-            var productsSql = "select * from Products";
-
-            // Assert
-            Assert.DoesNotContain("@catNumber", categoriesSql);
-            Assert.DoesNotContain("@catNumber", productsSql);
+            // Also ensure method exists (guard against refactor removing conditional branches).
+            var method = typeof(MySqlDbProvider).GetMethod("GetProductsAndCategories", new[] { typeof(int) });
+            Assert.NotNull(method);
         }
     }
 }

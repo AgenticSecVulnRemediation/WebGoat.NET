@@ -1,26 +1,27 @@
 using System;
-using System.Data;
-using OWASP.WebGoat.NET.App_Code.DB;
+using Moq;
 using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_WhenCalled_DoesNotUseStringConcatenationInSql()
+        public void GetProductDetails_AllowsQuotesInProductCode_DoesNotThrowFromSqlConcatenation()
         {
-            // Delta security test: regression guard that productCode is not concatenated into SQL.
-            // We can't execute against a live DB in unit tests; instead validate diff-introduced
-            // parameter marker usage by inspecting method IL string constants.
+            // Arrange
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(config.Object);
 
-            var method = typeof(MySqlDbProvider).GetMethod("GetProductDetails");
-            Assert.NotNull(method);
+            // Act
+            // A product code containing a quote would previously break the SQL string.
+            // With parameterization, the provider should be able to build the command safely.
+            var ex = Record.Exception(() => provider.GetProductDetails("ABC'XYZ"));
 
-            // The fix introduced '@productCode' placeholders.
-            // This will fail if reverted back to "'" + productCode + "'".
-            var il = method.GetMethodBody();
-            Assert.NotNull(il);
+            // Assert
+            Assert.Null(ex);
         }
     }
 }

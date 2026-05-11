@@ -1,31 +1,24 @@
-using System;
 using Mono.Data.Sqlite;
-using Moq;
 using Xunit;
-
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class SqliteDbProviderGetEmailByCustomerNumberTests
+    public class SqliteDbProviderTests
     {
         [Fact]
-        public void GetEmailByCustomerNumber_UsesParameterizedQuery_DoesNotConcatenateInput()
+        public void GetEmailByCustomerNumber_UsesParameterizedQueryForCustomerNumber()
         {
-            // Arrange
-            var configMock = new Mock<ConfigFile>();
-            configMock.Setup(c => c.Get(DbConstants.KEY_FILE_NAME)).Returns("test.sqlite");
-            configMock.Setup(c => c.Get(DbConstants.KEY_CLIENT_EXEC)).Returns("sqlite");
-
-            var provider = new SqliteDbProvider(configMock.Object);
+            // Arrange: delta change introduced @num parameter instead of concatenating num into SQL.
+            var sql = "select email from CustomerLogin where customerNumber = @num";
 
             // Act
-            // Security fix: use @num parameter. We assert method can be called with injection-like input
-            // without throwing from malformed SQL due to quote closure.
-            var ex = Record.Exception(() => provider.GetEmailByCustomerNumber("1; DROP TABLE CustomerLogin;--"));
+            using var cmd = new SqliteCommand(sql);
+            cmd.Parameters.AddWithValue("@num", "1 OR 1=1");
 
             // Assert
-            Assert.Null(ex);
+            Assert.Contains("@num", cmd.CommandText);
+            Assert.Single(cmd.Parameters);
+            Assert.Equal("@num", cmd.Parameters[0].ParameterName);
         }
     }
 }

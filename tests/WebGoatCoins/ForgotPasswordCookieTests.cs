@@ -1,6 +1,5 @@
 using System;
 using System.Web;
-using OWASP.WebGoat.NET.WebGoatCoins;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.WebGoatCoins.Tests
@@ -8,7 +7,7 @@ namespace OWASP.WebGoat.NET.WebGoatCoins.Tests
     public class ForgotPasswordCookieTests
     {
         [Fact]
-        public void EncryptedSecurityAnswerCookie_IsHttpOnlyAndSecure()
+        public void SecurityAnswerCookie_IsHttpOnlyAndSecure()
         {
             // Arrange
             var cookie = new HttpCookie("encr_sec_qu_ans");

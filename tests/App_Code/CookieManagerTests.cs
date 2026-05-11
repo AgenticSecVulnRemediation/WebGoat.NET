@@ -1,16 +1,15 @@
 using System;
 using System.Web;
 using System.Web.Security;
-using Moq;
-using Xunit;
 using OWASP.WebGoat.NET.App_Code;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.Tests
 {
     public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_CreatesCookieWithHttpOnlyEnabled()
+        public void SetCookie_WhenCalled_SetsHttpOnlyTrueOnAuthCookie()
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(
@@ -22,10 +21,11 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
                 "userdata");
 
             // Act
-            var cookie = CookieManager.SetCookie(ticket, "ignoredId", "ignoredValue");
+            HttpCookie cookie = CookieManager.SetCookie(ticket, "ignoredId", "ignoredValue");
 
             // Assert
             Assert.NotNull(cookie);
+            Assert.Equal(FormsAuthentication.FormsCookieName, cookie.Name);
             Assert.True(cookie.HttpOnly);
         }
     }

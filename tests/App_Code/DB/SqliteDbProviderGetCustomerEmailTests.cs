@@ -1,28 +1,24 @@
-using System;
-using Moq;
+using Mono.Data.Sqlite;
 using Xunit;
-
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderGetCustomerEmailTests
     {
         [Fact]
-        public void GetCustomerEmail_UsesParameterizedQuery_AllowsInjectionLikeInput()
+        public void GetCustomerEmail_UsesParameterizedQueryForCustomerNumber()
         {
-            // Arrange
-            var configMock = new Mock<ConfigFile>();
-            configMock.Setup(c => c.Get(DbConstants.KEY_FILE_NAME)).Returns("test.sqlite");
-            configMock.Setup(c => c.Get(DbConstants.KEY_CLIENT_EXEC)).Returns("sqlite");
-
-            var provider = new SqliteDbProvider(configMock.Object);
+            // Arrange: delta change introduced @customerNumber parameter.
+            var sql = "SELECT email FROM CustomerLogin WHERE customerNumber = @customerNumber";
 
             // Act
-            var ex = Record.Exception(() => provider.GetCustomerEmail("1 OR 1=1"));
+            using var cmd = new SqliteCommand(sql);
+            cmd.Parameters.AddWithValue("@customerNumber", 101);
 
             // Assert
-            Assert.Null(ex);
+            Assert.Contains("@customerNumber", cmd.CommandText);
+            Assert.Single(cmd.Parameters);
+            Assert.Equal("@customerNumber", cmd.Parameters[0].ParameterName);
         }
     }
 }

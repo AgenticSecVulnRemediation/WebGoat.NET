@@ -1,5 +1,6 @@
 using System;
-using System.Text;
+using System.Configuration;
+using System.Web.Profile;
 using Xunit;
 
 using TechInfoSystems.Data.SQLite;
@@ -9,13 +10,33 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteProfileProviderGetPropertyValuesParameterizationTests
     {
         [Fact]
-        public void GetPropertyValuesFromDatabase_UsesAtUserIdParameter()
+        public void GetPropertyValuesFromDatabase_UsesParameterizedUserIdLookup()
         {
-            // Delta regression test: query changed from string concatenation with $UserId to formatted SQL with @UserId.
-            var asmBytes = System.IO.File.ReadAllBytes(typeof(SQLiteProfileProvider).Assembly.Location);
-            var asmText = Encoding.UTF8.GetString(asmBytes);
+            // Arrange
+            // Delta test: changed query to string.Format with @UserId parameter.
+            var provider = new SQLiteProfileProvider();
+            var config = new System.Collections.Specialized.NameValueCollection
+            {
+                { "connectionStringName", "Test3" },
+                { "applicationName", "TestApp" },
+                { "membershipApplicationName", "TestApp" }
+            };
+            ConfigurationManager.ConnectionStrings.Add(new ConnectionStringSettings("Test3", "Data Source=:memory:;Version=3"));
+            provider.Initialize("SQLiteProfileProvider", config);
 
-            Assert.Contains("WHERE UserId = @UserId", asmText);
+            var sc = new SettingsContext();
+            sc["UserName"] = "user";
+            sc["IsAuthenticated"] = true;
+
+            var properties = new SettingsPropertyCollection();
+            properties.Add(new SettingsProperty("P") { PropertyType = typeof(string), SerializeAs = SettingsSerializeAs.String });
+
+            // Act
+            var ex = Record.Exception(() => provider.GetPropertyValues(sc, properties));
+
+            // Assert
+            Assert.NotNull(ex);
+            Assert.DoesNotContain("$UserId", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

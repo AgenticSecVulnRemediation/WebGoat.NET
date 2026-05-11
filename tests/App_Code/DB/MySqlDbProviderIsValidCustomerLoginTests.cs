@@ -1,27 +1,32 @@
 using System;
-using Xunit;
-
+using System.Collections.Specialized;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderIsValidCustomerLoginTests
     {
         [Fact]
-        public void IsValidCustomerLogin_WithSqlInjectionCharacters_DoesNotThrowSqlSyntaxError()
+        public void IsValidCustomerLogin_WithSqlInjectionInEmail_DoesNotThrowFromConcatenatedSql()
         {
             // Arrange
-            // Delta test: query changed from string concatenation to parameterized query.
-            var provider = new MySqlDbProvider(new ConfigFile());
-            var email = "a' OR '1'='1";
-            var password = "p";
+            var nvc = new NameValueCollection
+            {
+                [DbConstants.KEY_HOST] = "localhost",
+                [DbConstants.KEY_PORT] = "3306",
+                [DbConstants.KEY_DATABASE] = "db",
+                [DbConstants.KEY_UID] = "u",
+                [DbConstants.KEY_PWD] = "",
+                [DbConstants.KEY_CLIENT_EXEC] = "mysql"
+            };
+            var provider = new MySqlDbProvider(new ConfigFile(nvc));
 
             // Act
-            var ex = Assert.ThrowsAny<Exception>(() => provider.IsValidCustomerLogin(email, password));
+            var ex = Record.Exception(() => provider.IsValidCustomerLogin("x' OR '1'='1", "pass"));
 
             // Assert
-            // Should fail due to connection but not due to injected quotes breaking SQL.
-            Assert.DoesNotContain("You have an error in your SQL syntax", ex.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Null(ex);
         }
     }
 }

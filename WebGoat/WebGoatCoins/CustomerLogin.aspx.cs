@@ -33,7 +33,7 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             string email = txtUserName.Text;
             string pwd = txtPassword.Text;
 
-            log.Info("User " + email + " attempted to log in with password " + pwd);
+            log.Info("User " + email + " attempted to log in. [Password omitted]"); // Note: Do not log sensitive data like passwords
 
             if (!du.IsValidCustomerLogin(email, pwd))
             {

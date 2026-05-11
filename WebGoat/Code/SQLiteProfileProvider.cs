@@ -202,7 +202,7 @@ namespace TechInfoSystems.Data.SQLite
 					tran = cn.BeginTransaction ();
 
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId;";
+					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = @Username AND ApplicationId = @ApplicationId;";
 
 					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
 					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
@@ -807,19 +807,19 @@ namespace TechInfoSystems.Data.SQLite
 				cn.Open ();
 
 			using (SqliteCommand cmd = cn.CreateCommand()) {
-				cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+				cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = @Username AND ApplicationId = @ApplicationId";
 
-				cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-				cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
+				cmd.Parameters.AddWithValue ("@Username", username.ToLowerInvariant ());
+				cmd.Parameters.AddWithValue ("@ApplicationId", _membershipApplicationId);
 
 				if (tran != null)
 					cmd.Transaction = tran;
 
 				string userId = cmd.ExecuteScalar () as string;
 				if (userId != null) {
-					cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+					cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = @UserId";
 					cmd.Parameters.Clear ();
-					cmd.Parameters.Add ("$UserId", DbType.String, 36).Value = userId;
+					cmd.Parameters.AddWithValue("@UserId", userId);
 
 					deleteSuccessful = (cmd.ExecuteNonQuery () != 0);
 				}

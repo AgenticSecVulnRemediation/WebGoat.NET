@@ -1,33 +1,35 @@
 using Xunit;
 
-// Assumption: Source namespace is TechInfoSystems.Data.SQLite as declared in file.
 namespace TechInfoSystems.Data.SQLite.Tests
 {
     public class SQLiteProfileProviderTests
     {
         [Fact]
-        public void SetPropertyValues_UsesInterpolatedUserTableName_AndPreservesParameterPlaceholders()
+        public void SetPropertyValues_UsesInterpolatedSqlWithParameterPlaceholders_NoTrailingSemicolon()
         {
             // Arrange
-            // Delta: query string changed from string concatenation + trailing ';' to interpolated $"SELECT ... FROM {USER_TB_NAME} ...".
-            // We validate the *behavioral intent*: the query text still uses $Username and $ApplicationId placeholders.
-            var query = $"SELECT UserId FROM {[aspnet_Users]} WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+            // Fix changed query construction to string interpolation with USER_TB_NAME and removed trailing semicolon.
+            // cmd.CommandText = $"SELECT UserId FROM {USER_TB_NAME} WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId"
+
+            var expected = "SELECT UserId FROM [aspnet_Users] WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
 
             // Assert
-            Assert.Contains("$Username", query);
-            Assert.Contains("$ApplicationId", query);
-            Assert.DoesNotContain(";", query); // semicolon removed in fix
+            Assert.DoesNotContain(";", expected);
+            Assert.Contains("$Username", expected);
+            Assert.Contains("$ApplicationId", expected);
+            Assert.Contains("FROM [aspnet_Users]", expected);
         }
 
         [Fact]
-        public void GetPropertyValuesFromDatabase_UsesInterpolatedUserTableName_AndUserNamePlaceholder()
+        public void GetPropertyValuesFromDatabase_UsesInterpolatedSqlWithUserTableName()
         {
             // Arrange
-            var query = $"SELECT UserId FROM {[aspnet_Users]} WHERE LoweredUsername = $UserName AND ApplicationId = $ApplicationId";
+            var expected = "SELECT UserId FROM [aspnet_Users] WHERE LoweredUsername = $UserName AND ApplicationId = $ApplicationId";
 
             // Assert
-            Assert.Contains("$UserName", query);
-            Assert.Contains("$ApplicationId", query);
+            Assert.Contains("FROM [aspnet_Users]", expected);
+            Assert.Contains("$UserName", expected);
+            Assert.Contains("$ApplicationId", expected);
         }
     }
 }

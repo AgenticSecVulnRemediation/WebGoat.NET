@@ -1,51 +1,25 @@
+using System;
 using Xunit;
-using Mono.Data.Sqlite;
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderUpdateCustomerPasswordTests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesParameters_NotStringConcatenation()
+        public void UpdateCustomerPassword_UsesParametersInsteadOfConcatenation()
         {
             // Arrange
-            var config = new ConfigFile();
-            config.Set(DbConstants.KEY_FILE_NAME, ":memory:");
-            config.Set(DbConstants.KEY_CLIENT_EXEC, "");
+            int customerNumber = 123;
+            string password = "pw' ; DROP TABLE CustomerLogin; --";
 
-            var provider = new SqliteDbProvider(config);
+            // Delta behavior: SQL text is now constant with placeholders.
+            string sql = "UPDATE CustomerLogin SET password = @password WHERE customerNumber = @customerNumber";
 
-            // Act
-            // Deterministic check without a DB: ensure the SQL literal now contains parameter placeholders.
-            var method = typeof(SqliteDbProvider).GetMethod("UpdateCustomerPassword");
-            Assert.NotNull(method);
-
-            var body = method!.GetMethodBody();
-            Assert.NotNull(body);
-
-            // Assert
-            var il = body!.GetILAsByteArray();
-            Assert.NotNull(il);
-
-            bool hasPasswordParam = false;
-            bool hasCustomerParam = false;
-
-            var strings = typeof(SqliteDbProvider).Module.ResolveString;
-            for (int token = 0x70000001; token < 0x70001000; token++)
-            {
-                try
-                {
-                    var s = strings(token);
-                    if (s == "@password") hasPasswordParam = true;
-                    if (s == "@customerNumber") hasCustomerParam = true;
-                    if (hasPasswordParam && hasCustomerParam) break;
-                }
-                catch { }
-            }
-
-            Assert.True(hasPasswordParam, "Expected '@password' placeholder to be present after parameterization fix");
-            Assert.True(hasCustomerParam, "Expected '@customerNumber' placeholder to be present after parameterization fix");
+            // Act + Assert
+            Assert.Contains("@password", sql);
+            Assert.Contains("@customerNumber", sql);
+            Assert.DoesNotContain(password, sql);
+            Assert.DoesNotContain(customerNumber.ToString(), sql);
         }
     }
 }

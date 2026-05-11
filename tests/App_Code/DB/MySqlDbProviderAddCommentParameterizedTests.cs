@@ -1,24 +1,21 @@
-using System;
 using Xunit;
-
-// Assumption: production namespace matches file path.
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderAddCommentParameterizedTests
     {
         [Fact]
-        public void AddComment_UsesParameters_ForAllValues()
+        public void AddComment_UsesParameters_ForAllFields()
         {
-            // Arrange
-            const string sql = "INSERT INTO Comments(productCode, email, comment) VALUES (@productCode, @email, @comment)";
+            // Delta focus (PR 134): INSERT must use parameters rather than concatenation.
+            const string expectedSql = "INSERT INTO Comments(productCode, email, comment) VALUES (@productCode, @email, @comment)";
 
-            // Assert
-            Assert.Contains("@productCode", sql);
-            Assert.Contains("@email", sql);
-            Assert.Contains("@comment", sql);
-            Assert.DoesNotContain("values ('\" + productCode", sql, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("@productCode", expectedSql);
+            Assert.Contains("@email", expectedSql);
+            Assert.Contains("@comment", expectedSql);
+            Assert.DoesNotContain("+ productCode", expectedSql);
+            Assert.DoesNotContain("+ email", expectedSql);
+            Assert.DoesNotContain("+ comment", expectedSql);
         }
     }
 }

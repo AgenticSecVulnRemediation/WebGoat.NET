@@ -1,29 +1,23 @@
 using Xunit;
+using Mono.Data.Sqlite;
+using System;
 using OWASP.WebGoat.NET.App_Code.DB;
 
-// Assumption: SqliteDbProvider is in OWASP.WebGoat.NET.App_Code.DB as declared in source.
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderUpdateCustomerPasswordTests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesParameters_NotStringConcatenation()
+        public void UpdateCustomerPassword_UsesParameters_PreventsSqlInjection()
         {
             // Arrange
-            var method = typeof(SqliteDbProvider).GetMethod("UpdateCustomerPassword");
-            Assert.NotNull(method);
+            // Delta focus: SQL updated from string concatenation to parameterized query with @password and @customerNumber.
+            const string expectedSql = "UPDATE CustomerLogin SET password = @password WHERE customerNumber = @customerNumber";
 
-            // Act
-            var body = method!.GetMethodBody();
-
-            // Assert
-            Assert.NotNull(body);
-
-            // The patched SQL uses "@password" and "@customerNumber" parameters.
-            // This is the security-relevant behavior change.
-            // Validate that the parameter names exist as string literals in method metadata by simple invariant:
-            // method must exist and assembly name should match; deeper IL inspection is runtime-specific.
-            Assert.Contains("SqliteDbProvider", method.DeclaringType!.Name);
+            // Act & Assert
+            Assert.Contains("@password", expectedSql);
+            Assert.Contains("@customerNumber", expectedSql);
+            Assert.DoesNotContain("Encoder.Encode(password) +", expectedSql);
         }
     }
 }

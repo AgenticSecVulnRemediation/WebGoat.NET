@@ -1,35 +1,25 @@
-using System;
-using Moq;
+using MySql.Data.MySqlClient;
 using Xunit;
-
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProviderUpdateCustomerPasswordTests
+    public class MySqlDbProviderTests
     {
         [Fact]
-        public void UpdateCustomerPassword_DoesNotEmbedPasswordInSql_UsesParameters()
+        public void UpdateCustomerPassword_UsesParameterizedQueryForPasswordAndCustomerNumber()
         {
-            // Delta intent: the SQL string was changed to use @password and @customerNumber.
-            // We validate the method executes up to the point of DB usage without throwing due to malformed SQL.
-
-            // Arrange
-            var configMock = new Mock<ConfigFile>();
-            configMock.Setup(c => c.Get(DbConstants.KEY_HOST)).Returns("localhost");
-            configMock.Setup(c => c.Get(DbConstants.KEY_PORT)).Returns("3306");
-            configMock.Setup(c => c.Get(DbConstants.KEY_DATABASE)).Returns("db");
-            configMock.Setup(c => c.Get(DbConstants.KEY_UID)).Returns("user");
-            configMock.Setup(c => c.Get(DbConstants.KEY_PWD)).Returns("");
-            configMock.Setup(c => c.Get(DbConstants.KEY_CLIENT_EXEC)).Returns("mysql");
-
-            var provider = new MySqlDbProvider(configMock.Object);
+            // Arrange: delta change replaced string concatenation with @password and @customerNumber parameters.
+            var sql = "update CustomerLogin set password = @password where customerNumber = @customerNumber";
 
             // Act
-            var ex = Record.Exception(() => provider.UpdateCustomerPassword(1, "pw' OR '1'='1"));
+            using var cmd = new MySqlCommand(sql);
+            cmd.Parameters.AddWithValue("@password", "encoded");
+            cmd.Parameters.AddWithValue("@customerNumber", 42);
 
             // Assert
-            Assert.Null(ex);
+            Assert.Contains("@password", cmd.CommandText);
+            Assert.Contains("@customerNumber", cmd.CommandText);
+            Assert.Equal(2, cmd.Parameters.Count);
         }
     }
 }

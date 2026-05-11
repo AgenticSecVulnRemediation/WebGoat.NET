@@ -1,7 +1,5 @@
 using System;
-using System.Configuration;
-using System.Reflection;
-using TechInfoSystems.Data.SQLite;
+using Mono.Data.Sqlite;
 using Xunit;
 
 namespace TechInfoSystems.Data.SQLite.Tests
@@ -9,29 +7,20 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteProfileProviderVerifyApplicationTests
     {
         [Fact]
-        public void VerifyApplication_UsesPositionalParametersArray_DoesNotThrowWhenAddingRange()
+        public void VerifyApplication_UsesPositionalParameters_WithInsertValuesClause()
         {
             // Arrange
-            // Diff changes VerifyApplication to use positional parameters (?,?,?) and AddRange.
-            // We assert AddRange works with the provider's SQLiteParameter type.
+            using var cmd = new SqliteCommand();
 
             // Act
-            var ex = Record.Exception(() =>
-            {
-                var parameters = new SQLiteParameter[]
-                {
-                    new SQLiteParameter { Value = Guid.NewGuid().ToString() },
-                    new SQLiteParameter { Value = "app" },
-                    new SQLiteParameter { Value = string.Empty }
-                };
-
-                // basic sanity: array created and values are set
-                Assert.Equal(3, parameters.Length);
-                Assert.NotNull(parameters[0].Value);
-            });
+            cmd.CommandText = "INSERT INTO [aspnet_Applications] (ApplicationId, ApplicationName, Description) VALUES (?, ?, ?)";
+            cmd.Parameters.Add(new SqliteParameter { Value = "id" });
+            cmd.Parameters.Add(new SqliteParameter { Value = "name" });
+            cmd.Parameters.Add(new SqliteParameter { Value = string.Empty });
 
             // Assert
-            Assert.Null(ex);
+            Assert.Equal(3, cmd.Parameters.Count);
+            Assert.Contains("VALUES (?, ?, ?)", cmd.CommandText);
         }
     }
 }

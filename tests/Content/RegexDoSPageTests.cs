@@ -1,6 +1,5 @@
 using System;
 using System.Text.RegularExpressions;
-using OWASP.WebGoat.NET;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.Tests
@@ -8,18 +7,18 @@ namespace OWASP.WebGoat.NET.Tests
     public class RegexDoSTests
     {
         [Fact]
-        public void RegexDoS_ConstructorWithTimeout_TimesOutOnCatastrophicUserRegex()
+        public void RegexConstruction_WithUserControlledPattern_UsesTimeout_AndCanTimeout()
         {
             // Arrange
-            // Delta behavior: Regex is constructed with a 1-second timeout.
-            var userControlledRegex = "^(a+)+$";
-            var input = new string('a', 200000) + "!";
+            string userControlledPattern = "^(a+)+$";
+            string password = new string('a', 5000) + "!";
 
-            // Act
-            var regex = new Regex(userControlledRegex, RegexOptions.None, TimeSpan.FromMilliseconds(1));
-
-            // Assert
-            Assert.Throws<RegexMatchTimeoutException>(() => regex.Match(input));
+            // Act & Assert
+            Assert.Throws<RegexMatchTimeoutException>(() =>
+            {
+                var regex = new Regex(userControlledPattern, RegexOptions.None, TimeSpan.FromSeconds(1));
+                regex.Match(password);
+            });
         }
     }
 }

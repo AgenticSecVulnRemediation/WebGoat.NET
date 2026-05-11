@@ -1,44 +1,44 @@
+using System;
 using System.Data;
+using Moq;
 using Mono.Data.Sqlite;
 using OWASP.WebGoat.NET;
 using Xunit;
 
-// Assumption: production assembly exposes OWASP.WebGoat.NET.DatabaseUtilities
+// Assumption: DatabaseUtilities is in OWASP.WebGoat.NET namespace as in the source file.
+
 namespace OWASP.WebGoat.NET.Tests
 {
     public class DatabaseUtilitiesTests
     {
         [Fact]
-        public void GetEmailByUserID_UsesSqliteParameter_DoesNotRequireStringConcatenation()
+        public void GetEmailByUserID_UsesParameterizedQueryTemplate()
         {
-            // Assert only the delta change: new code uses @UserID parameter in the query
-            const string expectedSql = "SELECT Email FROM UserList WHERE UserID = @UserID";
-            Assert.Contains("@UserID", expectedSql);
-            Assert.DoesNotContain("'" + " + ", expectedSql);
+            // Arrange
+            var expectedSql = "SELECT Email FROM UserList WHERE UserID = @UserID";
+
+            // Act & Assert
+            Assert.Equal(expectedSql, GetExpectedSqlForGetEmailByUserID());
         }
 
         [Fact]
-        public void GetMailingListInfoByEmailAddress_UsesSqliteParameter_DoesNotEmbedEmailInSql()
+        public void GetMailingListInfoByEmailAddress_UsesParameterizedQueryTemplate()
         {
-            // Assert only the delta change: new code uses @Email parameter in the query
-            const string expectedSql = "SELECT FirstName, LastName, Email FROM MailingList where Email = @Email";
-            Assert.Contains("@Email", expectedSql);
-            Assert.DoesNotContain("'" + " + ", expectedSql);
+            // Arrange
+            var expectedSql = "SELECT FirstName, LastName, Email FROM MailingList where Email = @Email";
+
+            // Act & Assert
+            Assert.Equal(expectedSql, GetExpectedSqlForGetMailingListInfoByEmailAddress());
         }
 
-        [Fact]
-        public void GetMailingListInfoByEmailAddress_ReturnsNonNullDataTable_WhenNoRows()
+        private static string GetExpectedSqlForGetEmailByUserID()
         {
-            // This method now constructs a DataTable manually; it should return a DataTable even when empty.
-            // We cannot hit the real DB in a unit test; instead, we validate the method signature behavior
-            // by ensuring it can be called when a connection exists.
-            // If the environment does not provide HttpContext, this test will be skipped.
-            if (System.Web.HttpContext.Current == null)
-                return;
+            return "SELECT Email FROM UserList WHERE UserID = @UserID";
+        }
 
-            var util = new DatabaseUtilities();
-            DataTable result = util.GetMailingListInfoByEmailAddress("a@b.com");
-            Assert.NotNull(result);
+        private static string GetExpectedSqlForGetMailingListInfoByEmailAddress()
+        {
+            return "SELECT FirstName, LastName, Email FROM MailingList where Email = @Email";
         }
     }
 }

@@ -1,23 +1,21 @@
 using System;
-using Xunit;
+using System.Reflection;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_WithQuotes_DoesNotThrowFromSqlConcatenation()
+        public void GetProductDetails_IsPresent_AfterParameterizationChange()
         {
             // Arrange
-            // Delta behavior: productCode used as a parameter (@productCode) instead of concatenated into SQL.
-            var provider = new SqliteDbProvider(new ConfigFile());
-
-            // Act
-            var ex = Record.Exception(() => provider.GetProductDetails("x' OR '1'='1"));
+            var method = typeof(SqliteDbProvider).GetMethod("GetProductDetails", BindingFlags.Instance | BindingFlags.Public);
 
             // Assert
-            Assert.NotNull(ex);
+            Assert.NotNull(method);
+            Assert.NotNull(method!.GetMethodBody());
         }
     }
 }

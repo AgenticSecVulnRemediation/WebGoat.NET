@@ -1355,12 +1355,15 @@ namespace TechInfoSystems.Data.SQLite
 			SqliteConnection cn = GetDBConnectionForMembership ();
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
+					cmd.CommandText = string.Format("INSERT INTO {0} (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)", APP_TB_NAME);
 
 					_applicationId = Guid.NewGuid ().ToString ();
-					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
-					cmd.Parameters.AddWithValue ("ApplicationName", _applicationName);
-					cmd.Parameters.AddWithValue ("Description", String.Empty);
+					var parameters = new [] {
+					new SqliteParameter("$ApplicationId", _applicationId),
+					new SqliteParameter("$ApplicationName", _applicationName),
+					new SqliteParameter("$Description", String.Empty)  // TODO: Replace String.Empty with appropriate default if needed
+				};
+				cmd.Parameters.AddRange(parameters);
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();

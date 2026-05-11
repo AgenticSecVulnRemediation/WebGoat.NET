@@ -1,5 +1,6 @@
 using System;
-using System.Data;
+using System.Collections.Specialized;
+using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
@@ -7,18 +8,26 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderGetProductDetailsParameterizedTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterizedQueriesForProductsAndComments()
+        public void GetProductDetails_WithQuoteInProductCode_DoesNotThrowFromSqlConcatenation()
         {
-            // Delta check: ensure the fixed source contains parameter markers (prevents SQL injection via productCode).
-            // Note: This test is source-string based to avoid needing a live MySQL instance.
-            var source = @"select * from Products where productCode = @productCode";
-            Assert.Contains("@productCode", source);
+            // Arrange
+            var nvc = new NameValueCollection
+            {
+                [DbConstants.KEY_HOST] = "localhost",
+                [DbConstants.KEY_PORT] = "3306",
+                [DbConstants.KEY_DATABASE] = "db",
+                [DbConstants.KEY_UID] = "u",
+                [DbConstants.KEY_PWD] = "",
+                [DbConstants.KEY_CLIENT_EXEC] = "mysql"
+            };
+            var provider = new MySqlDbProvider(new ConfigFile(nvc));
 
-            var source2 = @"select * from Comments where productCode = @productCode";
-            Assert.Contains("@productCode", source2);
+            // Act
+            var ex = Record.Exception(() => provider.GetProductDetails("p' OR '1'='1"));
 
-            Assert.DoesNotContain("'\" + productCode + \"'", source);
-            Assert.DoesNotContain("'\" + productCode + \"'", source2);
+            // Assert
+            // Previously vulnerable concatenation could create malformed SQL strings.
+            Assert.Null(ex);
         }
     }
 }

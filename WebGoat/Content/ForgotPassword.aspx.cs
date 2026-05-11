@@ -40,12 +40,18 @@ namespace OWASP.WebGoat.NET
             
                    
             HttpCookie cookie = new HttpCookie("encr_sec_qu_ans");
+            cookie.Secure = true;    // ensures the cookie is only sent over HTTPS (replace if necessary with your environment's secure flag requirement)
+            cookie.HttpOnly = true;  // prevents client-side scripts from accessing the cookie
+            // Optionally, add: cookie.SameSite = SameSiteMode.Strict; (requires appropriate namespace import)
 
             //encode twice for more security!
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
 
-            Response.Cookies.Add(cookie); 
+            cookie.Secure = true;    // ensures the cookie is only sent over HTTPS (replace if necessary with your environment's secure flag requirement)
+cookie.HttpOnly = true;  // prevents client-side scripts from accessing the cookie
+cookie.SameSite = SameSiteMode.Strict;  // optionally set SameSite attribute for additional security
+Response.Cookies.Add(cookie); 
         }
 
         protected void ButtonRecoverPassword_Click(object sender, EventArgs e)

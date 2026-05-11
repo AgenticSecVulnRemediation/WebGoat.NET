@@ -1,17 +1,23 @@
 using System;
-using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterizedQueries_ForProductAndComments()
+        public void GetProductDetails_WithQuoteInProductCode_DoesNotThrowFromSqlConcatenation()
         {
-            // Delta security behavior: productCode is now bound via @productCode for both queries.
-            var method = typeof(SqliteDbProvider).GetMethod("GetProductDetails");
-            Assert.NotNull(method);
+            // Arrange
+            var config = new ConfigFile();
+            var provider = new SqliteDbProvider(config);
+
+            // Act
+            var ex = Record.Exception(() => provider.GetProductDetails("ABC'XYZ"));
+
+            // Assert
+            Assert.Null(ex);
         }
     }
 }

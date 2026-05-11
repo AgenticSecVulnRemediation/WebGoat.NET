@@ -1,16 +1,16 @@
 using System;
-using System.Web;
 using System.Web.Security;
 using OWASP.WebGoat.NET.App_Code;
 using Xunit;
 
-// Assumption: production assembly exposes OWASP.WebGoat.NET.App_Code.CookieManager
+// Assumption: source project exposes CookieManager in OWASP.WebGoat.NET.App_Code namespace.
+
 namespace OWASP.WebGoat.NET.App_Code.Tests
 {
     public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_SetsHttpOnly_ReturnsCookieThatIsNotAccessibleToClientScript()
+        public void SetCookie_CreatesCookieWithHttpOnlyFlagEnabled()
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(
@@ -19,11 +19,10 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
                 DateTime.UtcNow,
                 DateTime.UtcNow.AddMinutes(30),
                 false,
-                "data",
-                "/");
+                "data");
 
             // Act
-            HttpCookie cookie = CookieManager.SetCookie(ticket, "id", "value");
+            var cookie = CookieManager.SetCookie(ticket, "id", "value");
 
             // Assert
             Assert.NotNull(cookie);

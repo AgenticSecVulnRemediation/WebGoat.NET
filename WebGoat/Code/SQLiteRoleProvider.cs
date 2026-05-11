@@ -342,13 +342,13 @@ namespace TechInfoSystems.Data.SQLite
 			SqliteConnection cn = GetDbConnectionForRole ();
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT RoleName FROM " + ROLE_TB_NAME + " WHERE ApplicationId = $ApplicationId";
-					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
+					cmd.CommandText = "SELECT RoleName FROM " + ROLE_TB_NAME + " WHERE ApplicationId = ?";
+					// cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();
 
-					using (SqliteDataReader dr = cmd.ExecuteReader()) {
+					using (SqliteDataReader dr = cmd.ExecuteReader(new object[] { _applicationId })) { // Ensure the order of parameters in the tuple matches the query placeholders
 						while (dr.Read()) {
 							tmpRoleNames += dr.GetString (0) + ",";
 						}

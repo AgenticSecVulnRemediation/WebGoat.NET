@@ -19,7 +19,7 @@ namespace OWASP.WebGoat.NET
             lblMessage.Visible = false;
             txtEmail.Enabled = true;
             if (!Page.IsPostBack)
-                LoadComments();
+                FixedLoadComments();
 
         }
 
@@ -52,6 +52,7 @@ namespace OWASP.WebGoat.NET
             lblComments.Text = comments;
         }
 
+        // Developer Note: User-supplied data is HTML encoded here to prevent XSS vulnerabilities. If HTML input is allowed, additional sanitization may be required.
         void FixedLoadComments()
         {
             DataSet ds = du.GetComments("user_cmt");

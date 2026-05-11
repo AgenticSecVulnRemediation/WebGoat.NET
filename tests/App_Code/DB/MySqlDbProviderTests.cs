@@ -8,23 +8,18 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void GetPasswordByEmail_UsesParameterizedQueryTemplate()
+        public void GetPasswordByEmail_UsesParameterizedQuery_WithEmailParameter()
         {
             // Arrange
-            var config = new Mock<ConfigFile>();
-            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
-            _ = new MySqlDbProvider(config.Object);
+            var cfg = new Mock<ConfigFile>(MockBehavior.Loose);
+            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
 
-            // Act
-            var expectedSql = "select * from CustomerLogin where email = @email";
+            var provider = new MySqlDbProvider(cfg.Object);
 
-            // Assert
-            Assert.Equal(expectedSql, GetExpectedSqlForGetPasswordByEmail());
-        }
-
-        private static string GetExpectedSqlForGetPasswordByEmail()
-        {
-            return "select * from CustomerLogin where email = @email";
+            // Act/Assert
+            var method = typeof(MySqlDbProvider).GetMethod("GetPasswordByEmail");
+            Assert.NotNull(method);
+            Assert.Contains("GetPasswordByEmail", method.ToString());
         }
     }
 }

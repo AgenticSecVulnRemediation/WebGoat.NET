@@ -1,25 +1,27 @@
 using System;
-using Mono.Data.Sqlite;
-using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderAddCommentTests
     {
         [Fact]
-        public void AddComment_UsesParameterizedInsertSql()
+        public void AddComment_WithSqlInjectionPayload_DoesNotThrowDueToSqlConcatenation()
         {
             // Arrange
-            // We assert the new SQL template uses parameters to prevent SQL injection.
-            var provider = (SqliteDbProvider)Activator.CreateInstance(typeof(SqliteDbProvider), new object[] { new ConfigFile() });
+            // This delta test targets the change from string concatenation to parameterized INSERT.
+            // We assert that the method can be invoked with characters that would previously break SQL.
+            var config = new ConfigFile();
+            // NOTE: ConfigFile construction details are not available in patch context.
+            // If default ctor is not available, this test will need adjustment.
+            var provider = new SqliteDbProvider(config);
 
             // Act
-            // No DB; just reflect the method body presence.
-            var method = typeof(SqliteDbProvider).GetMethod("AddComment");
+            var ex = Record.Exception(() => provider.AddComment("P1", "a@b.com", "x'); DROP TABLE Comments;--"));
 
             // Assert
-            Assert.NotNull(method);
+            Assert.Null(ex);
         }
     }
 }

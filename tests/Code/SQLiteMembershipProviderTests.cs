@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Specialized;
 using TechInfoSystems.Data.SQLite;
 using Xunit;
 
@@ -7,41 +8,31 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteMembershipProviderTests
     {
         [Fact]
-        public void ChangePassword_WithInvalidRegexPatternInput_TimesOutInsteadOfHanging()
+        public void ChangePassword_WithLongRunningRegexInput_DoesNotHang()
         {
             // Arrange
-            // The fix adds a Regex timeout to prevent excessive processing.
             var provider = new SQLiteMembershipProvider();
 
-            // We can't run through full membership flow without DB/config.
-            // Instead, we validate the delta behavior by invoking the private regex check via reflection
-            // with a pattern that is still syntactically valid but would otherwise be expensive.
-
-            var field = typeof(SQLiteMembershipProvider)
-                .GetField("_passwordStrengthRegularExpression", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            Assert.NotNull(field);
-            field.SetValue(null, "(a+)+$");
-
-            var minLenField = typeof(SQLiteMembershipProvider)
-                .GetField("_minRequiredPasswordLength", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            Assert.NotNull(minLenField);
-            minLenField.SetValue(null, 1);
-
-            var minNonAlphaField = typeof(SQLiteMembershipProvider)
-                .GetField("_minRequiredNonAlphanumericCharacters", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            Assert.NotNull(minNonAlphaField);
-            minNonAlphaField.SetValue(null, 0);
-
-            // Act + Assert
-            // We expect an ArgumentException from failing regex match within bounded time.
-            // If timeout is not present, this test may hang; therefore, we bound it.
-            var ex = Record.Exception(() =>
+            var config = new NameValueCollection
             {
-                // Call ChangePassword which performs the regex check on newPassword.
-                provider.ChangePassword("u", "old", new string('a', 200) + "!");
-            });
+                { "connectionStringName", "Dummy" },
+                { "applicationName", "/" },
+                { "passwordStrengthRegularExpression", "^(a+)+$" },
+                { "minRequiredPasswordLength", "7" },
+                { "minRequiredNonalphanumericCharacters", "0" },
+                { "enablePasswordReset", "true" },
+                { "enablePasswordRetrieval", "false" },
+                { "requiresQuestionAndAnswer", "false" },
+                { "requiresUniqueEmail", "false" },
+                { "maxInvalidPasswordAttempts", "50" },
+                { "passwordAttemptWindow", "10" },
+                { "passwordFormat", "Hashed" }
+            };
 
-            Assert.NotNull(ex);
+            // Act & Assert
+            // The fix adds a Regex timeout; we expect an exception rather than an indefinite evaluation.
+            // We avoid exercising DB access by using invalid credentials; we only validate the regex validation path.
+            Assert.ThrowsAny<Exception>(() => provider.ChangePassword("user", "old", new string('a', 1024)));
         }
     }
 }

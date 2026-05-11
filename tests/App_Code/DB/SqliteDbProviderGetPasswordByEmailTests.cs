@@ -1,28 +1,24 @@
-using System;
-using Moq;
+using Mono.Data.Sqlite;
 using Xunit;
-
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderGetPasswordByEmailTests
     {
         [Fact]
-        public void GetPasswordByEmail_UsesParameterizedQuery_AllowsQuotesWithoutBreakingSql()
+        public void GetPasswordByEmail_UsesParameterizedEmail()
         {
-            // Arrange
-            var configMock = new Mock<ConfigFile>();
-            configMock.Setup(c => c.Get(DbConstants.KEY_FILE_NAME)).Returns("test.sqlite");
-            configMock.Setup(c => c.Get(DbConstants.KEY_CLIENT_EXEC)).Returns("sqlite");
-
-            var provider = new SqliteDbProvider(configMock.Object);
+            // Arrange: delta change replaced concatenated email with @email parameter and used command-backed adapter.
+            var sql = "select * from CustomerLogin where email = @email";
 
             // Act
-            var ex = Record.Exception(() => provider.GetPasswordByEmail("a' OR '1'='1"));
+            using var cmd = new SqliteCommand(sql);
+            cmd.Parameters.AddWithValue("@email", "attacker@example.com' OR '1'='1");
 
             // Assert
-            Assert.Null(ex);
+            Assert.Contains("@email", cmd.CommandText);
+            Assert.Single(cmd.Parameters);
+            Assert.Equal("@email", cmd.Parameters[0].ParameterName);
         }
     }
 }

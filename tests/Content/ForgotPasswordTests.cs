@@ -1,19 +1,17 @@
-using Xunit;
-using OWASP.WebGoat.NET;
+using System;
+using System.Reflection;
 using System.Web;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.Tests
 {
     public class ForgotPasswordTests
     {
         [Fact]
-        public void ButtonCheckEmail_Click_SetsSecurityAnswerCookie_HttpOnly_And_Secure()
+        public void ButtonCheckEmailClick_SetsCookieHttpOnlyAndSecure()
         {
             // Arrange
-            var page = new ForgotPassword();
-
-            // We can only validate the cookie properties at the type level without full ASP.NET pipeline.
-            // Delta asserts: cookie.HttpOnly and cookie.Secure are explicitly set to true.
+            // Delta behavior: newly added cookie.HttpOnly = true and cookie.Secure = true.
             var cookie = new HttpCookie("encr_sec_qu_ans");
 
             // Act

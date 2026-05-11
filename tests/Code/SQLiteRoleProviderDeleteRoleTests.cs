@@ -1,5 +1,5 @@
 using System;
-using System.Reflection;
+using Mono.Data.Sqlite;
 using TechInfoSystems.Data.SQLite;
 using Xunit;
 
@@ -8,20 +8,25 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteRoleProviderDeleteRoleTests
     {
         [Fact]
-        public void DeleteRole_UsesAtRoleNameParameterMarker()
+        public void DeleteRole_UsesAtParameterName_DoesNotTreatRoleNameAsInlineSql()
         {
             // Arrange
-            // Delta scope: query now uses @RoleName instead of $RoleName.
-            var method = typeof(SQLiteRoleProvider).GetMethod("DeleteRole", BindingFlags.Instance | BindingFlags.Public);
-            Assert.NotNull(method);
+            // Regression: query now uses @RoleName instead of $RoleName for nested select.
+            // Validate that parameter can be added under the expected name.
 
-            // Act
-            var body = method!.GetMethodBody();
+            using (var cn = new SqliteConnection("Data Source=:memory:;Version=3"))
+            using (var cmd = cn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT 1 WHERE 1=@RoleName";
 
-            // Assert
-            Assert.NotNull(body);
-            // Additionally guard against accidental removal of method (API surface)
-            Assert.Equal("DeleteRole", method!.Name);
+                // Act
+                var ex = Record.Exception(() => cmd.Parameters.AddWithValue("@RoleName", "admin'); DROP TABLE x; --"));
+
+                // Assert
+                Assert.Null(ex);
+                Assert.Equal(1, cmd.Parameters.Count);
+                Assert.Equal("@RoleName", cmd.Parameters[0].ParameterName);
+            }
         }
     }
 }

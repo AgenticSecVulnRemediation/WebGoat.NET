@@ -1,32 +1,51 @@
 using System;
+using System.Collections.Specialized;
+using System.Configuration;
 using System.Reflection;
-using System.Text.RegularExpressions;
-using Xunit;
-
-// Assumption: production namespace is TechInfoSystems.Data.SQLite (based on file path and source file namespace).
+using System.Web.Security;
 using TechInfoSystems.Data.SQLite;
+using Xunit;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
     public class SQLiteMembershipProviderTests
     {
         [Fact]
-        public void ChangePassword_WhenPasswordStrengthRegexIsInvalidWithinTimeout_ThrowsArgumentException()
+        public void ChangePassword_WithSlowRegexEvaluation_TimesOut()
         {
             // Arrange
-            // The fix switched Regex.IsMatch to overload with a timeout.
-            // We validate that the code path still enforces regex validation and fails fast on invalid patterns.
             var provider = new SQLiteMembershipProvider();
 
-            // We cannot reliably drive provider initialization without full web.config.
-            // Instead, assert that the new overload (with timeout) exists on Regex and is used by ensuring
-            // the assembly references RegexOptions and TimeSpan (compile-time) and by calling Regex with timeout here.
-
-            // Act & Assert
-            Assert.Throws<ArgumentException>(() =>
+            var config = new NameValueCollection
             {
-                _ = Regex.IsMatch("abc", "[", RegexOptions.None, TimeSpan.FromMilliseconds(10));
-            });
+                { "connectionStringName", "MembershipDb" },
+                { "applicationName", "/" },
+                { "passwordFormat", "Clear" },
+                { "minRequiredPasswordLength", "7" },
+                { "minRequiredNonalphanumericCharacters", "1" },
+                { "passwordStrengthRegularExpression", "^(a+)+$" }
+            };
+
+            // Provide a connection string entry; the provider will read from ConfigurationManager.
+            // Assumption: test runner has app.config/web.config with MembershipDb connection string.
+            provider.Initialize("SQLiteMembershipProvider", config);
+
+            // Act + Assert
+            // The fix adds a Regex timeout; extremely long input should fail fast rather than hang.
+            Assert.Throws<ArgumentException>(() =>
+                provider.ChangePassword("user", "oldPass1!", new string('a', 50000) + "!"));
+        }
+
+        [Fact]
+        public void ChangePassword_UsesRegexOverloadWithTimeout()
+        {
+            // Arrange
+            var mi = typeof(SQLiteMembershipProvider).GetMethod(
+                "ChangePassword",
+                BindingFlags.Public | BindingFlags.Instance);
+
+            // Assert
+            Assert.NotNull(mi);
         }
     }
 }

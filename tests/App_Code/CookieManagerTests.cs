@@ -1,6 +1,7 @@
-// Assumption: production namespace is OWASP.WebGoat.NET.App_Code because source file is WebGoat/App_Code/CookieManager.cs
+using System;
 using System.Web;
 using System.Web.Security;
+using OWASP.WebGoat.NET.App_Code;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.Tests
@@ -8,19 +9,20 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
     public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_SetsHttpOnlyAndSecureFlags_ReturnsHardenedCookie()
+        public void SetCookie_SetsHttpOnlyAndSecure_OnAuthCookie()
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(
                 1,
                 "user",
-                System.DateTime.UtcNow,
-                System.DateTime.UtcNow.AddMinutes(30),
+                DateTime.UtcNow,
+                DateTime.UtcNow.AddMinutes(5),
                 false,
-                "userdata");
+                "data",
+                FormsAuthentication.FormsCookiePath);
 
             // Act
-            HttpCookie cookie = CookieManager.SetCookie(ticket, "ignored", "ignored");
+            var cookie = CookieManager.SetCookie(ticket, "ignored", "ignored");
 
             // Assert
             Assert.NotNull(cookie);

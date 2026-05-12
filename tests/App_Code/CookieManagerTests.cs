@@ -13,12 +13,12 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(
-                1,
-                "user",
-                DateTime.Now,
-                DateTime.Now.AddMinutes(10),
-                false,
-                "userdata");
+                version: 1,
+                name: "user",
+                issueDate: DateTime.UtcNow,
+                expiration: DateTime.UtcNow.AddMinutes(5),
+                isPersistent: false,
+                userData: "");
 
             // Act
             HttpCookie cookie = CookieManager.SetCookie(ticket, "id", "value");

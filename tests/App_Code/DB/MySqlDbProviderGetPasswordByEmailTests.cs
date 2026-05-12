@@ -1,23 +1,18 @@
-using System;
-using Xunit;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetPasswordByEmailTests
     {
         [Fact]
-        public void GetPasswordByEmail_UsesParameterizedSelectStatement()
+        public void GetPasswordByEmail_SqlString_UsesEmailParameter()
         {
-            // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("GetPasswordByEmail");
-            Assert.NotNull(method);
+            // Arrange/Act
+            string source = typeof(MySqlDbProvider).ToString();
 
-            // Act
-            var signature = method.ToString();
-
-            // Assert
-            Assert.Contains("GetPasswordByEmail", signature);
+            // Assert (delta)
+            Assert.Contains("where email = @email", source);
         }
     }
 }

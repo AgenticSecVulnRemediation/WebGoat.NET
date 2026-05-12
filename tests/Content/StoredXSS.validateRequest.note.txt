@@ -1,0 +1,1 @@
+// Skipped: WebGoat/Content/StoredXSS.aspx - Language not supported for unit test generation

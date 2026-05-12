@@ -44,6 +44,11 @@ namespace OWASP.WebGoat.NET
             //encode twice for more security!
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
+            // Ensure the cookie is only accessible over secure channels and not via client-side scripts
+            cookie.HttpOnly = true;    // Prevent access to the cookie via client-side scripts
+            cookie.Secure = true;      // Ensure the cookie is only sent over HTTPS
+            // Optional: Set the SameSite attribute to provide additional protection
+            // cookie.SameSite = SameSiteMode.Strict;  // Uncomment and adjust if necessary
 
             Response.Cookies.Add(cookie); 
         }

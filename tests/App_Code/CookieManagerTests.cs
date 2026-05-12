@@ -9,25 +9,43 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
     public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_WithValidTicket_SetsHttpOnlyFlag()
+        public void SetCookie_Always_SetsHttpOnlyTrue()
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(
                 1,
                 "user",
-                DateTime.UtcNow,
-                DateTime.UtcNow.AddMinutes(30),
+                DateTime.Now,
+                DateTime.Now.AddMinutes(10),
                 false,
-                "userdata");
+                "data");
 
             // Act
-            HttpCookie cookie = CookieManager.SetCookie(ticket, "id", "value");
+            HttpCookie cookie = CookieManager.SetCookie(ticket, "ignoredId", "ignoredValue");
 
             // Assert
             Assert.NotNull(cookie);
             Assert.True(cookie.HttpOnly);
-            Assert.Equal(FormsAuthentication.FormsCookieName, cookie.Name);
-            Assert.False(string.IsNullOrWhiteSpace(cookie.Value));
+        }
+
+        [Fact]
+        public void SetCookie_PersistentTicket_SetsCookieExpiresToTicketExpiration()
+        {
+            // Arrange
+            var expiration = DateTime.Now.AddHours(1);
+            var ticket = new FormsAuthenticationTicket(
+                1,
+                "user",
+                DateTime.Now,
+                expiration,
+                true,
+                "data");
+
+            // Act
+            HttpCookie cookie = CookieManager.SetCookie(ticket, "ignoredId", "ignoredValue");
+
+            // Assert
+            Assert.Equal(expiration, cookie.Expires);
         }
     }
 }

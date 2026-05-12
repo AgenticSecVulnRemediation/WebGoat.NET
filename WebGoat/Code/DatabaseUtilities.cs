@@ -77,6 +77,27 @@ namespace OWASP.WebGoat.NET
 			
 			try {
 				cmd.ExecuteNonQuery ();
+				output = "<br/>SQL Executed";
+			} catch (SqliteException ex) {
+				output = "<br/>SQL Exception occurred";
+			} catch (Exception ex) {
+				output = "<br/>Exception occurred";
+			}
+			return output;
+		}
+		
+		}
+		
+		private string DoNonQuery (String SQL, SqliteConnection conn, SqliteParameter[] parameters)
+		{
+			var cmd = new SqliteCommand(SQL, conn);
+			foreach (var param in parameters)
+			{
+				cmd.Parameters.Add(param);
+			}
+			var output = string.Empty;
+			try {
+				cmd.ExecuteNonQuery();
 				output += "<br/>SQL Executed: " + SQL;
 			} catch (SqliteException ex) {
 				output += "<br/>SQL Exception: " + ex.Message;
@@ -96,11 +117,9 @@ namespace OWASP.WebGoat.NET
 			try {
 				output = (string)cmd.ExecuteScalar ();
 			} catch (SqliteException ex) {
-				output += "<br/>SQL Exception: " + ex.Message + " - ";
-				output += SQL;
+				output = "<br/>SQL Exception occurred";
 			} catch (Exception ex) {
-				output += "<br/>Exception: " + ex.Message + " - ";
-				output += SQL;
+				output = "<br/>Exception occurred";
 			}
 			return output;
 		}
@@ -217,8 +236,13 @@ namespace OWASP.WebGoat.NET
 
 		public string AddToMailingList (string first, string last, string email)
 		{
-			string sql = "insert into mailinglist (firstname, lastname, email) values ('" + first + "', '" + last + "', '" + email + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			string sql = "insert into mailinglist (firstname, lastname, email) values (@first, @last, @email)";
+			SqliteParameter[] parameters = new SqliteParameter[] {
+				new SqliteParameter("@first", first),
+				new SqliteParameter("@last", last),
+				new SqliteParameter("@email", email)
+			};
+			string result = DoNonQuery (sql, GetGoatDBConnection (), parameters);
 			return result;
 		}
 
@@ -231,8 +255,13 @@ namespace OWASP.WebGoat.NET
 
 		public string AddNewPosting (String title, String email, String message)
 		{
-			string sql = "insert into Postings(title, email, message) values ('" + title + "','" + email + "','" + message + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			string sql = "insert into Postings(title, email, message) values (@title, @email, @message)";
+			SqliteParameter[] parameters = new SqliteParameter[] {
+				new SqliteParameter("@title", title),
+				new SqliteParameter("@email", email),
+				new SqliteParameter("@message", message)
+			};
+			string result = DoNonQuery (sql, GetGoatDBConnection (), parameters);
 			return result;
 		}
 

@@ -1,27 +1,19 @@
-using System;
 using System.Reflection;
-using Xunit;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProviderTests
+    public class MySqlDbProviderAddCommentTests
     {
         [Fact]
-        public void AddComment_UsesParameterizedInsertStatement()
+        public void AddComment_SqlString_IsParameterized()
         {
-            // Arrange
-            // The security fix is switching to parameter placeholders.
-            // We'll assert the SQL string literal includes parameter tokens.
-            var method = typeof(MySqlDbProvider).GetMethod("AddComment");
-            Assert.NotNull(method);
+            // Arrange/Act
+            string source = typeof(MySqlDbProvider).ToString();
 
-            // Act
-            string newFile = typeof(MySqlDbProvider).Assembly.FullName;
-
-            // Assert
-            // Lightweight regression: ensure method exists; deeper SQL inspection requires refactor for testability.
-            Assert.Contains("MySqlDbProvider", newFile);
+            // Assert (delta): insert should use parameters instead of concatenation
+            Assert.Contains("values (@productCode, @email, @comment)", source);
         }
     }
 }

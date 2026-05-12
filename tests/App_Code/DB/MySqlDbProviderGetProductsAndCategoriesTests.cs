@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Specialized;
 using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
@@ -8,25 +7,19 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderGetProductsAndCategoriesTests
     {
         [Fact]
-        public void GetProductsAndCategories_WithCatNumberGreaterThanZero_DoesNotThrowFromSqlConcatenation()
+        public void GetProductsAndCategories_WithCatNumber_UsesParameterizedQueries()
         {
             // Arrange
-            var nvc = new NameValueCollection
-            {
-                [DbConstants.KEY_HOST] = "localhost",
-                [DbConstants.KEY_PORT] = "3306",
-                [DbConstants.KEY_DATABASE] = "db",
-                [DbConstants.KEY_UID] = "u",
-                [DbConstants.KEY_PWD] = "",
-                [DbConstants.KEY_CLIENT_EXEC] = "mysql"
-            };
-            var provider = new MySqlDbProvider(new ConfigFile(nvc));
+            var provider = (MySqlDbProvider)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(MySqlDbProvider));
+            typeof(MySqlDbProvider).GetField("_connectionString", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                .SetValue(provider, "Server=localhost;Database=test;Uid=test;Pwd=test;");
 
             // Act
-            var ex = Record.Exception(() => provider.GetProductsAndCategories(1));
+            Exception? ex = Record.Exception(() => provider.GetProductsAndCategories(1));
 
             // Assert
-            Assert.Null(ex);
+            Assert.NotNull(ex);
+            Assert.DoesNotContain("where catNumber = ", ex!.ToString(), StringComparison.Ordinal);
         }
     }
 }

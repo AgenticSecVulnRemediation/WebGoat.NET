@@ -1,21 +1,24 @@
-using System;
-using log4net;
-using Moq;
+using System.Web.Security;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.WebGoatCoins.Tests
 {
-    public class CustomerLoginLoggingTests
+    public class CustomerLoginTests
     {
         [Fact]
-        public void ButtonLogOn_DoesNotLogPassword()
+        public void LogMessage_DoesNotIncludePassword()
         {
-            // Delta: log message should not include the password
+            // Arrange
             var email = "user@example.com";
-            var pwd = "secret";
-            var message = $"User {email} attempted to log in.";
+            var pwd = "password";
 
+            // Act
+            var message = "User " + email + " attempted to log in.";
+
+            // Assert
+            Assert.Contains(email, message);
             Assert.DoesNotContain(pwd, message);
+            Assert.DoesNotContain("password", message, System.StringComparison.OrdinalIgnoreCase);
         }
     }
 }

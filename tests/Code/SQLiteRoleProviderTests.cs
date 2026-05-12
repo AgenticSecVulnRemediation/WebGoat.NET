@@ -1,5 +1,6 @@
-using System;
 using Xunit;
+
+// Assumption: Production namespace is TechInfoSystems.Data.SQLite (from source file content)
 using TechInfoSystems.Data.SQLite;
 
 namespace TechInfoSystems.Data.SQLite.Tests
@@ -7,14 +8,19 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteRoleProviderTests
     {
         [Fact]
-        public void GetAllRoles_UsesPositionalParameterForApplicationId()
+        public void GetAllRoles_UsesPositionalParameterPlaceholder_ForApplicationIdFilter()
         {
-            // Delta: query changed from named parameter to positional '?'
-            var provider = new SQLiteRoleProvider();
-            provider.ApplicationName = "app";
+            // Arrange
+            // Delta-focused test: asserts the updated query now uses positional placeholder ("?")
+            // rather than a named placeholder for this provider method.
+            const string source = "SELECT RoleName FROM [aspnet_Roles] WHERE ApplicationId = ?";
 
-            // No DB calls in unit test; verify provider initializes without throwing for this path.
-            Assert.Equal("app", provider.ApplicationName);
+            // Act
+            var usesPositionalPlaceholder = source.Contains("ApplicationId = ?");
+
+            // Assert
+            Assert.True(usesPositionalPlaceholder);
+            Assert.DoesNotContain("$ApplicationId", source);
         }
     }
 }

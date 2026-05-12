@@ -3,6 +3,8 @@ using System.Web;
 using System.Web.UI;
 using OWASP.WebGoat.NET.App_Code.DB;
 using OWASP.WebGoat.NET.App_Code;
+using System.Web.Security;
+using System.Text;
 
 namespace OWASP.WebGoat.NET
 {
@@ -26,6 +28,10 @@ namespace OWASP.WebGoat.NET
 
                 //Info leak
                 HttpCookie cookie = new HttpCookie("Server", Encoder.Encode(Server.MachineName));
+                cookie.HttpOnly = true;
+                cookie.Secure = true;
+                byte[] cookieData = Encoding.UTF8.GetBytes(cookie.Value);
+                cookie.Value = Convert.ToBase64String(MachineKey.Protect(cookieData));
                 Response.Cookies.Add(cookie);
             }
             else

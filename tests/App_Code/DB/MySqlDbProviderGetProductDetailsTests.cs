@@ -1,23 +1,18 @@
-using System;
-using Xunit;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterizedQueriesForProductsAndComments()
+        public void GetProductDetails_SqlString_UsesProductCodeParameter()
         {
-            // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("GetProductDetails");
-            Assert.NotNull(method);
+            // Arrange/Act
+            string source = typeof(MySqlDbProvider).ToString();
 
-            // Act
-            var signature = method.ToString();
-
-            // Assert
-            Assert.Contains("GetProductDetails", signature);
+            // Assert (delta)
+            Assert.Contains("where productCode = @productCode", source);
         }
     }
 }

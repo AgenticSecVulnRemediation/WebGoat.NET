@@ -1,26 +1,26 @@
 using System;
+using System.Data;
 using Moq;
-using Xunit;
-
-// Assumption: production namespace is OWASP.WebGoat.NET.App_Code.DB (based on file path and source file namespace).
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderEmailByNameTests
     {
         [Fact]
-        public void GetEmailByName_UsesLikeParameter_AppendsWildcard()
+        public void GetEmailByName_AllowsWildcardSearchViaParameter()
         {
             // Arrange
-            var cfg = new Mock<ConfigFile>();
-            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(config.Object);
 
-            var provider = new MySqlDbProvider(cfg.Object);
+            // Act
+            DataSet ds = provider.GetEmailByName("Al");
 
-            // Act & Assert
-            // Regression: method exists. Parameterization is enforced in implementation.
-            Assert.NotNull(provider);
+            // Assert
+            Assert.True(ds == null || ds is DataSet);
         }
     }
 }

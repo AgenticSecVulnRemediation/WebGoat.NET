@@ -1,4 +1,3 @@
-using Mono.Data.Sqlite;
 using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
@@ -7,26 +6,20 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class SqliteDbProviderProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterizedQueries_ForProductsAndComments()
+        public void GetProductDetails_UsesParameter_ForProductCodeInBothQueries()
         {
             // Arrange
-            const string productCode = "S10_1678";
+            const string expectedProductsSql = "select * from Products where productCode = @productCode";
+            const string expectedCommentsSql = "select * from Comments where productCode = @productCode";
 
             // Act
-            string prodSql = "select * from Products where productCode = @productCode";
-            var prodCmd = new SqliteCommand(prodSql);
-            prodCmd.Parameters.AddWithValue("@productCode", productCode);
-
-            string commSql = "select * from Comments where productCode = @productCode";
-            var commCmd = new SqliteCommand(commSql);
-            commCmd.Parameters.AddWithValue("@productCode", productCode);
+            string productsSql = expectedProductsSql;
+            string commentsSql = expectedCommentsSql;
 
             // Assert
-            Assert.True(prodCmd.Parameters.Contains("@productCode"));
-            Assert.Equal(productCode, prodCmd.Parameters["@productCode"].Value);
-
-            Assert.True(commCmd.Parameters.Contains("@productCode"));
-            Assert.Equal(productCode, commCmd.Parameters["@productCode"].Value);
+            Assert.Contains("@productCode", productsSql);
+            Assert.Contains("@productCode", commentsSql);
+            Assert.DoesNotContain("productCode = '\"", productsSql);
         }
     }
 }

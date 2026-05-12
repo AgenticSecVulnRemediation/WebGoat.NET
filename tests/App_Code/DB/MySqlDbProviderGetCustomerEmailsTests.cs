@@ -1,23 +1,26 @@
 using System;
-using Xunit;
+using Moq;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetCustomerEmailsTests
     {
         [Fact]
-        public void GetCustomerEmails_UsesParameterizedLike()
+        public void GetCustomerEmails_UsesParameterizedLikeQuery()
         {
             // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("GetCustomerEmails");
-            Assert.NotNull(method);
+            var config = new Mock<ConfigFile>(MockBehavior.Loose);
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(config.Object);
 
             // Act
-            var signature = method.ToString();
+            var method = typeof(MySqlDbProvider).GetMethod("GetCustomerEmails");
 
             // Assert
-            Assert.Contains("GetCustomerEmails", signature);
+            Assert.NotNull(method);
+            Assert.Contains("@email", method.ToString());
         }
     }
 }

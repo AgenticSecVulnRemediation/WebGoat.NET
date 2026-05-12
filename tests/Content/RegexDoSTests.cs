@@ -7,10 +7,16 @@ namespace OWASP.WebGoat.NET.Tests
     public class RegexDoSTests
     {
         [Fact]
-        public void RegexDoS_RegexConstruction_UsesTimeout()
+        public void RegexCtor_WithTimeout_DoesNotThrow_ForSimplePattern()
         {
-            // Delta: regex now constructed with a timeout to mitigate excessive backtracking
-            var regex = new Regex("test", RegexOptions.None, TimeSpan.FromMilliseconds(1000));
+            // Arrange
+            // Delta-focused: verifies new Regex overload with timeout is usable.
+            var pattern = "abc";
+
+            // Act
+            var regex = new Regex(pattern, RegexOptions.None, TimeSpan.FromMilliseconds(1000));
+
+            // Assert
             Assert.NotNull(regex);
         }
     }

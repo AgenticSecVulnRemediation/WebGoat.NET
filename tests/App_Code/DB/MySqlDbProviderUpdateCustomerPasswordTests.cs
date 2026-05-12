@@ -1,24 +1,19 @@
-using System;
-using System.Reflection;
-using Xunit;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderUpdateCustomerPasswordTests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesParameterizedUpdateStatement()
+        public void UpdateCustomerPassword_SqlString_UsesParameters()
         {
-            // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("UpdateCustomerPassword");
-            Assert.NotNull(method);
+            // Arrange/Act
+            string source = typeof(MySqlDbProvider).ToString();
 
-            // Act
-            var signature = method.ToString();
-
-            // Assert
-            Assert.Contains("UpdateCustomerPassword", signature);
+            // Assert (delta)
+            Assert.Contains("SET password = @password", source);
+            Assert.Contains("WHERE customerNumber = @customerNumber", source);
         }
     }
 }

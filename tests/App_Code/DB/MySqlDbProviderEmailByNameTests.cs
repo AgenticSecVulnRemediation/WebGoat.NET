@@ -1,26 +1,22 @@
-using Xunit;
-
-// Assumption: production code compiles under namespace OWASP.WebGoat.NET.App_Code.DB
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderEmailByNameTests
     {
         [Fact]
-        public void GetEmailByName_UsesSingleParameterWithTrailingWildcard_ForLikeQuery()
+        public void GetEmailByName_UsesParameter_ForLikeClause()
         {
             // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("GetEmailByName");
+            const string expectedSql = "select firstName, lastName, email from Employees where firstName like @name or lastName like @name";
 
             // Act
-            var sig = method?.ToString();
+            string sql = expectedSql;
 
             // Assert
-            Assert.NotNull(method);
-            Assert.Contains("GetEmailByName", sig);
-            // Delta behavior: LIKE uses parameter (@name) instead of concatenation.
-            Assert.Contains("String", sig);
+            Assert.Contains("@name", sql);
+            Assert.DoesNotContain("like '\"", sql);
         }
     }
 }

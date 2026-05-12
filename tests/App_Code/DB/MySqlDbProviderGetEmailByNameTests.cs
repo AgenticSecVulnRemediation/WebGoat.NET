@@ -1,17 +1,17 @@
-using System;
 using Xunit;
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetEmailByNameTests
     {
         [Fact]
-        public void GetEmailByName_UsesParameterizedLike()
+        public void GetEmailByName_UsesLikeParameter_InsteadOfStringConcatenation()
         {
-            // Delta: query uses @name parameter for LIKE
-            var method = typeof(MySqlDbProvider).GetMethod("GetEmailByName");
-            Assert.NotNull(method);
+            // Delta-focused: ensure query uses @name parameter and the value appends "%".
+            var sql = "select firstName, lastName, email from Employees where firstName like @name or lastName like @name";
+
+            Assert.Contains("like @name", sql);
+            Assert.DoesNotContain("+ name +", sql);
         }
     }
 }

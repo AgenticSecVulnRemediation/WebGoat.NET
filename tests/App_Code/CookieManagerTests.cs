@@ -9,25 +9,25 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
     public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_SetsHttpOnlyAndSecure_OnAuthCookie()
+        public void SetCookie_SetsHttpOnlyAndSecureFlags()
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(
                 1,
                 "user",
-                DateTime.UtcNow,
-                DateTime.UtcNow.AddMinutes(5),
-                false,
-                "data",
-                FormsAuthentication.FormsCookiePath);
+                DateTime.Now,
+                DateTime.Now.AddMinutes(5),
+                isPersistent: false,
+                userData: "");
 
             // Act
-            var cookie = CookieManager.SetCookie(ticket, "ignored", "ignored");
+            HttpCookie cookie = CookieManager.SetCookie(ticket, "id", "value");
 
-            // Assert
-            Assert.NotNull(cookie);
+            // Assert - delta change
             Assert.True(cookie.HttpOnly);
             Assert.True(cookie.Secure);
+            Assert.Equal(FormsAuthentication.FormsCookieName, cookie.Name);
+            Assert.False(string.IsNullOrEmpty(cookie.Value));
         }
     }
 }

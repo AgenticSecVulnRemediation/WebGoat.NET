@@ -1,23 +1,25 @@
+using Xunit;
 using System;
 using System.Text.RegularExpressions;
-using Xunit;
+
+// Assumption: page class is OWASP.WebGoat.NET.RegexDoS
+using OWASP.WebGoat.NET;
 
 namespace OWASP.WebGoat.NET.Tests
 {
     public class RegexDoSTests
     {
         [Fact]
-        public void RegexCtor_WithTimeout_DoesNotThrow_ForSimplePattern()
+        public void RegexConstructor_UsesTimeout_ToBoundExecution()
         {
             // Arrange
-            // Delta-focused: verifies new Regex overload with timeout is usable.
-            var pattern = "abc";
+            var pattern = "a+";
 
             // Act
             var regex = new Regex(pattern, RegexOptions.None, TimeSpan.FromMilliseconds(1000));
 
             // Assert
-            Assert.NotNull(regex);
+            Assert.Equal(TimeSpan.FromMilliseconds(1000), regex.MatchTimeout);
         }
     }
 }

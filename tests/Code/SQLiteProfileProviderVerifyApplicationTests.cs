@@ -1,5 +1,7 @@
 using System;
-using Mono.Data.Sqlite;
+using System.Collections.Specialized;
+using System.Reflection;
+using TechInfoSystems.Data.SQLite;
 using Xunit;
 
 namespace TechInfoSystems.Data.SQLite.Tests
@@ -7,20 +9,38 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteProfileProviderVerifyApplicationTests
     {
         [Fact]
-        public void VerifyApplication_UsesPositionalParameters_WithInsertValuesClause()
+        public void VerifyApplication_UsesPositionalParameters_ForInsertIntoApplications()
         {
             // Arrange
-            using var cmd = new SqliteCommand();
+            var method = typeof(SQLiteProfileProvider).GetMethod(
+                "VerifyApplication",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            Assert.NotNull(method);
 
             // Act
-            cmd.CommandText = "INSERT INTO [aspnet_Applications] (ApplicationId, ApplicationName, Description) VALUES (?, ?, ?)";
-            cmd.Parameters.Add(new SqliteParameter { Value = "id" });
-            cmd.Parameters.Add(new SqliteParameter { Value = "name" });
-            cmd.Parameters.Add(new SqliteParameter { Value = string.Empty });
+            // We assert the updated INSERT statement (positional parameters) is present in the type's string constants.
+            var literals = GetAllStringLiterals(typeof(SQLiteProfileProvider));
 
             // Assert
-            Assert.Equal(3, cmd.Parameters.Count);
-            Assert.Contains("VALUES (?, ?, ?)", cmd.CommandText);
+            Assert.Contains("INSERT INTO", literals, StringComparison.Ordinal);
+            Assert.Contains("VALUES (?, ?, ?)", literals, StringComparison.Ordinal);
+            Assert.DoesNotContain("VALUES ($ApplicationId, $ApplicationName, $Description)", literals, StringComparison.Ordinal);
+        }
+
+        private static string GetAllStringLiterals(Type t)
+        {
+            var fields = t.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+            var sb = new System.Text.StringBuilder();
+            foreach (var f in fields)
+            {
+                if (f.FieldType == typeof(string) && f.IsLiteral && !f.IsInitOnly)
+                {
+                    sb.Append((string?)f.GetRawConstantValue());
+                    sb.Append("\n");
+                }
+            }
+            return sb.ToString();
         }
     }
 }

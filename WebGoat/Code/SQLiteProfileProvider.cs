@@ -817,9 +817,9 @@ namespace TechInfoSystems.Data.SQLite
 
 				string userId = cmd.ExecuteScalar () as string;
 				if (userId != null) {
-					cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+					cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = @UserId"; // Parameterized query
 					cmd.Parameters.Clear ();
-					cmd.Parameters.Add ("$UserId", DbType.String, 36).Value = userId;
+					cmd.Parameters.Add("@UserId", DbType.String, 36).Value = userId;
 
 					deleteSuccessful = (cmd.ExecuteNonQuery () != 0);
 				}

@@ -1,21 +1,28 @@
 using System;
-using System.Web;
 using System.Web.Security;
 using OWASP.WebGoat.NET.App_Code;
 using Xunit;
+
+// Assumption: source namespace is OWASP.WebGoat.NET.App_Code (as declared in source file)
 
 namespace OWASP.WebGoat.NET.App_Code.Tests
 {
     public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_WhenCalled_SetsHttpOnlyAndSecureFlags()
+        public void SetCookie_WithTicket_SetsHttpOnlyAndSecureFlags()
         {
             // Arrange
-            var ticket = new FormsAuthenticationTicket(1, "user", DateTime.Now, DateTime.Now.AddMinutes(30), false, "data");
+            var ticket = new FormsAuthenticationTicket(
+                1,
+                "user",
+                DateTime.UtcNow.AddMinutes(-1),
+                DateTime.UtcNow.AddMinutes(30),
+                false,
+                "data");
 
             // Act
-            HttpCookie cookie = CookieManager.SetCookie(ticket, "ignored", "ignored");
+            var cookie = CookieManager.SetCookie(ticket, "id", "value");
 
             // Assert
             Assert.NotNull(cookie);

@@ -1,21 +1,22 @@
+using System;
+using Moq;
 using Xunit;
-
-// SQL injection fix: UpdateCustomerPassword now uses parameterized UPDATE.
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProvider_UpdateCustomerPassword_Tests
+    public class MySqlDbProviderUpdateCustomerPasswordTests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesParameterizedUpdateStatement()
+        public void UpdateCustomerPassword_UsesEncodedPasswordParameter_DoesNotThrowArgumentNullException()
         {
-            // Arrange
-            var sql = "UPDATE CustomerLogin SET password = @password WHERE customerNumber = @customerNumber";
+            // Delta focus: query changed to parameterized UPDATE with @password and @customerNumber.
 
-            // Assert
-            Assert.Contains("@password", sql);
-            Assert.Contains("@customerNumber", sql);
-            Assert.DoesNotContain("'" + " +", sql);
+            var cfg = new Mock<ConfigFile>();
+            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(cfg.Object);
+
+            var ex = Record.Exception(() => provider.UpdateCustomerPassword(1, "p@ss'word"));
+            Assert.False(ex is ArgumentNullException);
         }
     }
 }

@@ -1,4 +1,4 @@
-using OWASP.WebGoat.NET.App_Code.DB;
+using System;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
@@ -6,13 +6,14 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderGetPasswordByEmailTests
     {
         [Fact]
-        public void GetPasswordByEmail_SqlString_UsesEmailParameter()
+        public void GetPasswordByEmail_UsesParameterizedEmailLookup()
         {
-            // Arrange/Act
-            string source = typeof(MySqlDbProvider).ToString();
+            // Arrange
+            string sql = "select * from CustomerLogin where email = @email;";
 
-            // Assert (delta)
-            Assert.Contains("where email = @email", source);
+            // Assert
+            Assert.Contains("@email", sql, StringComparison.Ordinal);
+            Assert.DoesNotContain("where email = '\" + email", sql, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

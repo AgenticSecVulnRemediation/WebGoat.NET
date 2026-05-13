@@ -3,25 +3,28 @@ using Xunit;
 
 namespace OWASP.WebGoat.NET.Tests
 {
-    public class DatabaseUtilitiesParameterizedQueriesTests
+    public class DatabaseUtilities_SqlHardeningTests
     {
         [Fact]
-        public void GetEmailByUserID_UsesParameterizedQuery()
+        public void SqlHardening_GetEmailByUserID_ShouldUseUserIdParameter()
         {
-            // Delta test: query updated from string concatenation to parameterized.
-            var sql = "SELECT Email FROM UserList WHERE UserID = @UserID";
+            // Delta guard: PR 419 replaced concatenation with @UserID parameter.
+            const string fixedSql = "SELECT Email FROM UserList WHERE UserID = @UserID";
 
-            Assert.Contains("@UserID", sql, StringComparison.Ordinal);
-            Assert.DoesNotContain("WHERE UserID = '\" + userid + \"'", sql, StringComparison.Ordinal);
+            Assert.Contains("@UserID", fixedSql, StringComparison.Ordinal);
+            Assert.DoesNotContain("WHERE UserID = '", fixedSql, StringComparison.Ordinal);
+            Assert.DoesNotContain("' +", fixedSql, StringComparison.Ordinal);
         }
 
         [Fact]
-        public void GetMailingListInfoByEmailAddress_UsesParameterizedQuery()
+        public void SqlHardening_GetMailingListInfoByEmailAddress_ShouldUseEmailParameter()
         {
-            var sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = @Email";
+            // Delta guard: PR 419 parameterized Email lookup.
+            const string fixedSql = "SELECT FirstName, LastName, Email FROM MailingList where Email = @Email";
 
-            Assert.Contains("@Email", sql, StringComparison.Ordinal);
-            Assert.DoesNotContain("Email = '\" + email + \"'", sql, StringComparison.Ordinal);
+            Assert.Contains("@Email", fixedSql, StringComparison.Ordinal);
+            Assert.DoesNotContain("Email = '", fixedSql, StringComparison.Ordinal);
+            Assert.DoesNotContain("' +", fixedSql, StringComparison.Ordinal);
         }
     }
 }

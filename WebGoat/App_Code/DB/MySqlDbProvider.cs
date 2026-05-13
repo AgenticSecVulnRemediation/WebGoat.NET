@@ -412,12 +412,16 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                sql = "select * from Products where productCode = '" + productCode + "'";
-                da = new MySqlDataAdapter(sql, connection);
+                sql = "select * from Products where productCode = @ProductCode";
+                MySqlCommand cmdProducts = new MySqlCommand(sql, connection);
+                cmdProducts.Parameters.AddWithValue("@ProductCode", productCode);
+                da = new MySqlDataAdapter(cmdProducts, connection);
                 da.Fill(ds, "products");
 
-                sql = "select * from Comments where productCode = '" + productCode + "'";
-                da = new MySqlDataAdapter(sql, connection);
+                sql = "select * from Comments where productCode = @ProductCode";
+                MySqlCommand cmdComments = new MySqlCommand(sql, connection);
+                cmdComments.Parameters.AddWithValue("@ProductCode", productCode);
+                da = new MySqlDataAdapter(cmdComments, connection);
                 da.Fill(ds, "comments");
 
                 DataRelation dr = new DataRelation("prod_comments",

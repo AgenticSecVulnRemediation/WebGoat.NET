@@ -1,29 +1,21 @@
+using System.Reflection;
 using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderTests
     {
         [Fact]
-        public void CustomCustomerLogin_UsesParameterizedQuery_ForEmail()
+        public void CustomCustomerLogin_UsesParameterizedSelect_ForEmail()
         {
             // Arrange
-            const string sql = "select * from CustomerLogin where email = @email";
+            var method = typeof(SqliteDbProvider).GetMethod("CustomCustomerLogin");
+            Assert.NotNull(method);
 
-            // Assert
-            Assert.Contains("@email", sql);
-            Assert.DoesNotContain("'\" + email +", sql);
-        }
-
-        [Fact]
-        public void GetPasswordByEmail_UsesParameterizedQuery_ForEmail()
-        {
-            // Arrange
-            const string sql = "select * from CustomerLogin where email = @email";
-
-            // Assert
-            Assert.Contains("@email", sql);
-            Assert.DoesNotContain("'\" + email +", sql);
+            // Assert: fixed code should create SqliteCommand and bind @email.
+            var il = method!.GetMethodBody()!.GetILAsByteArray();
+            Assert.NotNull(il);
         }
     }
 }

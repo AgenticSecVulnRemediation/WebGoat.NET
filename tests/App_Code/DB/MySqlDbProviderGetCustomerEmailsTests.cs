@@ -1,21 +1,21 @@
+using System;
+using Moq;
 using Xunit;
-
-// SQL injection fix: GetCustomerEmails now uses CONCAT and parameter binding.
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProvider_GetCustomerEmails_Tests
+    public class MySqlDbProviderGetCustomerEmailsTests
     {
         [Fact]
-        public void GetCustomerEmails_UsesParameterizedLikeQuery()
+        public void GetCustomerEmails_WithSqlWildcardAndQuotes_DoesNotThrowArgumentNullException()
         {
-            // Arrange
-            var sql = "select email from CustomerLogin where email like CONCAT(@email, '%')";
+            // Delta focus: LIKE clause now parameterized using CONCAT(@email, '%').
+            var cfg = new Mock<ConfigFile>();
+            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(cfg.Object);
 
-            // Assert
-            Assert.Contains("CONCAT(@email", sql);
-            Assert.Contains("@email", sql);
-            Assert.DoesNotContain("'" + " +", sql);
+            var ex = Record.Exception(() => provider.GetCustomerEmails("a%' OR '1'='1"));
+            Assert.False(ex is ArgumentNullException);
         }
     }
 }

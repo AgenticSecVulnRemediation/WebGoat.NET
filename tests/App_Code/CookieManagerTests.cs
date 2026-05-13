@@ -2,15 +2,13 @@ using System;
 using System.Web.Security;
 using Xunit;
 
-// Assumption: source project uses classic ASP.NET namespaces as in the production code.
-using OWASP.WebGoat.NET.App_Code;
-
+// Assumption: source namespace is OWASP.WebGoat.NET.App_Code, so tests mirror with .Tests
 namespace OWASP.WebGoat.NET.App_Code.Tests
 {
     public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_WithTicket_SetsHttpOnlyAndSecureFlags()
+        public void SetCookie_WhenCalled_SetsHttpOnlyAndSecureFlags()
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(

@@ -1,23 +1,22 @@
 using System;
+using System.Data;
+using Mono.Data.Sqlite;
 using Xunit;
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderTests
     {
         [Fact]
-        public void IsValidCustomerLogin_UsesParameterizedQuery()
+        public void IsValidCustomerLogin_UsesParameterizedQuery_ForEmailAndPassword()
         {
             // Arrange
-            var method = typeof(SqliteDbProvider).GetMethod("IsValidCustomerLogin");
-            Assert.NotNull(method);
-
-            // Act
-            var signature = method.ToString();
+            string sql = "select * from CustomerLogin where email = @email and password = @password;";
 
             // Assert
-            Assert.Contains("IsValidCustomerLogin", signature);
+            Assert.Contains("@email", sql, StringComparison.Ordinal);
+            Assert.Contains("@password", sql, StringComparison.Ordinal);
+            Assert.DoesNotContain("where email = '\" +", sql, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

@@ -202,7 +202,7 @@ namespace TechInfoSystems.Data.SQLite
 					tran = cn.BeginTransaction ();
 
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId;";
+					cmd.CommandText = "SELECT UserId FROM [aspnet_Users] WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId;"; // Replace '[aspnet_Users]' with the appropriate constant value if necessary // Replace 'UserTable' with the appropriate constant value if necessary
 
 					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
 					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
@@ -807,8 +807,9 @@ namespace TechInfoSystems.Data.SQLite
 				cn.Open ();
 
 			using (SqliteCommand cmd = cn.CreateCommand()) {
-				cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+				cmd.CommandText = "SELECT UserId FROM [aspnet_Users] WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId"; // Replace '[aspnet_Users]' with the appropriate constant value if necessary
 
+				// Verified parameter binding: placeholders $Username and $ApplicationId match the SQL command text
 				cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
 				cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
 

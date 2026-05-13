@@ -1,35 +1,50 @@
 using System;
 using System.Data;
 using Mono.Data.Sqlite;
-using TechInfoSystems.Data.SQLite;
 using Xunit;
-
-// Assumption: production code is compiled into the same solution and namespace TechInfoSystems.Data.SQLite.
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
-    public class SQLiteProfileProviderTests
+    public class SQLiteProfileProviderDeleteProfileParameterPrefixTests
     {
         [Fact]
-        public void DeleteProfiles_UsesAtParameterPrefix_DoesNotThrow()
+        public void DeleteProfile_CommandText_UsesAtParameters_NotDollarParameters()
         {
-            // Arrange
-            // We can't easily intercept the command text without heavy refactoring; instead we assert the behavior
-            // affected by the change: the provider uses '@' parameters in DeleteProfile and should execute without
-            // parameter placeholder mismatch.
-            // This test is a regression guard against reverting to '$' placeholders in this code path.
+            // This is a strict delta regression test: the patch changed parameter placeholders
+            // in DeleteProfile from $Username/$ApplicationId/$UserId to @Username/@ApplicationId/@UserId.
+            // We validate by scanning the updated source text embedded as a resource.
+            // Assumption: test project includes the production source file as a linked file resource named exactly as file path.
 
-            var provider = new SQLiteProfileProvider();
+            var source = SourceText.Read("WebGoat/Code/SQLiteProfileProvider.cs");
 
-            // Create minimal SettingsContext/PropertyCollection for Initialize is not needed for calling private method,
-            // so we validate via reflection on the private DeleteProfile method signature and its SQL constants.
-            var deleteProfile = typeof(SQLiteProfileProvider).GetMethod("DeleteProfile", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            Assert.NotNull(deleteProfile);
+            Assert.Contains("LoweredUsername = @Username", source);
+            Assert.Contains("ApplicationId = @ApplicationId", source);
+            Assert.Contains("WHERE UserId = @UserId", source);
 
-            // Act & Assert
-            // Ensure the new SQL uses '@' placeholders (diff changed $ -> @)
-            var body = deleteProfile.ToString();
-            Assert.Contains("DeleteProfile", body);
+            Assert.DoesNotContain("LoweredUsername = $Username", source);
+            Assert.DoesNotContain("ApplicationId = $ApplicationId", source);
+            Assert.DoesNotContain("WHERE UserId = $UserId", source);
+        }
+    }
+
+    internal static class SourceText
+    {
+        public static string Read(string resourcePath)
+        {
+            // Minimal, deterministic helper: if the build doesn't embed sources,
+            // this fails clearly and forces alignment rather than silently passing.
+            var asm = typeof(SourceText).Assembly;
+            var normalized = resourcePath.Replace('/', '.').Replace('\\', '.');
+            foreach (var name in asm.GetManifestResourceNames())
+            {
+                if (name.EndsWith(normalized, StringComparison.OrdinalIgnoreCase))
+                {
+                    using var s = asm.GetManifestResourceStream(name);
+                    using var r = new System.IO.StreamReader(s!);
+                    return r.ReadToEnd();
+                }
+            }
+            throw new InvalidOperationException($"Embedded resource not found for '{resourcePath}'. Ensure the source file is embedded for this delta test.");
         }
     }
 }

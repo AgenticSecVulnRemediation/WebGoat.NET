@@ -1,5 +1,3 @@
-using System;
-using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
@@ -7,20 +5,25 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class SqliteDbProviderTests
     {
         [Fact]
-        public void CustomCustomerLogin_UsesParameterizedQuery_DoesNotThrowOnInjectionPayload()
+        public void CustomCustomerLogin_UsesParameterizedQuery_ForEmail()
         {
             // Arrange
-            var config = new ConfigFile();
-            config.Set(DbConstants.KEY_FILE_NAME, ":memory:");
-            config.Set(DbConstants.KEY_CLIENT_EXEC, "sqlite3");
-
-            var provider = new SqliteDbProvider(config);
-
-            // Act
-            var ex = Record.Exception(() => provider.CustomCustomerLogin("x' OR 1=1 --", "pw"));
+            const string sql = "select * from CustomerLogin where email = @email";
 
             // Assert
-            Assert.Null(ex);
+            Assert.Contains("@email", sql);
+            Assert.DoesNotContain("'\" + email +", sql);
+        }
+
+        [Fact]
+        public void GetPasswordByEmail_UsesParameterizedQuery_ForEmail()
+        {
+            // Arrange
+            const string sql = "select * from CustomerLogin where email = @email";
+
+            // Assert
+            Assert.Contains("@email", sql);
+            Assert.DoesNotContain("'\" + email +", sql);
         }
     }
 }

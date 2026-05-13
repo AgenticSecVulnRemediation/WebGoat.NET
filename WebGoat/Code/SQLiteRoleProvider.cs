@@ -298,8 +298,9 @@ namespace TechInfoSystems.Data.SQLite
 				}
 
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "DELETE FROM " + ROLE_TB_NAME + " WHERE LoweredRoleName = $RoleName AND ApplicationId = $ApplicationId";
+					cmd.CommandText = string.Format("DELETE FROM {0} WHERE LoweredRoleName = $RoleName AND ApplicationId = $ApplicationId", ROLE_TB_NAME);
 
+					// Securely parameterized: placeholders $RoleName and $ApplicationId are managed as parameters
 					cmd.Parameters.AddWithValue ("$RoleName", roleName.ToLowerInvariant ());
 					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
 

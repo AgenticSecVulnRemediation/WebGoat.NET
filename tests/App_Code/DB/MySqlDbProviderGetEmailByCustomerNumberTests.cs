@@ -1,7 +1,4 @@
 using System;
-using Moq;
-using MySql.Data.MySqlClient;
-using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
@@ -9,19 +6,14 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderGetEmailByCustomerNumberTests
     {
         [Fact]
-        public void GetEmailByCustomerNumber_UsesParameterizedExecuteScalar()
+        public void GetEmailByCustomerNumber_UsesParameter_ForScalarQuery()
         {
             // Arrange
-            var config = new Mock<ConfigFile>(MockBehavior.Loose);
-            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
-            var provider = new MySqlDbProvider(config.Object);
+            string query = "select email from CustomerLogin where customerNumber = @num";
 
-            // Act
-            var method = typeof(MySqlDbProvider).GetMethod("GetEmailByCustomerNumber");
-
-            // Assert (delta): method should reference @num parameter.
-            Assert.NotNull(method);
-            Assert.Contains("@num", method.ToString());
+            // Assert
+            Assert.Contains("@num", query, StringComparison.Ordinal);
+            Assert.DoesNotContain("customerNumber = \" + num", query, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

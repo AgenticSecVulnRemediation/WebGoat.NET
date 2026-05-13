@@ -45,6 +45,9 @@ namespace OWASP.WebGoat.NET
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
 
+                        cookie.HttpOnly = true; // Ensures the cookie is not accessible via JavaScript
+            cookie.Secure = true;   // Ensures the cookie is only sent over HTTPS
+            cookie.SameSite = SameSiteMode.Strict;  // Enforces strict same-site policies
             Response.Cookies.Add(cookie); 
         }
 

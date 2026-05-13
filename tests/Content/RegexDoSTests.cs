@@ -1,19 +1,18 @@
 using System;
 using Xunit;
 
-namespace OWASP.WebGoat.NET.Tests.Content
+namespace OWASP.WebGoat.NET.Tests
 {
-    public class RegexDosTests
+    public class RegexDoSTests
     {
         [Fact]
-        public void RegexConstruction_UsesMatchTimeout()
+        public void RegexConstructor_UsesTimeout_ToMitigateReDoS()
         {
             // Arrange
-            // We validate the delta behavior by ensuring the overload with timeout is used.
-            var pattern = "a+";
+            var userSuppliedPattern = "(a+)+$";
 
             // Act
-            var regex = new System.Text.RegularExpressions.Regex(pattern, System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromMilliseconds(1000));
+            var regex = new System.Text.RegularExpressions.Regex(userSuppliedPattern, System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromMilliseconds(1000));
 
             // Assert
             Assert.Equal(TimeSpan.FromMilliseconds(1000), regex.MatchTimeout);

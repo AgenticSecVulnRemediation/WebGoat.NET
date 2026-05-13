@@ -1,9 +1,9 @@
 using System;
 using System.Web.Security;
-using OWASP.WebGoat.NET.App_Code;
 using Xunit;
 
-// Assumption: source namespace is OWASP.WebGoat.NET.App_Code (as declared in source file)
+// Assumption: source project uses classic ASP.NET namespaces as in the production code.
+using OWASP.WebGoat.NET.App_Code;
 
 namespace OWASP.WebGoat.NET.App_Code.Tests
 {
@@ -16,13 +16,13 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
             var ticket = new FormsAuthenticationTicket(
                 1,
                 "user",
-                DateTime.UtcNow.AddMinutes(-1),
+                DateTime.UtcNow,
                 DateTime.UtcNow.AddMinutes(30),
                 false,
                 "data");
 
             // Act
-            var cookie = CookieManager.SetCookie(ticket, "id", "value");
+            var cookie = CookieManager.SetCookie(ticket, "ignored", "ignored");
 
             // Assert
             Assert.NotNull(cookie);

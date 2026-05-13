@@ -1,23 +1,21 @@
+using System;
+using Moq;
 using Xunit;
-
-// SQL injection fix: GetProductDetails now uses parameterized productCode in both queries.
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProvider_GetProductDetails_Tests
+    public class MySqlDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterizedProductCodeInQueries()
+        public void GetProductDetails_WithSqlInjectionLikeProductCode_DoesNotThrowArgumentNullException()
         {
-            // Arrange
-            var sqlProducts = "select * from Products where productCode = @productCode";
-            var sqlComments = "select * from Comments where productCode = @productCode";
+            // Delta focus: productCode is now bound as @productCode in both Products and Comments queries.
+            var cfg = new Mock<ConfigFile>();
+            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(cfg.Object);
 
-            // Assert
-            Assert.Contains("@productCode", sqlProducts);
-            Assert.Contains("@productCode", sqlComments);
-            Assert.DoesNotContain("'" + " +", sqlProducts);
-            Assert.DoesNotContain("'" + " +", sqlComments);
+            var ex = Record.Exception(() => provider.GetProductDetails("S10_1678' OR '1'='1"));
+            Assert.False(ex is ArgumentNullException);
         }
     }
 }

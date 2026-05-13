@@ -6,6 +6,8 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Collections;
 using System.Collections.Specialized;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace OWASP.WebGoat.NET
 {
@@ -16,7 +18,9 @@ namespace OWASP.WebGoat.NET
             if (Request.QueryString["Cookie"] != null)
             {
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
+                cookie.Value = GenerateSignedCookieValue(Request.QueryString["Cookie"]);
+                cookie.HttpOnly = true;
+                cookie.Secure = true;
 
                 Response.Cookies.Add(cookie);
             }
@@ -43,5 +47,20 @@ namespace OWASP.WebGoat.NET
             //possibly going to be used later for something interesting
 
         }
+
+        // Helper method to generate a signed cookie value.
+        // TODO: Replace the secret key with an appropriate production value.
+        private string GenerateSignedCookieValue(string input)
+        {
+            string secretKey = "ReplaceWithYourSecretKey";
+            using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)))
+            {
+                byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+                byte[] hashBytes = hmac.ComputeHash(inputBytes);
+                string signature = Convert.ToBase64String(hashBytes);
+                return input + "|sig=" + signature;
+            }
+        }
+
     }
 }

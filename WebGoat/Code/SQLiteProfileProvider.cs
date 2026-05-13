@@ -712,13 +712,12 @@ namespace TechInfoSystems.Data.SQLite
 				SqliteConnection cn = GetDbConnectionForProfile ();
 				try {
 					using (SqliteCommand cmd = cn.CreateCommand()) {
-						cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
+						cmd.CommandText = $"INSERT INTO {APP_TB_NAME} (ApplicationId, ApplicationName, Description) VALUES (?, ?, ? )";
 
 						string profileApplicationId = Guid.NewGuid ().ToString ();
 
-						cmd.Parameters.AddWithValue ("$ApplicationId", profileApplicationId);
-						cmd.Parameters.AddWithValue ("$ApplicationName", _applicationName);
-						cmd.Parameters.AddWithValue ("$Description", String.Empty);
+						var parameters = new object[] { profileApplicationId, _applicationName, String.Empty }; // TODO: Replace any placeholder values as necessary
+						cmd.Parameters.AddRange(parameters);
 
 						if (cn.State == ConnectionState.Closed)
 							cn.Open ();

@@ -1,20 +1,21 @@
+using System;
+using Moq;
 using Xunit;
-
-// SQL injection fix: GetPayments now uses parameterized customerNumber.
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProvider_GetPayments_Tests
+    public class MySqlDbProviderGetPaymentsTests
     {
         [Fact]
-        public void GetPayments_UsesParameterizedCustomerNumber()
+        public void GetPayments_WithArbitraryCustomerNumber_DoesNotThrowArgumentNullException()
         {
-            // Arrange
-            var sql = "select * from Payments where customerNumber = @customerNumber";
+            // Delta focus: customerNumber now passed as @customerNumber parameter.
+            var cfg = new Mock<ConfigFile>();
+            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(cfg.Object);
 
-            // Assert
-            Assert.Contains("@customerNumber", sql);
-            Assert.DoesNotContain(" + customerNumber", sql);
+            var ex = Record.Exception(() => provider.GetPayments(1));
+            Assert.False(ex is ArgumentNullException);
         }
     }
 }

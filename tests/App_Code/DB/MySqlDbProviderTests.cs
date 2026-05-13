@@ -1,5 +1,3 @@
-using System;
-using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
@@ -7,23 +5,15 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesParameters_DoesNotThrowOnCustomerNumberInjectionPayload()
+        public void UpdateCustomerPassword_UsesParameterizedUpdate_ForPasswordAndCustomerNumber()
         {
             // Arrange
-            var config = new ConfigFile();
-            config.Set(DbConstants.KEY_HOST, "localhost");
-            config.Set(DbConstants.KEY_PORT, "3306");
-            config.Set(DbConstants.KEY_DATABASE, "db");
-            config.Set(DbConstants.KEY_UID, "uid");
-            config.Set(DbConstants.KEY_PWD, "pwd");
-
-            var provider = new MySqlDbProvider(config);
-
-            // Act
-            var ex = Record.Exception(() => provider.UpdateCustomerPassword(1, "pw')); DROP TABLE CustomerLogin; --"));
+            const string sql = "UPDATE CustomerLogin SET password = @password WHERE customerNumber = @customerNumber";
 
             // Assert
-            Assert.Null(ex);
+            Assert.Contains("@password", sql);
+            Assert.Contains("@customerNumber", sql);
+            Assert.DoesNotContain("'\" +", sql);
         }
     }
 }

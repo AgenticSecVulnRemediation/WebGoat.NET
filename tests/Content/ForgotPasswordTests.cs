@@ -1,47 +1,57 @@
-using Xunit;
-using System.Web;
-using System.IO;
 using System;
+using System.Collections.Specialized;
+using System.Web;
+using System.Web.UI.WebControls;
+using Moq;
+using Xunit;
 
-// Assumption: page class is OWASP.WebGoat.NET.ForgotPassword per source.
-using OWASP.WebGoat.NET;
+// Assumptions:
+// - Code-behind class is OWASP.WebGoat.NET.ForgotPassword
+// - Panels/labels/textboxes exist as fields created by ASP.NET designer
 
-namespace OWASP.WebGoat.NET.Tests
+namespace OWASP.WebGoat.NET.Tests.Content
 {
     public class ForgotPasswordTests
     {
         [Fact]
-        public void ButtonCheckEmail_Click_SetsSecurityAnswerCookieHttpOnly()
+        public void ButtonCheckEmailClick_SetsCookie_HttpOnly_True()
         {
-            // Arrange: set up a minimal HttpContext so Response.Cookies can be written.
+            // Arrange
+            var page = new OWASP.WebGoat.NET.ForgotPassword();
+
+            // Inject minimal control graph expected by handler
+            page.GetType().GetField("PanelForgotPasswordStep2", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)
+                ?.SetValue(page, new Panel());
+            page.GetType().GetField("PanelForgotPasswordStep3", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)
+                ?.SetValue(page, new Panel());
+            page.GetType().GetField("labelQuestion", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)
+                ?.SetValue(page, new Label());
+            page.GetType().GetField("txtEmail", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)
+                ?.SetValue(page, new TextBox { Text = "user@example.com" });
+
+            var dbProvider = new Mock<OWASP.WebGoat.NET.App_Code.DB.IDbProvider>(MockBehavior.Strict);
+            dbProvider.Setup(p => p.GetSecurityQuestionAndAnswer("user@example.com"))
+                .Returns(new[] { "Q", "A" });
+
+            // Put mock provider into the private field 'du'
+            page.GetType().GetField("du", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                ?.SetValue(page, dbProvider.Object);
+
             var request = new HttpRequest("", "http://localhost/ForgotPassword.aspx", "");
-            var response = new HttpResponse(new StringWriter());
-            HttpContext.Current = new HttpContext(request, response);
+            var response = new HttpResponse(new System.IO.StringWriter());
+            var context = new HttpContext(request, response);
+            HttpContext.Current = context;
 
-            var page = new ForgotPassword();
-
-            // Act: invoke handler via reflection (protected method)
-            var mi = typeof(ForgotPassword).GetMethod("ButtonCheckEmail_Click", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            Assert.NotNull(mi);
-
-            // Provide dummy sender/args; handler reads txtEmail and db provider, so we only assert cookie flags are set
-            // when cookie is created. If the handler short-circuits, cookie won't exist.
-            // Therefore we assert that if cookie exists, it must be HttpOnly.
-            try
-            {
-                mi!.Invoke(page, new object[] { page, EventArgs.Empty });
-            }
-            catch
-            {
-                // Ignore: handler depends on DB and controls not initialized in unit test.
-            }
+            // Act
+            var method = typeof(OWASP.WebGoat.NET.ForgotPassword).GetMethod("ButtonCheckEmail_Click", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            method!.Invoke(page, new object?[] { null, EventArgs.Empty });
 
             // Assert
-            var cookie = HttpContext.Current.Response.Cookies["encr_sec_qu_ans"];
-            if (cookie != null)
-            {
-                Assert.True(cookie.HttpOnly);
-            }
+            var cookie = context.Response.Cookies["encr_sec_qu_ans"];
+            Assert.NotNull(cookie);
+            Assert.True(cookie!.HttpOnly);
+
+            dbProvider.VerifyAll();
         }
     }
 }

@@ -1,14 +1,14 @@
 using System;
 using System.Web.Security;
 using Xunit;
+using OWASP.WebGoat.NET.App_Code;
 
-// Assumption: source namespace is OWASP.WebGoat.NET.App_Code, so tests mirror with .Tests
 namespace OWASP.WebGoat.NET.App_Code.Tests
 {
     public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_WhenCalled_SetsHttpOnlyAndSecureFlags()
+        public void SetCookie_CreatesAuthCookie_SetsHttpOnlyAndSecure()
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(
@@ -17,13 +17,14 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
                 DateTime.UtcNow,
                 DateTime.UtcNow.AddMinutes(30),
                 false,
-                "data");
+                "userData");
 
             // Act
             var cookie = CookieManager.SetCookie(ticket, "ignored", "ignored");
 
             // Assert
             Assert.NotNull(cookie);
+            Assert.Equal(FormsAuthentication.FormsCookieName, cookie.Name);
             Assert.True(cookie.HttpOnly);
             Assert.True(cookie.Secure);
         }

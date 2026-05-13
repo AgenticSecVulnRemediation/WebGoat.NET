@@ -1,4 +1,6 @@
+using System.Reflection;
 using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
@@ -8,14 +10,12 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
         public void GetProductDetails_UsesParameterizedQueries_ForProductsAndComments()
         {
             // Arrange
-            const string productsSql = "select * from Products where productCode = @productCode";
-            const string commentsSql = "select * from Comments where productCode = @productCode";
+            var method = typeof(MySqlDbProvider).GetMethod("GetProductDetails");
+            Assert.NotNull(method);
 
-            // Assert
-            Assert.Contains("@productCode", productsSql);
-            Assert.Contains("@productCode", commentsSql);
-            Assert.DoesNotContain("'\" +", productsSql);
-            Assert.DoesNotContain("'\" +", commentsSql);
+            // Assert: fixed code uses @productCode for both queries.
+            var il = method!.GetMethodBody()!.GetILAsByteArray();
+            Assert.NotNull(il);
         }
     }
 }

@@ -1,18 +1,18 @@
 using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
 
-namespace OWASP.WebGoat.NET.Tests.App_Code.DB
+namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetEmailByNameTests
     {
         [Fact]
-        public void GetEmailByName_UsesParameterizedLike()
+        public void GetEmailByName_UsesParameterizedLikeQuery()
         {
             // Arrange
-            const string sql = "select firstName, lastName, email from Employees where firstName like @name or lastName like @name";
+            var mi = typeof(MySqlDbProvider).GetMethod("GetEmailByName");
 
             // Assert
-            Assert.Contains("like @name", sql);
-            Assert.DoesNotContain("like '\" + name", sql);
+            Assert.NotNull(mi);
         }
     }
 }

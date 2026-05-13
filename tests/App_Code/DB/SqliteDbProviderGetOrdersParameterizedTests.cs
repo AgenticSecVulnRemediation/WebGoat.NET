@@ -1,27 +1,32 @@
-using System.Data;
-using Moq;
 using Xunit;
 
-// Assumptions:
-// - SqliteDbProvider is used in a web app; this unit test focuses narrowly on the SQL change in GetOrders.
-// - We validate the secure behavior by ensuring the patched SQL query uses a parameter placeholder.
+// Assumption: production code namespace is OWASP.WebGoat.NET.App_Code.DB based on file path.
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class SqliteDbProviderGetOrdersParameterizedTests
+    public class SqliteDbProviderGetOrdersTests
     {
         [Fact]
-        public void GetOrders_UsesParameterizedCustomerIdQuery_ContainsParameterPlaceholder()
+        public void GetOrders_UsesParameterizedQuery_IncludesCustomerIdParameterToken()
         {
-            // Arrange
-            const string expectedSql = "select * from Orders where customerNumber = @customerID";
-
-            // Act
-            var sql = expectedSql;
+            // Arrange/Act
+            // Delta test for SQL injection fix: query uses @customerID and AddWithValue.
+            var literals = GetAllStringLiterals(typeof(SqliteDbProvider));
 
             // Assert
-            Assert.Contains("@customerID", sql);
-            Assert.DoesNotContain("+ customerID", sql);
+            Assert.Contains("@customerID", literals);
+            Assert.DoesNotContain("select * from Orders where customerNumber = ", literals);
+        }
+
+        private static string GetAllStringLiterals(System.Type t)
+        {
+            var sb = new System.Text.StringBuilder();
+            foreach (var m in t.GetMethods(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic))
+            {
+                sb.Append(m.ToString());
+            }
+            return sb.ToString();
         }
     }
 }

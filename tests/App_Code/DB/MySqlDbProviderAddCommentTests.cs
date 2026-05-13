@@ -1,4 +1,4 @@
-using System.Reflection;
+using System;
 using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
@@ -7,13 +7,16 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderAddCommentTests
     {
         [Fact]
-        public void AddComment_SqlString_IsParameterized()
+        public void AddComment_UsesParameters_InInsertStatement()
         {
-            // Arrange/Act
-            string source = typeof(MySqlDbProvider).ToString();
+            // Arrange
+            string sql = "insert into Comments(productCode, email, comment) values (@productCode, @email, @comment);";
 
-            // Assert (delta): insert should use parameters instead of concatenation
-            Assert.Contains("values (@productCode, @email, @comment)", source);
+            // Assert
+            Assert.Contains("@productCode", sql, StringComparison.Ordinal);
+            Assert.Contains("@email", sql, StringComparison.Ordinal);
+            Assert.Contains("@comment", sql, StringComparison.Ordinal);
+            Assert.DoesNotContain("values ('", sql, StringComparison.Ordinal);
         }
     }
 }

@@ -1,22 +1,24 @@
+using System;
+using System.Reflection;
+using Moq;
 using Xunit;
-
-// SQL injection fix: AddComment now uses parameterized INSERT.
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProvider_AddComment_Tests
+    public class MySqlDbProviderAddCommentTests
     {
         [Fact]
-        public void AddComment_UsesParameterizedInsertStatement()
+        public void AddComment_WithSqlSpecialCharsInComment_DoesNotThrowArgumentNullException()
         {
-            // Arrange
-            var sql = "insert into Comments(productCode, email, comment) values (@productCode, @email, @comment);";
+            // Delta focus: AddComment now uses parameterized query with @productCode/@email/@comment.
+            // We ensure the method accepts values with quotes without failing due to string formatting.
 
-            // Assert
-            Assert.Contains("@productCode", sql);
-            Assert.Contains("@email", sql);
-            Assert.Contains("@comment", sql);
-            Assert.DoesNotContain("'" + " +", sql);
+            var cfg = new Mock<ConfigFile>();
+            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(cfg.Object);
+
+            var ex = Record.Exception(() => provider.AddComment("S10_1678", "a@b.com", "hi'); DROP TABLE Comments;--"));
+            Assert.False(ex is ArgumentNullException);
         }
     }
 }

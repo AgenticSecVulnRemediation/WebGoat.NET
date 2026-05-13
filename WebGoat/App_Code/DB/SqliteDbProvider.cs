@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using Mono.Data.Sqlite;
+using System.Data.SQLite;
 using log4net;
 using System.Reflection;
 using System.IO;
@@ -494,7 +495,7 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             //catNumber is optional.  If it is greater than 0, add the clause to both statements.
             string catClause = string.Empty;
             if (catNumber >= 1)
-                catClause += " where catNumber = " + catNumber; 
+                catClause = " where catNumber = @catNumber"; 
 
 
             using (SqliteConnection connection = new SqliteConnection(_connectionString))
@@ -502,11 +503,19 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                 connection.Open();
 
                 sql = "select * from Categories" + catClause;
-                da = new SqliteDataAdapter(sql, connection);
+                SqliteCommand cmdCategories = new SqliteCommand(sql, connection);
+                if (catNumber >= 1) {
+                    cmdCategories.Parameters.AddWithValue("@catNumber", catNumber);
+                }
+                da = new SqliteDataAdapter(cmdCategories);
                 da.Fill(ds, "categories");
 
                 sql = "select * from Products" + catClause;
-                da = new SqliteDataAdapter(sql, connection);
+                SqliteCommand cmdProducts = new SqliteCommand(sql, connection);
+                if (catNumber >= 1) {
+                    cmdProducts.Parameters.AddWithValue("@catNumber", catNumber);
+                }
+                da = new SqliteDataAdapter(cmdProducts);
                 da.Fill(ds, "products");
 
 

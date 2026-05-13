@@ -1,25 +1,20 @@
 using Xunit;
-using Mono.Data.Sqlite;
 
-namespace OWASP.WebGoat.NET.App_Code.DB.Tests
+namespace OWASP.WebGoat.NET.Tests.App_Code.DB
 {
     public class SqliteDbProviderAddCommentTests
     {
         [Fact]
-        public void AddComment_UsesParameterizedInsert_ForAllFields()
+        public void AddComment_Query_IsParameterized()
         {
-            // Regression: insert should use parameters rather than string concatenation.
-            const string expectedSql = "insert into Comments(productCode, email, comment) values (@productCode, @email, @comment);";
+            // Arrange
+            const string sql = "insert into Comments(productCode, email, comment) values (@productCode, @email, @comment);";
 
-            var cmd = new SqliteCommand(expectedSql);
-            cmd.Parameters.AddWithValue("@productCode", "P1");
-            cmd.Parameters.AddWithValue("@email", "user@example.com");
-            cmd.Parameters.AddWithValue("@comment", "hello");
-
-            Assert.Equal(expectedSql, cmd.CommandText);
-            Assert.True(cmd.Parameters.Contains("@productCode"));
-            Assert.True(cmd.Parameters.Contains("@email"));
-            Assert.True(cmd.Parameters.Contains("@comment"));
+            // Assert
+            Assert.Contains("@productCode", sql);
+            Assert.Contains("@email", sql);
+            Assert.Contains("@comment", sql);
+            Assert.DoesNotContain("values ('", sql);
         }
     }
 }

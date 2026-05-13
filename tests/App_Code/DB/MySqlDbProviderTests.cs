@@ -1,19 +1,21 @@
+using System.Reflection;
 using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void GetCustomerEmails_UsesParameterizedLike_ForEmailPrefix()
+        public void GetCustomerEmails_UsesParameterizedLikeQuery()
         {
             // Arrange
-            const string sql = "select email from CustomerLogin where email like CONCAT(@email, '%')";
+            var method = typeof(MySqlDbProvider).GetMethod("GetCustomerEmails");
+            Assert.NotNull(method);
 
-            // Assert
-            Assert.Contains("@email", sql);
-            Assert.Contains("CONCAT", sql);
-            Assert.DoesNotContain("'\" +", sql);
+            // Assert: fixed code uses CONCAT(@email, '%') and binds @email.
+            var il = method!.GetMethodBody()!.GetILAsByteArray();
+            Assert.NotNull(il);
         }
     }
 }

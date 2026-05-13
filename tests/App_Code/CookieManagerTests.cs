@@ -9,14 +9,14 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
     public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_SetsHttpOnly_WhenCreatingAuthCookie()
+        public void SetCookie_CreatesCookieWithHttpOnlyFlag_SetToTrue()
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(
                 1,
                 "user",
-                DateTime.Now,
-                DateTime.Now.AddMinutes(30),
+                DateTime.UtcNow,
+                DateTime.UtcNow.AddMinutes(30),
                 false,
                 "userdata");
 

@@ -459,8 +459,10 @@ namespace OWASP.WebGoat.NET.App_Code.DB
         {
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                string sql = "select * from Payments where customerNumber = " + customerNumber;
-                MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
+                string sql = "select * from Payments where customerNumber = @customerNumber";
+                MySqlCommand cmd = new MySqlCommand(sql, connection);
+                cmd.Parameters.AddWithValue("@customerNumber", customerNumber); // TODO: Review and replace the placeholder if necessary
+                MySqlDataAdapter da = new MySqlDataAdapter(cmd);
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 

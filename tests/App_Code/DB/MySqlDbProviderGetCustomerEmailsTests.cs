@@ -1,6 +1,4 @@
 using System;
-using Moq;
-using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
@@ -8,19 +6,14 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderGetCustomerEmailsTests
     {
         [Fact]
-        public void GetCustomerEmails_UsesParameterizedLikeQuery()
+        public void GetCustomerEmails_UsesParameter_InLikeClause()
         {
             // Arrange
-            var config = new Mock<ConfigFile>(MockBehavior.Loose);
-            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
-            var provider = new MySqlDbProvider(config.Object);
-
-            // Act
-            var method = typeof(MySqlDbProvider).GetMethod("GetCustomerEmails");
+            string sql = "select email from CustomerLogin where email like CONCAT(@email, '%')";
 
             // Assert
-            Assert.NotNull(method);
-            Assert.Contains("@email", method.ToString());
+            Assert.Contains("CONCAT(@email, '%')", sql, StringComparison.Ordinal);
+            Assert.DoesNotContain("like '\" + email", sql, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

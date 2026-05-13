@@ -5,38 +5,36 @@ using Xunit;
 
 namespace OWASP.WebGoat.NET.WebGoatCoins.Tests
 {
-    public class ForgotPasswordTests
+    public class ForgotPasswordCookieFlagsTests
     {
         [Fact]
-        public void ButtonCheckEmailClick_SetsSecurityAnswerCookie_HttpOnlyAndSecure()
+        public void Cookie_encr_sec_qu_ans_MustBeHttpOnlyAndSecure_WhenIssued()
         {
-            // Arrange
-            var request = new HttpRequest("", "https://localhost/WebGoatCoins/ForgotPassword.aspx", "");
-            var response = new HttpResponse(new System.IO.StringWriter());
-            HttpContext.Current = new HttpContext(request, response);
+            // Delta: newly added cookie flags must be set.
+            // We assert the exact fixed lines exist to prevent regression.
 
-            var page = new ForgotPassword();
+            var source = SourceText.Read("WebGoat/WebGoatCoins/ForgotPassword.aspx.cs");
+            Assert.Contains("cookie.HttpOnly = true", source);
+            Assert.Contains("cookie.Secure = true", source);
+        }
+    }
 
-            // Act
-            // We can't easily reach the handler without configuring controls/db provider;
-            // therefore we validate the contract by ensuring cookie flags are set when cookie exists.
-            // If the code regresses, HttpOnly/Secure won't be set.
-
-            // Simulate what handler would do: add cookie with expected name and flags
-            // then assert that the fixed code mandates HttpOnly+Secure for that cookie.
-            var cookie = new HttpCookie("encr_sec_qu_ans")
+    internal static class SourceText
+    {
+        public static string Read(string resourcePath)
+        {
+            var asm = typeof(SourceText).Assembly;
+            var normalized = resourcePath.Replace('/', '.').Replace('\\', '.');
+            foreach (var name in asm.GetManifestResourceNames())
             {
-                Value = "x",
-                HttpOnly = true,
-                Secure = true
-            };
-            HttpContext.Current.Response.Cookies.Add(cookie);
-
-            // Assert
-            var written = HttpContext.Current.Response.Cookies["encr_sec_qu_ans"];
-            Assert.NotNull(written);
-            Assert.True(written.HttpOnly);
-            Assert.True(written.Secure);
+                if (name.EndsWith(normalized, StringComparison.OrdinalIgnoreCase))
+                {
+                    using var s = asm.GetManifestResourceStream(name);
+                    using var r = new System.IO.StreamReader(s!);
+                    return r.ReadToEnd();
+                }
+            }
+            throw new InvalidOperationException($"Embedded resource not found for '{resourcePath}'. Ensure the source file is embedded for this delta test.");
         }
     }
 }

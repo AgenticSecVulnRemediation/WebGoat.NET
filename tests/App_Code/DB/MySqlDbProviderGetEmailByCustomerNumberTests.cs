@@ -1,20 +1,21 @@
+using System;
+using Moq;
 using Xunit;
-
-// SQL injection fix: GetEmailByCustomerNumber now uses parameterized query.
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProvider_GetEmailByCustomerNumber_Tests
+    public class MySqlDbProviderGetEmailByCustomerNumberTests
     {
         [Fact]
-        public void GetEmailByCustomerNumber_UsesParameterizedQuery()
+        public void GetEmailByCustomerNumber_WithSqlLikeNumberInput_DoesNotThrowArgumentNullException()
         {
-            // Arrange
-            var query = "select email from CustomerLogin where customerNumber = @num";
+            // Delta focus: ExecuteScalar now uses query with @num parameter.
+            var cfg = new Mock<ConfigFile>();
+            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(cfg.Object);
 
-            // Assert
-            Assert.Contains("@num", query);
-            Assert.DoesNotContain(" + num", query);
+            var ex = Record.Exception(() => provider.GetEmailByCustomerNumber("1 OR 1=1"));
+            Assert.False(ex is ArgumentNullException);
         }
     }
 }

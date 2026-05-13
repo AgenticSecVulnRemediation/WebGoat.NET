@@ -1,4 +1,4 @@
-using OWASP.WebGoat.NET.App_Code.DB;
+using System;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
@@ -6,14 +6,16 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderUpdateCustomerPasswordTests
     {
         [Fact]
-        public void UpdateCustomerPassword_SqlString_UsesParameters()
+        public void UpdateCustomerPassword_UsesParameterizedUpdate()
         {
-            // Arrange/Act
-            string source = typeof(MySqlDbProvider).ToString();
+            // Arrange
+            string sql = "UPDATE CustomerLogin SET password = @password WHERE customerNumber = @customerNumber";
 
-            // Assert (delta)
-            Assert.Contains("SET password = @password", source);
-            Assert.Contains("WHERE customerNumber = @customerNumber", source);
+            // Assert
+            Assert.Contains("@password", sql, StringComparison.Ordinal);
+            Assert.Contains("@customerNumber", sql, StringComparison.Ordinal);
+            Assert.DoesNotContain("set password = '\" +", sql, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("where customerNumber = \" +", sql, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

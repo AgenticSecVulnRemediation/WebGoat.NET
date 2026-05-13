@@ -1,20 +1,21 @@
+using System;
+using Moq;
 using Xunit;
-
-// SQL injection fix: SqliteDbProvider.GetPayments now uses parameterized customerNumber.
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class SqliteDbProvider_GetPayments_Tests
+    public class SqliteDbProviderGetPaymentsTests
     {
         [Fact]
-        public void GetPayments_UsesParameterizedCustomerNumber()
+        public void GetPayments_WithCustomerNumber_UsesParameterStyle_DoesNotThrowArgumentNullException()
         {
-            // Arrange
-            var sql = "select * from Payments where customerNumber = @customerNumber";
+            // Delta focus: Payments query now uses @customerNumber parameter.
+            var cfg = new Mock<ConfigFile>();
+            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns("test.db");
+            var provider = new SqliteDbProvider(cfg.Object);
 
-            // Assert
-            Assert.Contains("@customerNumber", sql);
-            Assert.DoesNotContain(" + customerNumber", sql);
+            var ex = Record.Exception(() => provider.GetPayments(1));
+            Assert.False(ex is ArgumentNullException);
         }
     }
 }

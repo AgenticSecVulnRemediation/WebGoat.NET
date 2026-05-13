@@ -2,14 +2,13 @@ using System;
 using System.Web.Security;
 using Xunit;
 
-using OWASP.WebGoat.NET.App_Code;
-
+// Assumption: source namespace is OWASP.WebGoat.NET.App_Code, so tests mirror with .Tests
 namespace OWASP.WebGoat.NET.App_Code.Tests
 {
-    public class CookieManagerHttpOnlyTests
+    public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_WithTicket_SetsHttpOnlyFlag()
+        public void SetCookie_WhenCalled_SetsHttpOnlyFlag()
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(

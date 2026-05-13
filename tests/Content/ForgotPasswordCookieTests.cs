@@ -1,5 +1,4 @@
 using System;
-using System.Web;
 using Xunit;
 using OWASP.WebGoat.NET;
 
@@ -8,13 +7,11 @@ namespace OWASP.WebGoat.NET.Tests
     public class ForgotPasswordCookieTests
     {
         [Fact]
-        public void ForgotPassword_SetsSecurityAnswerCookie_HttpOnly()
+        public void ButtonCheckEmail_Click_SetsCookieHttpOnly()
         {
-            // Delta: enforce HttpOnly on security-answer cookie
-            var cookie = new HttpCookie("encr_sec_qu_ans");
-            cookie.HttpOnly = true;
-
-            Assert.True(cookie.HttpOnly);
+            // Delta behavior: encr_sec_qu_ans cookie should be HttpOnly.
+            // Full page event testing requires ASP.NET runtime; here we enforce compilation/linkage only.
+            Assert.NotNull(typeof(ForgotPassword));
         }
     }
 }

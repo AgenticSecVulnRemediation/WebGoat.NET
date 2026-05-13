@@ -4,19 +4,19 @@ using Xunit;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
-    public class SQLiteMembershipProviderPasswordStrengthRegexTimeoutTests
+    public class SQLiteMembershipProvider_RegexTimeoutTests
     {
         [Fact]
-        public void CreateUser_PasswordStrengthRegexUsesTimeout_ThrowsRegexMatchTimeoutExceptionForEvilInput()
+        public void PasswordStrengthRegex_WithTimeout_CanThrowRegexMatchTimeoutException()
         {
-            // Delta test for ReDoS fix: Regex.IsMatch now uses a 1-second timeout.
-            // We validate behavior of Regex with explicit timeout representative of the production call.
+            // Delta guard: PR 426 introduced a Regex.IsMatch timeout (TimeSpan.FromSeconds(1)).
+            // We validate the runtime behavior of Regex with an explicit timeout to prevent ReDoS.
 
-            var pattern = "^(a+)+$";
-            var input = new string('a', 100_000) + "!";
+            const string catastrophicPattern = "^(a+)+$";
+            string evilInput = new string('a', 200_000) + "!";
 
             Assert.Throws<RegexMatchTimeoutException>(() =>
-                Regex.IsMatch(input, pattern, RegexOptions.None, TimeSpan.FromSeconds(1))
+                Regex.IsMatch(evilInput, catastrophicPattern, RegexOptions.None, TimeSpan.FromSeconds(1))
             );
         }
     }

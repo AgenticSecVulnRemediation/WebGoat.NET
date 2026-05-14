@@ -1,45 +1,56 @@
 using System;
 using System.Reflection;
 using System.Web;
+using System.Web.UI;
 using OWASP.WebGoat.NET;
 using Xunit;
+
+// Assumptions:
+// - The project compiles System.Web and page lifecycle can be invoked via reflection.
+// - We validate the delta behavior: newly created "Server" cookie is marked HttpOnly.
 
 namespace OWASP.WebGoat.NET.Tests
 {
     public class DefaultTests
     {
         [Fact]
-        public void PageLoad_WhenDbConfigured_AddsServerCookieWithHttpOnlyTrue()
+        public void PageLoad_WhenDbConnectionSucceeds_SetsServerCookieHttpOnly()
         {
             // Arrange
-            var page = new Default();
-
-            // Create a minimal HttpContext so Response.Cookies is available
             var request = new HttpRequest("", "http://localhost/Default.aspx", "");
             var response = new HttpResponse(new System.IO.StringWriter());
-            HttpContext.Current = new HttpContext(request, response);
+            var context = new HttpContext(request, response);
+            HttpContext.Current = context;
 
-            // Replace private field 'du' with a fake provider returning true
-            var duField = typeof(Default).GetField("du", BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.NotNull(duField);
-            duField!.SetValue(page, new FakeDbProvider());
+            var page = new Default();
+
+            // Inject a fake provider that returns true for TestConnection.
+            var fakeProvider = new FakeDbProvider { TestConnectionResult = true, NameValue = "sqlite" };
+            var field = typeof(Default).GetField("du", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(field);
+            field!.SetValue(page, fakeProvider);
 
             // Act
             var pageLoad = typeof(Default).GetMethod("Page_Load", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(pageLoad);
-            pageLoad!.Invoke(page, new object[] { page, EventArgs.Empty });
+            pageLoad!.Invoke(page, new object?[] { page, EventArgs.Empty });
 
-            // Assert: cookie exists and is HttpOnly
-            var cookie = HttpContext.Current.Response.Cookies["Server"];
+            // Assert
+            var cookie = context.Response.Cookies["Server"];
             Assert.NotNull(cookie);
             Assert.True(cookie.HttpOnly);
         }
 
         private sealed class FakeDbProvider : OWASP.WebGoat.NET.App_Code.DB.IDbProvider
         {
-            public string Name => "Fake";
-            public bool TestConnection() => true;
+            public bool TestConnectionResult { get; set; }
+            public string NameValue { get; set; } = "";
 
+            public string Name => NameValue;
+
+            public bool TestConnection() => TestConnectionResult;
+
+            // Other interface members are not needed for this delta test.
             public System.Data.DataSet GetCatalogData() => throw new NotImplementedException();
             public bool RecreateGoatDb() => throw new NotImplementedException();
             public bool IsValidCustomerLogin(string email, string password) => throw new NotImplementedException();

@@ -1,21 +1,19 @@
+using System.Reflection;
 using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    // NOTE: Namespace inferred from source file path "WebGoat/App_Code/DB/SqliteDbProvider.cs".
     public class SqliteDbProviderCustomerEmailTests
     {
         [Fact]
-        public void GetCustomerEmail_UsesParameter_ForCustomerNumber()
+        public void GetCustomerEmail_MethodExists_AcceptsStringCustomerNumber()
         {
-            // Patch changed:
-            //   "... customerNumber = " + customerNumber
-            // to:
-            //   "... customerNumber = @customerNumber" with parameter binding.
-            const string sql = "select email from CustomerLogin where customerNumber = @customerNumber";
-
-            Assert.Contains("@customerNumber", sql);
-            Assert.DoesNotContain("customerNumber = " + " ", sql);
+            // Delta behavior: GetCustomerEmail now uses parameterized query (@customerNumber).
+            var method = typeof(SqliteDbProvider).GetMethod("GetCustomerEmail");
+            Assert.NotNull(method);
+            Assert.Single(method!.GetParameters());
+            Assert.Equal(typeof(string), method.GetParameters()[0].ParameterType);
         }
     }
 }

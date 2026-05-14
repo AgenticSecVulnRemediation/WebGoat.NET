@@ -9,7 +9,7 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
     public class CookieManagerTests
     {
         [Fact]
-        public void SetCookie_WhenCalled_SetsHttpOnlyAndSecureFlags()
+        public void SetCookie_Always_SetsHttpOnlyTrue()
         {
             // Arrange
             var ticket = new FormsAuthenticationTicket(
@@ -18,14 +18,35 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
                 DateTime.UtcNow,
                 DateTime.UtcNow.AddMinutes(30),
                 false,
-                "userdata");
+                "",
+                FormsAuthentication.FormsCookiePath);
 
             // Act
-            HttpCookie cookie = CookieManager.SetCookie(ticket, "ignoredId", "ignoredValue");
+            HttpCookie cookie = CookieManager.SetCookie(ticket, "id", "value");
 
             // Assert
             Assert.NotNull(cookie);
             Assert.True(cookie.HttpOnly);
+        }
+
+        [Fact]
+        public void SetCookie_Always_SetsSecureTrue()
+        {
+            // Arrange
+            var ticket = new FormsAuthenticationTicket(
+                1,
+                "user",
+                DateTime.UtcNow,
+                DateTime.UtcNow.AddMinutes(30),
+                false,
+                "",
+                FormsAuthentication.FormsCookiePath);
+
+            // Act
+            HttpCookie cookie = CookieManager.SetCookie(ticket, "id", "value");
+
+            // Assert
+            Assert.NotNull(cookie);
             Assert.True(cookie.Secure);
         }
     }

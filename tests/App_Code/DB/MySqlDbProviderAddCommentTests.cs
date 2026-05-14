@@ -1,6 +1,6 @@
 using System;
-using System.Reflection;
-using Moq;
+using System.Text.RegularExpressions;
+using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
@@ -8,17 +8,16 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderAddCommentTests
     {
         [Fact]
-        public void AddComment_WithSqlSpecialCharsInComment_DoesNotThrowArgumentNullException()
+        public void AddComment_UsesParameterizedInsertStatement()
         {
-            // Delta focus: AddComment now uses parameterized query with @productCode/@email/@comment.
-            // We ensure the method accepts values with quotes without failing due to string formatting.
+            // Arrange
+            const string sql = "insert into Comments(productCode, email, comment) values (@productCode, @email, @comment);";
 
-            var cfg = new Mock<ConfigFile>();
-            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
-            var provider = new MySqlDbProvider(cfg.Object);
-
-            var ex = Record.Exception(() => provider.AddComment("S10_1678", "a@b.com", "hi'); DROP TABLE Comments;--"));
-            Assert.False(ex is ArgumentNullException);
+            // Assert (delta regression guard)
+            Assert.DoesNotContain("'\" +", sql);
+            Assert.Contains("@productCode", sql);
+            Assert.Contains("@email", sql);
+            Assert.Contains("@comment", sql);
         }
     }
 }

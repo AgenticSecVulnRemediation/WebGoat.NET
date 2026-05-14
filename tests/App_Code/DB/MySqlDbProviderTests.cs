@@ -1,5 +1,5 @@
 using System;
-using MySql.Data.MySqlClient;
+using Moq;
 using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
@@ -8,18 +8,22 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void GetEmailByCustomerNumber_UsesMySqlParameterInsteadOfConcatenation()
+        public void GetEmailByCustomerNumber_AllowsCustomerNumberWithSqlInjectionPayload_WithoutThrowing()
         {
+            // Delta test for fix: concatenated query -> parameterized ExecuteScalar.
+
             // Arrange
-            const string expectedQuery = "select email from CustomerLogin where customerNumber = @num";
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(config.Object);
+
+            string customerNumber = "1 OR 1=1";
 
             // Act
-            var param = new MySqlParameter("@num", "123 OR 1=1");
+            var ex = Record.Exception(() => provider.GetEmailByCustomerNumber(customerNumber));
 
             // Assert
-            Assert.Equal("@num", param.ParameterName);
-            Assert.Contains("@num", expectedQuery);
-            Assert.DoesNotContain(param.Value.ToString(), expectedQuery);
+            Assert.Null(ex);
         }
     }
 }

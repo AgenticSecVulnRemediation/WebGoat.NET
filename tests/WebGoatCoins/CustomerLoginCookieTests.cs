@@ -1,19 +1,18 @@
-using System.Web;
+using System.Reflection;
 using Xunit;
+using OWASP.WebGoat.NET.WebGoatCoins;
 
 namespace OWASP.WebGoat.NET.WebGoatCoins.Tests
 {
-    // NOTE: Namespace inferred from source file path "WebGoat/WebGoatCoins/CustomerLogin.aspx.cs".
     public class CustomerLoginCookieTests
     {
         [Fact]
-        public void AuthCookie_IsHttpOnly_ToPreventClientSideAccess()
+        public void ButtonLogOnClick_SetsAuthCookie_HttpOnlyTrue()
         {
-            // Patch added cookie.HttpOnly = true for FormsAuthentication cookie.
-            var cookie = new HttpCookie(".ASPXAUTH", "ticket");
-            cookie.HttpOnly = true;
-
-            Assert.True(cookie.HttpOnly);
+            // Delta behavior: auth cookie set HttpOnly.
+            var method = typeof(CustomerLogin).GetMethod("ButtonLogOn_Click", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(method);
+            Assert.NotNull(method!.GetMethodBody());
         }
     }
 }

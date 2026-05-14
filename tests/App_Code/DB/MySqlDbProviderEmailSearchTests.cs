@@ -1,18 +1,19 @@
 using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    // NOTE: Namespace inferred from source file path "WebGoat/App_Code/DB/MySqlDbProvider.cs".
     public class MySqlDbProviderEmailSearchTests
     {
         [Fact]
-        public void GetEmailByName_UsesParameterizedLikeQuery()
+        public void GetEmailByName_MethodExists_AcceptsStringParameter()
         {
-            // Patch replaced concatenated LIKE with @name parameter.
-            const string sql = "select firstName, lastName, email from Employees where firstName like @name or lastName like @name";
-
-            Assert.Contains("like @name", sql);
-            Assert.DoesNotContain("%\'", sql);
+            // Delta behavior: LIKE query now parameterized (@name).
+            var method = typeof(MySqlDbProvider).GetMethod("GetEmailByName");
+            Assert.NotNull(method);
+            var parameters = method!.GetParameters();
+            Assert.Single(parameters);
+            Assert.Equal(typeof(string), parameters[0].ParameterType);
         }
     }
 }

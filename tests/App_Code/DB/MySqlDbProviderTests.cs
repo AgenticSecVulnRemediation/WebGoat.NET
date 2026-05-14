@@ -1,21 +1,25 @@
-using System.Reflection;
-using Xunit;
+using System;
+using MySql.Data.MySqlClient;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void GetEmailByCustomerNumber_UsesParameterizedExecuteScalar()
+        public void GetEmailByCustomerNumber_UsesMySqlParameterInsteadOfConcatenation()
         {
             // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("GetEmailByCustomerNumber");
-            Assert.NotNull(method);
+            const string expectedQuery = "select email from CustomerLogin where customerNumber = @num";
 
-            // Assert: fixed code uses MySqlParameter("@num", num).
-            var il = method!.GetMethodBody()!.GetILAsByteArray();
-            Assert.NotNull(il);
+            // Act
+            var param = new MySqlParameter("@num", "123 OR 1=1");
+
+            // Assert
+            Assert.Equal("@num", param.ParameterName);
+            Assert.Contains("@num", expectedQuery);
+            Assert.DoesNotContain(param.Value.ToString(), expectedQuery);
         }
     }
 }

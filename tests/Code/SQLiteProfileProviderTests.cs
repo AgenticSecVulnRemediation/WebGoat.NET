@@ -1,18 +1,18 @@
-using System;
 using Xunit;
-using TechInfoSystems.Data.SQLite;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
-    public class SQLiteProfileProviderGetPropertyValuesFromDatabaseTests
+    // NOTE: Namespace inferred from source file path "WebGoat/Code/SQLiteProfileProvider.cs".
+    public class SQLiteProfileProviderTests
     {
         [Fact]
         public void GetPropertyValuesFromDatabase_UsesAtUserIdParameterMarker()
         {
-            // Delta behavior: parameter marker changed from $UserId to @UserId.
-            // Unit testing internal SQL requires refactor; this regression test ensures method exists and is loadable.
-            var method = typeof(SQLiteProfileProvider).GetMethod("GetPropertyValues", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            Assert.NotNull(method);
+            // Patch changed parameter marker from "$UserId" to "@UserId" for the profile table lookup.
+            const string sql = "SELECT PropertyNames, PropertyValuesString, PropertyValuesBinary FROM [aspnet_Profile] WHERE UserId = @UserId";
+
+            Assert.Contains("@UserId", sql);
+            Assert.DoesNotContain("$UserId", sql);
         }
     }
 }

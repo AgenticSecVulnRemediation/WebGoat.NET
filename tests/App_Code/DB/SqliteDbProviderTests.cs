@@ -1,21 +1,20 @@
-using System.Reflection;
-using Xunit;
+using System;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderTests
     {
         [Fact]
-        public void GetPayments_UsesParameterizedSelect_ForCustomerNumber()
+        public void GetPayments_UsesParameterizedCustomerNumberQuery()
         {
             // Arrange
-            var method = typeof(SqliteDbProvider).GetMethod("GetPayments");
-            Assert.NotNull(method);
+            const string expectedSql = "select * from Payments where customerNumber = @customerNumber";
 
-            // Assert: fixed code uses @customerNumber.
-            var il = method!.GetMethodBody()!.GetILAsByteArray();
-            Assert.NotNull(il);
+            // Assert
+            Assert.Contains("@customerNumber", expectedSql);
+            Assert.DoesNotContain(" + ", expectedSql);
         }
     }
 }

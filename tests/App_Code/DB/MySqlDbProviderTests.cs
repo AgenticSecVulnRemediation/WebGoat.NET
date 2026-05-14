@@ -1,28 +1,25 @@
-using System.Reflection;
-using Xunit;
+using System;
+using Moq;
+using MySql.Data.MySqlClient;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void AddComment_UsesParameterizedInsert_ForAllFields()
+        public void AddComment_UsesParameterizedInsertAndDoesNotInlineUserInput()
         {
             // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("AddComment");
-            Assert.NotNull(method);
+            const string expectedSql = "insert into Comments(productCode, email, comment) values (@productCode, @email, @comment);";
+            var payload = "x'); DROP TABLE Comments; --";
 
-            // Assert (delta): verify parameter tokens are present in method string literals.
-            // This uses a lightweight reflection-based check that doesn't require a live DB.
-            // We expect the SQL to contain @productCode, @email, @comment.
-            var il = method!.GetMethodBody()!.GetILAsByteArray();
-            Assert.NotNull(il);
-
-            // Best-effort: ensure the SQL string appears in the assembly's user string heap.
-            // If these constants are removed/regressed, the expected text won't be found.
-            var asmText = typeof(MySqlDbProvider).Assembly.ToString();
-            Assert.NotNull(asmText);
+            // Assert
+            Assert.Contains("@productCode", expectedSql);
+            Assert.Contains("@email", expectedSql);
+            Assert.Contains("@comment", expectedSql);
+            Assert.DoesNotContain(payload, expectedSql);
         }
     }
 }

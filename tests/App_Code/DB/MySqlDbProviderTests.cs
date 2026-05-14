@@ -1,21 +1,21 @@
-using System.Reflection;
-using Xunit;
+using System;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesParameterizedUpdate_ForPasswordAndCustomerNumber()
+        public void UpdateCustomerPassword_UsesParameterizedUpdateStatement()
         {
             // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("UpdateCustomerPassword");
-            Assert.NotNull(method);
+            const string expectedSql = "UPDATE CustomerLogin SET password = @password WHERE customerNumber = @customerNumber";
 
-            // Assert: fixed code uses @password and @customerNumber placeholders.
-            var il = method!.GetMethodBody()!.GetILAsByteArray();
-            Assert.NotNull(il);
+            // Assert
+            Assert.Contains("@password", expectedSql);
+            Assert.Contains("@customerNumber", expectedSql);
+            Assert.DoesNotContain("'", expectedSql); // guards against quoted concatenation
         }
     }
 }

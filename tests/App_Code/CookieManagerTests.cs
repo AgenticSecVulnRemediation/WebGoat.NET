@@ -1,9 +1,9 @@
 using System;
 using System.Web;
 using System.Web.Security;
+using OWASP.WebGoat.NET.App_Code;
 using Xunit;
 
-// Namespace inferred from source file path: OWASP.WebGoat.NET.App_Code
 namespace OWASP.WebGoat.NET.App_Code.Tests
 {
     public class CookieManagerTests
@@ -21,7 +21,7 @@ namespace OWASP.WebGoat.NET.App_Code.Tests
                 userData: "data");
 
             // Act
-            HttpCookie cookie = CookieManager.SetCookie(ticket, "ignored", "ignored");
+            HttpCookie cookie = CookieManager.SetCookie(ticket, cookieId: "ignored", cookieValue: "ignored");
 
             // Assert
             Assert.NotNull(cookie);

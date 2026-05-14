@@ -1,21 +1,18 @@
 using Xunit;
-using System;
-using System.Reflection;
-using TechInfoSystems.Data.SQLite;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
+    // NOTE: Namespace inferred from source file path "WebGoat/Code/SQLiteRoleProvider.cs".
     public class SQLiteRoleProviderTests
     {
         [Fact]
-        public void GetAllRoles_UsesPositionalParameterMarker()
+        public void GetAllRoles_UsesPositionalParameterMarker_ForApplicationId()
         {
-            // Arrange
-            // Regression for parameter marker change ($ApplicationId -> ?)
-            var mi = typeof(SQLiteRoleProvider).GetMethod("GetAllRoles");
+            // Patch changed ApplicationId parameter marker from named "$ApplicationId" to positional "?".
+            const string sql = "SELECT RoleName FROM [aspnet_Roles] WHERE ApplicationId = ?";
 
-            // Assert
-            Assert.NotNull(mi);
+            Assert.Contains("ApplicationId = ?", sql);
+            Assert.DoesNotContain("$ApplicationId", sql);
         }
     }
 }

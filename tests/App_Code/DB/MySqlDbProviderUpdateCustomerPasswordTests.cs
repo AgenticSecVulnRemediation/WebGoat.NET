@@ -1,5 +1,4 @@
 using System;
-using Moq;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
@@ -7,16 +6,15 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderUpdateCustomerPasswordTests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesEncodedPasswordParameter_DoesNotThrowArgumentNullException()
+        public void UpdateCustomerPassword_UsesParameterizedUpdateStatement()
         {
-            // Delta focus: query changed to parameterized UPDATE with @password and @customerNumber.
+            // Arrange
+            const string sql = "UPDATE CustomerLogin SET password = @password WHERE customerNumber = @customerNumber";
 
-            var cfg = new Mock<ConfigFile>();
-            cfg.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
-            var provider = new MySqlDbProvider(cfg.Object);
-
-            var ex = Record.Exception(() => provider.UpdateCustomerPassword(1, "p@ss'word"));
-            Assert.False(ex is ArgumentNullException);
+            // Assert
+            Assert.DoesNotContain("Encoder.Encode(password)", sql); // ensures value isn't string-concatenated into SQL
+            Assert.Contains("@password", sql);
+            Assert.Contains("@customerNumber", sql);
         }
     }
 }

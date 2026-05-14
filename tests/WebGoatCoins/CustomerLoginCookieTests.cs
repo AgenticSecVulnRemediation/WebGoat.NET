@@ -3,15 +3,16 @@ using Xunit;
 
 namespace OWASP.WebGoat.NET.WebGoatCoins.Tests
 {
+    // NOTE: Namespace inferred from source file path "WebGoat/WebGoatCoins/CustomerLogin.aspx.cs".
     public class CustomerLoginCookieTests
     {
         [Fact]
-        public void AuthCookie_IsHttpOnly()
+        public void AuthCookie_IsHttpOnly_ToPreventClientSideAccess()
         {
-            // Arrange
-            var cookie = new HttpCookie(".ASPXAUTH", "ticket") { HttpOnly = true };
+            // Patch added cookie.HttpOnly = true for FormsAuthentication cookie.
+            var cookie = new HttpCookie(".ASPXAUTH", "ticket");
+            cookie.HttpOnly = true;
 
-            // Assert
             Assert.True(cookie.HttpOnly);
         }
     }

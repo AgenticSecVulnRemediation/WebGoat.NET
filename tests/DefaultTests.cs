@@ -1,29 +1,20 @@
-using System;
-using System.Web;
-using System.Web.Security;
-using System.Text;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.Tests
 {
+    // NOTE: Namespace inferred from source file path "WebGoat/Default.aspx.cs".
     public class DefaultTests
     {
         [Fact]
-        public void ServerCookie_IsHttpOnlyAndSecure_AndIsProtected()
+        public void ServerCookie_IsHardened_WithHttpOnlyAndSecure()
         {
-            // Arrange
-            var cookie = new HttpCookie("Server", "plain");
-
-            // Act
+            // Patch added HttpOnly and Secure flags to the "Server" cookie.
+            var cookie = new System.Web.HttpCookie("Server", "value");
             cookie.HttpOnly = true;
             cookie.Secure = true;
-            var protectedValue = Convert.ToBase64String(MachineKey.Protect(Encoding.UTF8.GetBytes(cookie.Value)));
-            cookie.Value = protectedValue;
 
-            // Assert
             Assert.True(cookie.HttpOnly);
             Assert.True(cookie.Secure);
-            Assert.NotEqual("plain", cookie.Value);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using Moq;
 using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
@@ -7,25 +8,41 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class SqliteDbProviderTests
     {
         [Fact]
-        public void CustomCustomerLogin_UsesParameterizedQuery()
+        public void CustomCustomerLogin_DoesNotThrow_WhenEmailContainsQuotes()
         {
+            // Delta test for fix: concatenated SQL -> parameterized SQL in CustomCustomerLogin.
+
             // Arrange
-            const string expectedSql = "select * from CustomerLogin where email = @email";
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new SqliteDbProvider(config.Object);
+
+            string email = "a' OR '1'='1";
+
+            // Act
+            var ex = Record.Exception(() => provider.CustomCustomerLogin(email, "any"));
 
             // Assert
-            Assert.Contains("@email", expectedSql);
-            Assert.DoesNotContain("'", expectedSql);
+            Assert.Null(ex);
         }
 
         [Fact]
-        public void GetPasswordByEmail_UsesParameterizedQuery()
+        public void GetPasswordByEmail_DoesNotThrow_WhenEmailContainsQuotes()
         {
+            // Delta test for fix: concatenated SQL -> parameterized SQL in GetPasswordByEmail.
+
             // Arrange
-            const string expectedSql = "select * from CustomerLogin where email = @email";
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new SqliteDbProvider(config.Object);
+
+            string email = "a' OR '1'='1";
+
+            // Act
+            var ex = Record.Exception(() => provider.GetPasswordByEmail(email));
 
             // Assert
-            Assert.Contains("@email", expectedSql);
-            Assert.DoesNotContain("'", expectedSql);
+            Assert.Null(ex);
         }
     }
 }

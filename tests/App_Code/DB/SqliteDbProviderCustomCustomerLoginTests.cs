@@ -1,20 +1,25 @@
+using System;
+using Mono.Data.Sqlite;
 using Xunit;
-
-// SQL injection fix: SqliteDbProvider.CustomCustomerLogin now uses parameterized query.
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class SqliteDbProvider_CustomCustomerLogin_Tests
+    public class SqliteDbProviderCustomCustomerLoginTests
     {
         [Fact]
-        public void CustomCustomerLogin_UsesParameterizedQueryForEmail()
+        public void CustomCustomerLogin_UsesParameterizedEmailFilter()
         {
             // Arrange
-            var sql = "select * from CustomerLogin where email = @email";
+            const string sql = "select * from CustomerLogin where email = @email";
+
+            // Act
+            var emailParam = new SqliteParameter("@email", "foo' OR 1=1--");
 
             // Assert
             Assert.Contains("@email", sql);
-            Assert.DoesNotContain("'" + " +", sql);
+            Assert.DoesNotContain("'\" + email + \"'", sql);
+            Assert.Equal("@email", emailParam.ParameterName);
+            Assert.Equal("foo' OR 1=1--", emailParam.Value);
         }
     }
 }

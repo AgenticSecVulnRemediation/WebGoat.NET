@@ -1,23 +1,48 @@
 using System;
-using System.Text.RegularExpressions;
+using System.Collections.Specialized;
+using System.Configuration;
 using Xunit;
+using TechInfoSystems.Data.SQLite;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
-    // NOTE: Namespace inferred from source file path "WebGoat/Code/SQLiteMembershipProvider.cs".
     public class SQLiteMembershipProviderRegexTimeoutTests
     {
         [Fact]
-        public void CreateUser_PasswordStrengthRegex_UsesTimeout_ToMitigateReDoS()
+        public void CreateUser_PasswordStrengthRegex_UsesTimeoutToMitigateReDoS()
         {
-            // Patch changed Regex.IsMatch(password, regex) to Regex.IsMatch(password, regex, RegexOptions.None, TimeSpan.FromSeconds(1))
-            // Validate that the overload with a timeout throws RegexMatchTimeoutException for catastrophic backtracking.
+            // Delta behavior: Regex.IsMatch(..., timeout: 1s) should throw RegexMatchTimeoutException
+            // for catastrophic patterns instead of hanging.
 
-            var pattern = "^(a+)+$";
-            var input = new string('a', 50000) + "!"; // crafted to backtrack
+            var provider = new SQLiteMembershipProvider();
+
+            var config = new NameValueCollection
+            {
+                { "connectionStringName", "TestSqlite" },
+                { "applicationName", "/" },
+                { "passwordStrengthRegularExpression", "^(a+)+$" },
+                { "minRequiredPasswordLength", "1" },
+                { "minRequiredNonalphanumericCharacters", "0" },
+                { "requiresUniqueEmail", "false" },
+                { "requiresQuestionAndAnswer", "false" },
+                { "enablePasswordReset", "false" },
+                { "enablePasswordRetrieval", "false" }
+            };
+
+            // Ensure a connection string exists; provider will attempt to read it during Initialize.
+            // This test focuses on regex timeout; DB is not used because exception occurs before DB calls.
+            if (ConfigurationManager.ConnectionStrings["TestSqlite"] == null)
+            {
+                // In some test runners, ConnectionStrings is read-only; if so, skip deterministically.
+                throw new SkipException("Test requires ConfigurationManager.ConnectionStrings['TestSqlite'] to be configured for unit tests.");
+            }
+
+            provider.Initialize("SQLiteMembershipProvider", config);
+
+            var password = new string('a', 20000) + "!";
 
             Assert.Throws<RegexMatchTimeoutException>(() =>
-                Regex.IsMatch(input, pattern, RegexOptions.None, TimeSpan.FromMilliseconds(1)));
+                provider.CreateUser("user1", password, "e@e", null, null, true, null, out _));
         }
     }
 }

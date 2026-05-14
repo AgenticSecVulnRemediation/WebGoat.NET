@@ -349,8 +349,11 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                     connection.Open();
 
                     //get data
-                    string sql = "select * from CustomerLogin where email = '" + email + "';";
-                    SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
+                    string sql = "select * from CustomerLogin where email = @email";
+                    // Replace the existing adapter initialization
+                    SqliteCommand command = new SqliteCommand(sql, connection);
+                    command.Parameters.AddWithValue("@email", email);
+                    SqliteDataAdapter da = new SqliteDataAdapter(command);
                     DataSet ds = new DataSet();
                     da.Fill(ds);
 

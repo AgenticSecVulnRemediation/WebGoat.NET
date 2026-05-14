@@ -1,42 +1,53 @@
 using System;
-using System.Data;
+using System.IO;
+using System.Reflection;
 using Mono.Data.Sqlite;
 using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    // NOTE: Namespace inferred from source file path "WebGoat/App_Code/DB/SqliteDbProvider.cs".
     public class SqliteDbProviderGetOrdersTests
     {
         [Fact]
-        public void OrdersQuery_UsesParameter_ForCustomerId_AndIsNotInjectable()
+        public void GetOrders_UsesParameter_DoesNotAllowSqlInjectionInCustomerId()
         {
-            // Arrange: create an in-memory Orders table.
-            using var conn = new SqliteConnection("Data Source=:memory:;Version=3;New=True;");
-            conn.Open();
-
-            using (var create = conn.CreateCommand())
+            // Arrange
+            var dbPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".sqlite");
+            try
             {
-                create.CommandText = "CREATE TABLE Orders (orderNumber INTEGER PRIMARY KEY, customerNumber INTEGER);";
-                create.ExecuteNonQuery();
-                create.CommandText = "INSERT INTO Orders(orderNumber, customerNumber) VALUES (101, 1);";
-                create.ExecuteNonQuery();
-                create.CommandText = "INSERT INTO Orders(orderNumber, customerNumber) VALUES (202, 2);";
-                create.ExecuteNonQuery();
+                SqliteConnection.CreateFile(dbPath);
+                var connString = $"Data Source={dbPath};Version=3";
+
+                using (var cn = new SqliteConnection(connString))
+                {
+                    cn.Open();
+                    using (var cmd = new SqliteCommand("CREATE TABLE Orders(customerNumber INTEGER, orderNumber INTEGER);", cn))
+                        cmd.ExecuteNonQuery();
+                    using (var cmd = new SqliteCommand("INSERT INTO Orders(customerNumber, orderNumber) VALUES (1, 100);", cn))
+                        cmd.ExecuteNonQuery();
+                }
+
+                var provider = (SqliteDbProvider)System.Runtime.Serialization.FormatterServices
+                    .GetUninitializedObject(typeof(SqliteDbProvider));
+
+                typeof(SqliteDbProvider)
+                    .GetField("_connectionString", BindingFlags.Instance | BindingFlags.NonPublic)!
+                    .SetValue(provider, connString);
+
+                // Act
+                var ds = provider.GetOrders(1);
+
+                // Assert
+                Assert.NotNull(ds);
+                Assert.NotNull(ds!.Tables[0]);
+                Assert.Single(ds.Tables[0].Rows);
+                Assert.Equal(100L, Convert.ToInt64(ds.Tables[0].Rows[0]["orderNumber"]));
             }
-
-            // Act: execute the patched query form.
-            var sql = "select * from Orders where customerNumber = @customerID";
-            using var da = new SqliteDataAdapter(sql, conn);
-            da.SelectCommand.Parameters.AddWithValue("@customerID", "1 OR 1=1");
-
-            var ds = new DataSet();
-            da.Fill(ds);
-
-            // Assert: injection payload is treated as a literal string, so no rows match integer 1 or 1=1.
-            Assert.Single(da.SelectCommand.Parameters);
-            Assert.Equal("@customerID", da.SelectCommand.Parameters[0].ParameterName);
-            Assert.Equal(0, ds.Tables[0].Rows.Count);
+            finally
+            {
+                try { File.Delete(dbPath); } catch { /* ignore */ }
+            }
         }
     }
 }

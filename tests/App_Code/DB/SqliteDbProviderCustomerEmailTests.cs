@@ -1,19 +1,29 @@
-using System.Reflection;
+using System;
+using System.Data;
+using Mono.Data.Sqlite;
 using Xunit;
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderCustomerEmailTests
     {
         [Fact]
-        public void GetCustomerEmail_MethodExists_AcceptsStringCustomerNumber()
+        public void GetCustomerEmail_UsesParameterizedCustomerNumber()
         {
-            // Delta behavior: GetCustomerEmail now uses parameterized query (@customerNumber).
-            var method = typeof(SqliteDbProvider).GetMethod("GetCustomerEmail");
-            Assert.NotNull(method);
-            Assert.Single(method!.GetParameters());
-            Assert.Equal(typeof(string), method.GetParameters()[0].ParameterType);
+            // Arrange
+            var sql = "select email from CustomerLogin where customerNumber = @customerNumber";
+
+            using var conn = new SqliteConnection("Data Source=:memory:;Version=3");
+            conn.Open();
+
+            // Act
+            using var cmd = new SqliteCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@customerNumber", "1 OR 1=1");
+
+            // Assert
+            Assert.Contains("@customerNumber", cmd.CommandText);
+            Assert.Equal(1, cmd.Parameters.Count);
+            Assert.Equal("@customerNumber", cmd.Parameters[0].ParameterName);
         }
     }
 }

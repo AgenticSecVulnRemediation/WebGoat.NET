@@ -1,5 +1,5 @@
+using System;
 using System.IO;
-using System.Text.RegularExpressions;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.Tests
@@ -7,14 +7,13 @@ namespace OWASP.WebGoat.NET.Tests
     public class StoredXSSTests
     {
         [Fact]
-        public void StoredXssMarkup_EnablesValidateRequest()
+        public void StoredXssMarkup_HasValidateRequestEnabled()
         {
-            // Arrange
-            // Regression: validateRequest must be true in StoredXSS.aspx page directive.
-            var markup = File.ReadAllText(Path.Combine("WebGoat", "Content", "StoredXSS.aspx"));
-
-            // Assert
-            Assert.Matches(new Regex("validateRequest=\"true\"", RegexOptions.IgnoreCase), markup);
+            // Delta behavior: validateRequest set to true to enable ASP.NET request validation.
+            // Read the markup file directly; this is deterministic within repo checkout.
+            var path = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "WebGoat", "Content", "StoredXSS.aspx");
+            var content = File.ReadAllText(path);
+            Assert.Contains("validateRequest=\"true\"", content);
         }
     }
 }

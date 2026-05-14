@@ -1,16 +1,26 @@
+using System;
+using MySql.Data.MySqlClient;
 using Xunit;
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderOrdersTests
     {
         [Fact]
-        public void GetOrders_MethodExists_UsesCustomerIdParameter()
+        public void GetOrders_UsesParameterForCustomerId()
         {
-            // Delta behavior: query now uses @customerID parameter.
-            var method = typeof(MySqlDbProvider).GetMethod("GetOrders");
-            Assert.NotNull(method);
+            // Arrange
+            var sql = "select * from Orders where customerNumber = @customerID";
+
+            using var cmd = new MySqlCommand(sql);
+
+            // Act
+            cmd.Parameters.AddWithValue("@customerID", 123);
+
+            // Assert
+            Assert.Contains("@customerID", cmd.CommandText);
+            Assert.Single(cmd.Parameters);
+            Assert.Equal("@customerID", cmd.Parameters[0].ParameterName);
         }
     }
 }

@@ -1,77 +1,62 @@
 using System;
-using System.Reflection;
+using System.IO;
 using System.Web;
+using System.Web.UI;
 using OWASP.WebGoat.NET.WebGoatCoins;
-using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
+
+// Assumptions:
+// - Page event handler can be invoked directly.
+// - We validate the delta behavior: cookie is marked HttpOnly and Secure after fix.
 
 namespace OWASP.WebGoat.NET.WebGoatCoins.Tests
 {
     public class ForgotPasswordTests
     {
         [Fact]
-        public void ButtonCheckEmailClick_SetsSecurityAnswerCookie_HttpOnlyAndSecure()
+        public void ButtonCheckEmailClick_SetsCookieHttpOnlyAndSecure()
         {
             // Arrange
+            var request = new HttpRequest("", "https://localhost/WebGoatCoins/ForgotPassword.aspx", "");
+            var response = new HttpResponse(new StringWriter());
+            var context = new HttpContext(request, response);
+            HttpContext.Current = context;
+
             var page = new ForgotPassword();
 
-            var request = new HttpRequest("", "https://localhost/WebGoatCoins/ForgotPassword.aspx", "");
-            var response = new HttpResponse(new System.IO.StringWriter());
-            HttpContext.Current = new HttpContext(request, response);
+            // set up private field 'du' with fake provider returning known Q/A
+            var fakeProvider = new FakeDbProvider(new[] { "Q", "A" });
+            typeof(ForgotPassword).GetField("du", BindingFlags.NonPublic | BindingFlags.Instance)!
+                .SetValue(page, fakeProvider);
 
-            var duField = typeof(ForgotPassword).GetField("du", BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.NotNull(duField);
-            duField!.SetValue(page, new FakeDbProvider());
-
-            // Set txtEmail control via reflection (auto-generated fields in WebForms)
-            SetTextBox(page, "txtEmail", "user@example.com");
-            SetLabel(page, "labelQuestion");
-            SetPanel(page, "PanelForgotPasswordStep2");
-            SetPanel(page, "PanelForgotPasswordStep3");
-
-            var handler = typeof(ForgotPassword).GetMethod("ButtonCheckEmail_Click", BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.NotNull(handler);
+            // set email textbox via reflection
+            var txtEmail = typeof(ForgotPassword).GetField("txtEmail", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(txtEmail);
+            var tb = new System.Web.UI.WebControls.TextBox { Text = "user@example.com" };
+            txtEmail!.SetValue(page, tb);
 
             // Act
-            handler!.Invoke(page, new object[] { page, EventArgs.Empty });
+            var handler = typeof(ForgotPassword).GetMethod("ButtonCheckEmail_Click", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.NotNull(handler);
+            handler!.Invoke(page, new object?[] { page, EventArgs.Empty });
 
             // Assert
-            var cookie = HttpContext.Current.Response.Cookies["encr_sec_qu_ans"];
+            var cookie = context.Response.Cookies["encr_sec_qu_ans"];
             Assert.NotNull(cookie);
             Assert.True(cookie.HttpOnly);
             Assert.True(cookie.Secure);
         }
 
-        private static void SetTextBox(object page, string fieldName, string value)
+        private sealed class FakeDbProvider : OWASP.WebGoat.NET.App_Code.DB.IDbProvider
         {
-            var f = page.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-            if (f == null) return; // tolerate missing in unit environment
-            var tb = f.GetValue(page) as System.Web.UI.WebControls.TextBox;
-            if (tb != null) tb.Text = value;
-        }
+            private readonly string[] _qa;
+            public FakeDbProvider(string[] qa) => _qa = qa;
 
-        private static void SetLabel(object page, string fieldName)
-        {
-            var f = page.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-            if (f == null) return;
-            if (f.GetValue(page) == null) f.SetValue(page, new System.Web.UI.WebControls.Label());
-        }
-
-        private static void SetPanel(object page, string fieldName)
-        {
-            var f = page.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-            if (f == null) return;
-            if (f.GetValue(page) == null) f.SetValue(page, new System.Web.UI.WebControls.Panel());
-        }
-
-        private sealed class FakeDbProvider : IDbProvider
-        {
-            public string Name => "Fake";
+            public string Name => "fake";
             public bool TestConnection() => true;
+            public string[] GetSecurityQuestionAndAnswer(string email) => _qa;
 
-            public string[] GetSecurityQuestionAndAnswer(string email) => new[] { "Q", "A" };
-            public string GetPasswordByEmail(string email) => "pw";
-
+            // Other interface members are not needed for this delta test.
             public System.Data.DataSet GetCatalogData() => throw new NotImplementedException();
             public bool RecreateGoatDb() => throw new NotImplementedException();
             public bool IsValidCustomerLogin(string email, string password) => throw new NotImplementedException();
@@ -82,6 +67,7 @@ namespace OWASP.WebGoat.NET.WebGoatCoins.Tests
             public System.Data.DataSet GetComments(string productCode) => throw new NotImplementedException();
             public string AddComment(string productCode, string email, string comment) => throw new NotImplementedException();
             public string UpdateCustomerPassword(int customerNumber, string password) => throw new NotImplementedException();
+            public string GetPasswordByEmail(string email) => throw new NotImplementedException();
             public System.Data.DataSet GetUsers() => throw new NotImplementedException();
             public System.Data.DataSet GetOrders(int customerID) => throw new NotImplementedException();
             public System.Data.DataSet GetProductDetails(string productCode) => throw new NotImplementedException();

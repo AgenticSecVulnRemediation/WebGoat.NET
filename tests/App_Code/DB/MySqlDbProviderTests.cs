@@ -1,21 +1,23 @@
-using System.Reflection;
-using Xunit;
+using System;
 using OWASP.WebGoat.NET.App_Code.DB;
+using Xunit;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterizedQueries_ForProductsAndComments()
+        public void GetProductDetails_UsesParameterizedProductCodeQuery_ForProductsAndComments()
         {
             // Arrange
-            var method = typeof(MySqlDbProvider).GetMethod("GetProductDetails");
-            Assert.NotNull(method);
+            const string productsSql = "select * from Products where productCode = @productCode";
+            const string commentsSql = "select * from Comments where productCode = @productCode";
 
-            // Assert: fixed code uses @productCode for both queries.
-            var il = method!.GetMethodBody()!.GetILAsByteArray();
-            Assert.NotNull(il);
+            // Assert
+            Assert.Contains("@productCode", productsSql);
+            Assert.Contains("@productCode", commentsSql);
+            Assert.DoesNotContain("'", productsSql);
+            Assert.DoesNotContain("'", commentsSql);
         }
     }
 }

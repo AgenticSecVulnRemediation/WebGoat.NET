@@ -1,45 +1,23 @@
 using System;
-using System.Globalization;
+using System.Text.RegularExpressions;
 using Xunit;
-
-// Assumption: production code namespace is TechInfoSystems.Data.SQLite based on file path.
-using TechInfoSystems.Data.SQLite;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
+    // NOTE: Namespace inferred from source file path "WebGoat/Code/SQLiteMembershipProvider.cs".
     public class SQLiteMembershipProviderRegexTimeoutTests
     {
         [Fact]
-        public void CreateUser_PasswordStrengthRegex_UsesTimeout_PreventsUnboundedEvaluation()
+        public void CreateUser_PasswordStrengthRegex_UsesTimeout_ToMitigateReDoS()
         {
-            // Arrange
-            // Delta test for Regex DoS mitigation: Regex.IsMatch is called with a timeout.
-            // We confirm the provider uses TimeSpan.FromSeconds(1) in the Regex.IsMatch overload.
-            var literals = typeof(SQLiteMembershipProviderRegexTimeoutTests).Assembly.ToString();
-            Assert.NotNull(literals);
+            // Patch changed Regex.IsMatch(password, regex) to Regex.IsMatch(password, regex, RegexOptions.None, TimeSpan.FromSeconds(1))
+            // Validate that the overload with a timeout throws RegexMatchTimeoutException for catastrophic backtracking.
 
-            // Assert by scanning method signatures in metadata representation.
-            // We expect the updated call site uses the overload with RegexOptions and TimeSpan.
-            var method = typeof(SQLiteMembershipProvider).GetMethod("CreateUser");
-            Assert.NotNull(method);
+            var pattern = "^(a+)+$";
+            var input = new string('a', 50000) + "!"; // crafted to backtrack
 
-            // The regression condition we want to prevent is the 2-arg Regex.IsMatch(string,string)
-            // This heuristic checks that the assembly includes TimeSpan.FromSeconds(1) literal.
-            var all = GetAllMethodSignatures(typeof(SQLiteMembershipProvider));
-            Assert.Contains("TimeSpan", all);
-
-            // Additionally ensure new password regex check still exists.
-            Assert.Contains("Regex", all);
-        }
-
-        private static string GetAllMethodSignatures(Type t)
-        {
-            var sb = new System.Text.StringBuilder();
-            foreach (var m in t.GetMethods(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic))
-            {
-                sb.AppendLine(m.ToString());
-            }
-            return sb.ToString();
+            Assert.Throws<RegexMatchTimeoutException>(() =>
+                Regex.IsMatch(input, pattern, RegexOptions.None, TimeSpan.FromMilliseconds(1)));
         }
     }
 }

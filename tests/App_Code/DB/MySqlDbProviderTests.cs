@@ -1,4 +1,5 @@
 using System;
+using Moq;
 using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
 
@@ -7,15 +8,23 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesParameterizedUpdateStatement()
+        public void UpdateCustomerPassword_AllowsPasswordWithQuotes_WithoutThrowing_FromSqlConcatenation()
         {
+            // Delta test for fix: SQL concatenation -> parameterized update.
+
             // Arrange
-            const string expectedSql = "UPDATE CustomerLogin SET password = @password WHERE customerNumber = @customerNumber";
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(config.Object);
+
+            int customerNumber = 1;
+            string password = "pw' ); DROP TABLE CustomerLogin;--";
+
+            // Act
+            var ex = Record.Exception(() => provider.UpdateCustomerPassword(customerNumber, password));
 
             // Assert
-            Assert.Contains("@password", expectedSql);
-            Assert.Contains("@customerNumber", expectedSql);
-            Assert.DoesNotContain("'", expectedSql); // guards against quoted concatenation
+            Assert.Null(ex);
         }
     }
 }

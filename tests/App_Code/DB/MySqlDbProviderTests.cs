@@ -9,17 +9,25 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
     public class MySqlDbProviderTests
     {
         [Fact]
-        public void AddComment_UsesParameterizedInsertAndDoesNotInlineUserInput()
+        public void AddComment_AllowsQuotesInInputs_WithoutThrowing_FromSqlConcatenation()
         {
+            // Delta test for fix: SQL concatenation -> parameterized insert.
+            // With parameters, quotes in inputs should not break SQL syntax.
+
             // Arrange
-            const string expectedSql = "insert into Comments(productCode, email, comment) values (@productCode, @email, @comment);";
-            var payload = "x'); DROP TABLE Comments; --";
+            var config = new Mock<ConfigFile>();
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
+            var provider = new MySqlDbProvider(config.Object);
+
+            string productCode = "S10_1678";
+            string email = "test'@example.com";
+            string comment = "Nice'); DROP TABLE Comments;--";
+
+            // Act
+            var ex = Record.Exception(() => provider.AddComment(productCode, email, comment));
 
             // Assert
-            Assert.Contains("@productCode", expectedSql);
-            Assert.Contains("@email", expectedSql);
-            Assert.Contains("@comment", expectedSql);
-            Assert.DoesNotContain(payload, expectedSql);
+            Assert.Null(ex);
         }
     }
 }

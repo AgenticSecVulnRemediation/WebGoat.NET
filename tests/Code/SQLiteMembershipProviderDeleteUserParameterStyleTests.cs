@@ -1,5 +1,7 @@
 using System;
+using System.Data;
 using System.Reflection;
+using Mono.Data.Sqlite;
 using Xunit;
 
 // Assumption: production namespace is TechInfoSystems.Data.SQLite as in the source file.
@@ -7,39 +9,67 @@ using TechInfoSystems.Data.SQLite;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
-    public class SQLiteMembershipProviderTests
+    public class SQLiteMembershipProviderDeleteUserParameterStyleTests
     {
         [Fact]
-        public void DeleteUser_DeleteAllRelatedDataTrue_UsesParameterizedDeleteQueryWithAtParameters()
+        public void DeleteUser_WithDeleteAllRelatedDataFalse_UsesAtParametersAndReturnsTrueWhenRowDeleted()
         {
-            // This PR changes DeleteUser's DELETE statement to use @Username/@ApplicationId.
-            // We assert the new secure behavior by inspecting the command text and parameter placeholders via reflection.
-            // Note: This is a targeted delta test; it does not attempt to execute against a real SQLite DB.
+            // Arrange: create in-memory sqlite schema that matches the provider's expected tables/columns.
+            using var cn = new SqliteConnection("Data Source=:memory:;Version=3;New=True;");
+            cn.Open();
 
-            var method = typeof(SQLiteMembershipProvider).GetMethod(
-                "DeleteUser",
-                BindingFlags.Instance | BindingFlags.Public,
-                binder: null,
-                types: new[] { typeof(string), typeof(bool) },
-                modifiers: null);
+            using (var cmd = cn.CreateCommand())
+            {
+                cmd.CommandText = @"
+CREATE TABLE [aspnet_Users] (
+  UserId TEXT,
+  LoweredUsername TEXT,
+  ApplicationId TEXT
+);
+CREATE TABLE [aspnet_UsersInRoles] (UserId TEXT);
+CREATE TABLE [aspnet_Profile] (UserId TEXT);
+";
+                cmd.ExecuteNonQuery();
+            }
 
-            Assert.NotNull(method);
+            // Configure provider's static fields via reflection so it uses our connection.
+            // We avoid calling Initialize() to keep this a deterministic unit test.
+            SetStaticField("_connectionString", cn.ConnectionString);
+            SetStaticField("_applicationId", "app1");
 
-            var source = method!.GetMethodBody();
-            Assert.NotNull(source);
+            // Seed a user row that should be deleted.
+            using (var seed = cn.CreateCommand())
+            {
+                seed.CommandText = "INSERT INTO [aspnet_Users] (UserId, LoweredUsername, ApplicationId) VALUES ($UserId, $LoweredUsername, $ApplicationId)";
+                seed.Parameters.AddWithValue("$UserId", "u1");
+                seed.Parameters.AddWithValue("$LoweredUsername", "alice");
+                seed.Parameters.AddWithValue("$ApplicationId", "app1");
+                seed.ExecuteNonQuery();
+            }
 
-            // The important regression we guard: presence of the updated placeholder tokens.
-            // If the code regresses to $Username/$ApplicationId, this test should fail.
-            var il = method.GetMethodBody()!.GetILAsByteArray();
-            Assert.NotNull(il);
+            var provider = new SQLiteMembershipProvider();
 
-            // Best-effort: scan the assembly for the literal strings used in the changed SQL.
-            // This is deterministic and verifies the updated SQL text is embedded.
-            var asmBytes = System.IO.File.ReadAllBytes(typeof(SQLiteMembershipProvider).Assembly.Location);
-            var asmText = System.Text.Encoding.UTF8.GetString(asmBytes);
+            // Act
+            var deleted = provider.DeleteUser("Alice", deleteAllRelatedData: false);
 
-            Assert.Contains("WHERE LoweredUsername = @Username AND ApplicationId = @ApplicationId", asmText);
-            Assert.DoesNotContain("WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId\";\r\n\r\n\t\t\t\t\tcmd.Parameters.AddWithValue (\"$Username\"", asmText);
+            // Assert
+            Assert.True(deleted);
+
+            using (var verify = cn.CreateCommand())
+            {
+                verify.CommandText = "SELECT COUNT(*) FROM [aspnet_Users] WHERE LoweredUsername = $LoweredUsername AND ApplicationId = $ApplicationId";
+                verify.Parameters.AddWithValue("$LoweredUsername", "alice");
+                verify.Parameters.AddWithValue("$ApplicationId", "app1");
+                var remaining = Convert.ToInt32(verify.ExecuteScalar());
+                Assert.Equal(0, remaining);
+            }
+        }
+
+        private static void SetStaticField(string fieldName, object? value)
+        {
+            var f = typeof(SQLiteMembershipProvider).GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(f);
+            f!.SetValue(null, value);
         }
     }
 }

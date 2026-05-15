@@ -6,6 +6,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Collections;
 using System.Collections.Specialized;
+using System.Text.RegularExpressions;
 
 namespace OWASP.WebGoat.NET
 {
@@ -17,6 +18,14 @@ namespace OWASP.WebGoat.NET
             {
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
                 cookie.Value = Request.QueryString["Cookie"];
+                // Validate cookie value. This regex is a placeholder; replace with production-grade validation or a proper signing mechanism for cookies.
+                if (!Regex.IsMatch(cookie.Value, "^[a-zA-Z0-9]*$"))
+                {
+                    // If validation fails, reset the cookie value (or handle accordingly)
+                    cookie.Value = "";
+                }
+                cookie.HttpOnly = true;
+                cookie.Secure = true; // Ensure this aligns with the deployment environment using HTTPS
 
                 Response.Cookies.Add(cookie);
             }

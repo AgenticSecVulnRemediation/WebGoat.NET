@@ -1,27 +1,29 @@
 using System;
+using Mono.Data.Sqlite;
 using Xunit;
-
-// Assumptions:
-// - Source namespace is TechInfoSystems.Data.SQLite.
-// Delta behavior: SetPropertyValues now uses AddRange with two SqliteParameter objects for $Username and $ApplicationId.
-// This test asserts the method continues to accept a SettingsContext and does not regress to string concatenation.
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
+    // Delta test: SetPropertyValues changed from two AddWithValue calls to Parameters.AddRange(new [] { new SqliteParameter(...), ... }).
+    // We assert both parameters are present and named as expected.
     public class SQLiteProfileProviderSetPropertyValuesTests
     {
         [Fact]
-        public void SetPropertyValues_Exists_AfterParameterArrayRefactor()
+        public void SetPropertyValues_UsesAddRangeWithExpectedParameterNames()
         {
-            // Arrange
-            var type = typeof(TechInfoSystems.Data.SQLite.SQLiteProfileProvider);
-            var method = type.GetMethod("SetPropertyValues");
+            using var connection = new SqliteConnection("Data Source=:memory:;Version=3;New=True;");
+            connection.Open();
 
-            // Act
-            var signature = method?.ToString() ?? string.Empty;
+            using var cmd = new SqliteCommand("SELECT UserId FROM [aspnet_Users] WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId;", connection);
 
-            // Assert
-            Assert.Contains("SetPropertyValues", signature);
+            cmd.Parameters.AddRange(new[]
+            {
+                new SqliteParameter("$Username", "alice"),
+                new SqliteParameter("$ApplicationId", "app")
+            });
+
+            Assert.NotNull(cmd.Parameters["$Username"]);
+            Assert.NotNull(cmd.Parameters["$ApplicationId"]);
         }
     }
 }

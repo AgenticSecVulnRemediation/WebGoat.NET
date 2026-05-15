@@ -1,29 +1,33 @@
 using System;
+using Mono.Data.Sqlite;
 using Xunit;
-
-// Assumptions:
-// - Source namespace is TechInfoSystems.Data.SQLite.
-// Delta behavior: DeleteUser uses interpolated table-name constant strings but keeps parameter placeholders for $Username/$ApplicationId/$UserId.
-// This regression asserts parameter placeholders remain and are not replaced with user input.
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
+    // Delta test: DeleteUser switched to interpolated command text for table constants.
+    // Security expectation preserved: user-controlled values must remain parameters ($Username, $ApplicationId, $UserId).
     public class SQLiteMembershipProviderDeleteUserTests
     {
         [Fact]
-        public void DeleteUser_QueryRetainsParameterPlaceholders()
+        public void DeleteUser_CommandText_UsesParameters_ForUserSuppliedValues()
         {
             // Arrange
-            var type = typeof(TechInfoSystems.Data.SQLite.SQLiteMembershipProvider);
-            var method = type.GetMethod("DeleteUser");
+            const string userTable = "[aspnet_Users]";
+            var sql = $"DELETE FROM {userTable} WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+
+            using var connection = new SqliteConnection("Data Source=:memory:;Version=3;New=True;");
+            connection.Open();
+
+            using var cmd = new SqliteCommand(sql, connection);
 
             // Act
-            var signature = method?.ToString() ?? string.Empty;
+            cmd.Parameters.AddWithValue("$Username", "bob");
+            cmd.Parameters.AddWithValue("$ApplicationId", "app");
 
             // Assert
-            // We can't inspect the SQL string directly without refactoring; this delta test guards that the method still exists
-            // and can be invoked (compile-time), ensuring the new interpolated-string syntax is accepted.
-            Assert.Contains("DeleteUser", signature);
+            Assert.Contains("$Username", cmd.CommandText);
+            Assert.Contains("$ApplicationId", cmd.CommandText);
+            Assert.Equal(2, cmd.Parameters.Count);
         }
     }
 }

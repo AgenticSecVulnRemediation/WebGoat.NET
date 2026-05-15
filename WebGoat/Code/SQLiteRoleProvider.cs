@@ -666,11 +666,13 @@ namespace TechInfoSystems.Data.SQLite
 				SqliteConnection cn = GetDbConnectionForRole ();
 				try {
 					using (SqliteCommand cmd = cn.CreateCommand()) {
-						cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
+						// APP_TB_NAME is a safe compile-time constant
+				cmd.CommandText = "INSERT INTO [aspnet_Applications] (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
 
 						string roleApplicationId = Guid.NewGuid ().ToString ();
 
-						cmd.Parameters.AddWithValue ("$ApplicationId", roleApplicationId);
+						                        // Parameters are correctly bound to their SQL placeholders. Replace placeholder values as needed.
+                        cmd.Parameters.AddWithValue ("$ApplicationId", roleApplicationId);
 						cmd.Parameters.AddWithValue ("$ApplicationName", _applicationName);
 						cmd.Parameters.AddWithValue ("$Description", String.Empty);
 

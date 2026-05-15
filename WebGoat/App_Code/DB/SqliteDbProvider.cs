@@ -187,9 +187,16 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                 {
                     connection.Open();
 
-                    string sql = "select email from CustomerLogin where customerNumber = " + customerNumber;
-                    SqliteCommand command = new SqliteCommand(sql, connection);
-                    output = command.ExecuteScalar().ToString();
+                    string sql = "select email from CustomerLogin where customerNumber = @customerNumber";
+                    using (SqliteCommand command = new SqliteCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@customerNumber", customerNumber);
+                        var result = command.ExecuteScalar();
+                        if(result != null)
+                            output = result.ToString();
+                        else
+                            output = null;
+                    }
                 } 
             }
             catch (Exception ex)

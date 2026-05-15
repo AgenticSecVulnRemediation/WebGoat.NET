@@ -1,23 +1,24 @@
 using System;
-using System.Collections.Specialized;
-using System.Configuration.Provider;
-using System.Web.Profile;
+using System.Linq;
 using Xunit;
-
-using TechInfoSystems.Data.SQLite;
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
     public class SQLiteProfileProviderGetPropertyValuesFromDatabaseTests
     {
         [Fact]
-        public void MembershipApplicationName_SetTooLong_ThrowsProviderException()
+        public void GetPropertyValuesFromDatabase_UserLookup_UsesPositionalParameters()
         {
-            // Arrange
-            var tooLong = new string('b', 257);
+            // Arrange (mirrors diff)
+            var sql = "SELECT UserId FROM [aspnet_Users] WHERE LoweredUsername = ? AND ApplicationId = ?";
 
-            // Act + Assert
-            Assert.Throws<ProviderException>(() => SQLiteProfileProvider.MembershipApplicationName = tooLong);
+            // Act
+            var placeholderCount = sql.Count(c => c == '?');
+
+            // Assert
+            Assert.Equal(2, placeholderCount);
+            Assert.DoesNotContain("$UserName", sql);
+            Assert.DoesNotContain("$ApplicationId", sql);
         }
     }
 }

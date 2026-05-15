@@ -270,7 +270,7 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public string AddComment(string productCode, string email, string comment)
         {
-            string sql = "insert into Comments(productCode, email, comment) values ('" + productCode + "','" + email + "','" + comment + "');";
+            string sql = "INSERT INTO Comments(productCode, email, comment) VALUES (@productCode, @Email, @Comment);";
             string output = null;
             
             try
@@ -280,6 +280,9 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                 {
                     connection.Open();
                     MySqlCommand command = new MySqlCommand(sql, connection);
+                    command.Parameters.AddWithValue("@productCode", productCode);  // Ensure productCode is safely bound
+                    command.Parameters.AddWithValue("@Email", email);              // Ensure email is safely bound
+                    command.Parameters.AddWithValue("@Comment", comment);          // Ensure comment is safely bound
                     command.ExecuteNonQuery();
                 }
             }

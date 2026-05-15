@@ -20,7 +20,8 @@ namespace OWASP.WebGoat.NET
             string userName = txtUsername.Text;
             string password = txtPassword.Text;
 
-            Regex testPassword = new Regex(userName);
+                        // TODO: Adjust timeout value if necessary
+            Regex testPassword = new Regex(userName, RegexOptions.None, TimeSpan.FromMilliseconds(100));
             Match match = testPassword.Match(password);
             if (match.Success)
             {

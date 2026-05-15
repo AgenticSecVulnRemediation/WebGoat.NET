@@ -1,5 +1,4 @@
 using System;
-using System.Text.RegularExpressions;
 using Xunit;
 
 // Assumption: source file namespace is TechInfoSystems.Data.SQLite as declared in SQLiteMembershipProvider.cs

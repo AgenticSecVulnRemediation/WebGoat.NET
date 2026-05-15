@@ -45,6 +45,17 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             //encode twice for more security!
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
+            // Set HttpOnly to prevent JavaScript access
+            cookie.HttpOnly = true;
+            
+            // Ensure the cookie is sent only over HTTPS
+            cookie.Secure = true;
+            
+            // (Optional) Set SameSite attribute to mitigate CSRF attacks:
+            // cookie.SameSite = SameSiteMode.Strict; // Note: Requires framework support, please replace with appropriate value if necessary
+            cookie.HttpOnly = true;
+            cookie.Secure = true;
+            // cookie.SameSite = SameSiteMode.Strict; // Uncomment if framework supports it
 
             Response.Cookies.Add(cookie);
         }

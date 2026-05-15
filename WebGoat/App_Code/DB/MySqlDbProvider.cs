@@ -149,13 +149,17 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             try
             {
                 //get data
-                string sql = "select * from CustomerLogin where email = '" + email + "';";
+                string sql = "select * from CustomerLogin where email = @email;";
                 
                 using (MySqlConnection connection = new MySqlConnection(_connectionString))
                 {
-                    MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
-                    DataSet ds = new DataSet();
-                    da.Fill(ds);
+                    using (MySqlCommand cmd = new MySqlCommand(sql, connection))
+                    {
+                        // Add parameter value; replace the placeholder value if needed
+                        cmd.Parameters.AddWithValue("@email", email);
+                        MySqlDataAdapter da = new MySqlDataAdapter(cmd);
+                        DataSet ds = new DataSet();
+                        da.Fill(ds);
 
                     //check if email address exists
                     if (ds.Tables[0].Rows.Count == 0)
@@ -351,20 +355,26 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                 using (MySqlConnection connection = new MySqlConnection(_connectionString))
                 {
                     //get data
-                    string sql = "select * from CustomerLogin where email = '" + email + "';";
-                    MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
-                    DataSet ds = new DataSet();
-                    da.Fill(ds);
-
-                    //check if email address exists
-                    if (ds.Tables[0].Rows.Count == 0)
+                    string sql = "select * from CustomerLogin where email = @email;";
+                    using (MySqlCommand cmd = new MySqlCommand(sql, connection))
                     {
-                        result = "Email Address Not Found!";
-                    }
+                        cmd.Parameters.AddWithValue("@email", email);
+                        MySqlDataAdapter da = new MySqlDataAdapter(cmd);
+                        DataSet ds = new DataSet();
+                        da.Fill(ds);
 
-                    string encoded_password = ds.Tables[0].Rows[0]["Password"].ToString();
-                    string decoded_password = Encoder.Decode(encoded_password);
-                    result = decoded_password;
+                        //check if email address exists
+                        if (ds.Tables[0].Rows.Count == 0)
+                        {
+                            result = "Email Address Not Found!";
+                        }
+                        else
+                        {
+                            string encoded_password = ds.Tables[0].Rows[0]["Password"].ToString();
+                            string decoded_password = Encoder.Decode(encoded_password);
+                            result = decoded_password;
+                        }
+                    }
                 }
             }
             catch (Exception ex)

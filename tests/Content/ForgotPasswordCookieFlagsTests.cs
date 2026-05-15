@@ -1,40 +1,36 @@
 using System;
 using System.Reflection;
 using System.Web;
-using System.Web.UI;
 using Xunit;
 
-// Assumption: the project compiles WebForms pages into the OWASP.WebGoat.NET namespace.
 namespace OWASP.WebGoat.NET.Tests
 {
-    public class ForgotPasswordTests
+    public class ForgotPasswordCookieFlagsTests
     {
         [Fact]
-        public void ButtonCheckEmailClick_SetsCookieHttpOnlyAndSecure()
+        public void ButtonCheckEmailClick_SetsHttpOnlyAndSecureOnChallengeCookie()
         {
             // Arrange
             var page = new ForgotPassword();
 
-            // Create fake HTTP context with response cookies collection
             var request = new HttpRequest("", "http://localhost/Content/ForgotPassword.aspx", "");
             var response = new HttpResponse(new System.IO.StringWriter());
             HttpContext.Current = new HttpContext(request, response);
 
-            // Inject a fake db provider that returns Q/A
+            // Inject fake provider returning a security question and answer
             var duField = typeof(ForgotPassword).GetField("du", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.NotNull(duField);
-            duField!.SetValue(page, new FakeDbProvider());
+            duField.SetValue(page, new FakeDbProvider());
 
-            // Also set txtEmail TextBox via reflection
+            // Set txtEmail TextBox
             var emailField = typeof(ForgotPassword).GetField("txtEmail", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.NotNull(emailField);
-            var tb = new System.Web.UI.WebControls.TextBox { Text = "test@example.com" };
-            emailField!.SetValue(page, tb);
+            emailField.SetValue(page, new System.Web.UI.WebControls.TextBox { Text = "test@example.com" });
 
             // Act
             var method = typeof(ForgotPassword).GetMethod("ButtonCheckEmail_Click", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.NotNull(method);
-            method!.Invoke(page, new object?[] { null, EventArgs.Empty });
+            method.Invoke(page, new object[] { null, EventArgs.Empty });
 
             // Assert
             var cookie = HttpContext.Current.Response.Cookies["encr_sec_qu_ans"];

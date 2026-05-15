@@ -3,8 +3,6 @@ using System.Web;
 using System.Web.UI.WebControls;
 using Moq;
 using Xunit;
-
-// Assumption: page class is OWASP.WebGoat.NET.Default in WebGoat/Default.aspx.cs
 using OWASP.WebGoat.NET;
 using OWASP.WebGoat.NET.App_Code;
 using OWASP.WebGoat.NET.App_Code.DB;
@@ -22,13 +20,11 @@ namespace OWASP.WebGoat.NET.Tests
             db.Setup(d => d.TestConnection()).Returns(true);
             Settings.CurrentDbProvider = db.Object;
 
-            var page = new Default();
-            page.lblOutput = new Label();
+            var page = new Default { lblOutput = new Label() };
 
-            var request = new HttpRequest("", "http://localhost/", "");
-            var response = new HttpResponse(new System.IO.StringWriter());
-            var context = new HttpContext(request, response);
-            HttpContext.Current = context;
+            HttpContext.Current = new HttpContext(
+                new HttpRequest("", "https://localhost/", ""),
+                new HttpResponse(new System.IO.StringWriter()));
 
             // Act
             page.Page_Load(null, EventArgs.Empty);

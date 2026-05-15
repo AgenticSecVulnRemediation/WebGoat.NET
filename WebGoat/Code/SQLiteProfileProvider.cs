@@ -202,10 +202,11 @@ namespace TechInfoSystems.Data.SQLite
 					tran = cn.BeginTransaction ();
 
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId;";
+					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = @Username AND ApplicationId = @ApplicationId;"; // NOTE: USER_TB_NAME is a constant. Validate or replace it with a safe literal if necessary
 
-					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
+					                    // Developer: Ensure that the values passed for @Username and @ApplicationId have been properly validated. Replace placeholders with validated data if necessary.
+                    cmd.Parameters.AddWithValue ("@Username", username.ToLowerInvariant ());
+					cmd.Parameters.AddWithValue ("@ApplicationId", _membershipApplicationId);
 
 					string userId = cmd.ExecuteScalar () as string;
 
@@ -809,8 +810,9 @@ namespace TechInfoSystems.Data.SQLite
 			using (SqliteCommand cmd = cn.CreateCommand()) {
 				cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
 
-				cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-				cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
+				// TODO: Replace placeholders with actual validated values if necessary.
+				cmd.Parameters.AddWithValue ("@Username", username.ToLowerInvariant ());
+				cmd.Parameters.AddWithValue ("@ApplicationId", _membershipApplicationId);
 
 				if (tran != null)
 					cmd.Transaction = tran;

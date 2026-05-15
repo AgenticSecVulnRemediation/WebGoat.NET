@@ -200,8 +200,9 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             
                 using (MySqlConnection connection = new MySqlConnection(_connectionString))
                 {
-                    string sql = "select email from CustomerLogin where customerNumber = " + customerNumber;
+                    string sql = "select email from CustomerLogin where customerNumber = @customerNumber";
                     MySqlCommand command = new MySqlCommand(sql, connection);
+                    command.Parameters.AddWithValue("@customerNumber", customerNumber);  // Replace with appropriate data-type conversion if needed
                     output = command.ExecuteScalar().ToString();
                 } 
             }

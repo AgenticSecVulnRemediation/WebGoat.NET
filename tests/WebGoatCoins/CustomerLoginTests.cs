@@ -4,34 +4,33 @@ using System.Web.Security;
 using System.Web.UI.WebControls;
 using Moq;
 using Xunit;
-
-// Assumption: page class is OWASP.WebGoat.NET.WebGoatCoins.CustomerLogin
-using OWASP.WebGoat.NET.WebGoatCoins;
 using OWASP.WebGoat.NET.App_Code;
 using OWASP.WebGoat.NET.App_Code.DB;
+using OWASP.WebGoat.NET.WebGoatCoins;
 
 namespace OWASP.WebGoat.NET.WebGoatCoins.Tests
 {
     public class CustomerLoginTests
     {
         [Fact]
-        public void ButtonLogOnClick_SetsAuthCookieHttpOnlyAndSecure()
+        public void ButtonLogOnClick_SetsFormsAuthCookieHttpOnlyAndSecure()
         {
             // Arrange
             var db = new Mock<IDbProvider>();
             db.Setup(d => d.IsValidCustomerLogin(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
             Settings.CurrentDbProvider = db.Object;
 
-            var page = new CustomerLogin();
-            page.txtUserName = new TextBox { Text = "a@b.com" };
-            page.txtPassword = new TextBox { Text = "pwd" };
-            page.PanelError = new Panel();
-            page.labelError = new Label();
+            var page = new CustomerLogin
+            {
+                txtUserName = new TextBox { Text = "a@b.com" },
+                txtPassword = new TextBox { Text = "pwd" },
+                PanelError = new Panel(),
+                labelError = new Label()
+            };
 
-            var request = new HttpRequest("", "https://localhost/", "");
-            var response = new HttpResponse(new System.IO.StringWriter());
-            var context = new HttpContext(request, response);
-            HttpContext.Current = context;
+            HttpContext.Current = new HttpContext(
+                new HttpRequest("", "https://localhost/", ""),
+                new HttpResponse(new System.IO.StringWriter()));
 
             // Act
             page.ButtonLogOn_Click(null, EventArgs.Empty);

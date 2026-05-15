@@ -132,15 +132,18 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             try
             {
                 //get data
-                string sql = "select * from CustomerLogin where email = '" + email + "';";
+                string sql = "SELECT * FROM CustomerLogin WHERE email = @Email";
                 
                 using (SqliteConnection connection = new SqliteConnection(_connectionString))
                 {
                     connection.Open();
-
-                    SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
                     DataSet ds = new DataSet();
-                    da.Fill(ds);
+                    using (SqliteCommand command = new SqliteCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@Email", email);
+                        SqliteDataAdapter da = new SqliteDataAdapter(command);
+                        da.Fill(ds);
+                    }
 
                     //check if email address exists
                     if (ds.Tables[0].Rows.Count == 0)
@@ -349,20 +352,26 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                     connection.Open();
 
                     //get data
-                    string sql = "select * from CustomerLogin where email = '" + email + "';";
-                    SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
-                    DataSet ds = new DataSet();
-                    da.Fill(ds);
-
-                    //check if email address exists
-                    if (ds.Tables[0].Rows.Count == 0)
+                    string sql = "SELECT * FROM CustomerLogin WHERE email = @Email";
+                    using (SqliteCommand command = new SqliteCommand(sql, connection))
                     {
-                        result = "Email Address Not Found!";
-                    }
+                        command.Parameters.AddWithValue("@Email", email);
+                        SqliteDataAdapter da = new SqliteDataAdapter(command);
+                        DataSet ds = new DataSet();
+                        da.Fill(ds);
 
-                    string encoded_password = ds.Tables[0].Rows[0]["Password"].ToString();
-                    string decoded_password = Encoder.Decode(encoded_password);
-                    result = decoded_password;
+                        //check if email address exists
+                        if (ds.Tables[0].Rows.Count == 0)
+                        {
+                            result = "Email Address Not Found!";
+                        }
+                        else
+                        {
+                            string encoded_password = ds.Tables[0].Rows[0]["Password"].ToString();
+                            string decoded_password = Encoder.Decode(encoded_password);
+                            result = decoded_password;
+                        }
+                    }
                 }
             }
             catch (Exception ex)

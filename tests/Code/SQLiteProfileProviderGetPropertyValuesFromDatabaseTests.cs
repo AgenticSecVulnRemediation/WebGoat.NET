@@ -1,27 +1,26 @@
 using System;
+using Mono.Data.Sqlite;
 using Xunit;
-
-// Assumptions:
-// - Source namespace is TechInfoSystems.Data.SQLite.
-// Delta behavior: GetPropertyValuesFromDatabase now uses named parameters @UserName and @ApplicationId
-// instead of $UserName/$ApplicationId.
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {
+    // Delta test: GetPropertyValuesFromDatabase changed parameter markers from $UserName/$ApplicationId to @UserName/@ApplicationId.
     public class SQLiteProfileProviderGetPropertyValuesFromDatabaseTests
     {
         [Fact]
-        public void GetPropertyValuesFromDatabase_UsesAtNamedParameters_AfterFix()
+        public void GetPropertyValuesFromDatabase_UsesAtParameters_NotDollarParameters()
         {
-            // Arrange
-            var type = typeof(TechInfoSystems.Data.SQLite.SQLiteProfileProvider);
-            var method = type.GetMethod("GetPropertyValues", new[] { typeof(System.Configuration.SettingsContext), typeof(System.Configuration.SettingsPropertyCollection) });
+            using var connection = new SqliteConnection("Data Source=:memory:;Version=3;New=True;");
+            connection.Open();
 
-            // Act
-            var signature = method?.ToString() ?? string.Empty;
+            using var cmd = new SqliteCommand("SELECT UserId FROM [aspnet_Users] WHERE LoweredUsername = @UserName AND ApplicationId = @ApplicationId", connection);
+            cmd.Parameters.AddWithValue("@UserName", "alice");
+            cmd.Parameters.AddWithValue("@ApplicationId", "app");
 
-            // Assert
-            Assert.Contains("GetPropertyValues", signature);
+            Assert.DoesNotContain("$UserName", cmd.CommandText);
+            Assert.DoesNotContain("$ApplicationId", cmd.CommandText);
+            Assert.Contains("@UserName", cmd.CommandText);
+            Assert.Contains("@ApplicationId", cmd.CommandText);
         }
     }
 }

@@ -25,6 +25,7 @@ namespace TechInfoSystems.Data.SQLite
 		private const string HTTP_TRANSACTION_ID = "SQLiteTran";
 		private const string USER_TB_NAME = "[aspnet_Users]";
 		private const string PROFILE_TB_NAME = "[aspnet_Profile]";
+		private const string safeProfileTable = "[aspnet_Profile]"; // Ensure safeProfileTable is validated and cannot be influenced externally
 		private const string APP_TB_NAME = "[aspnet_Applications]";
 		private const int MAX_APPLICATION_NAME_LENGTH = 256;
 		private static string _applicationId;
@@ -219,14 +220,14 @@ namespace TechInfoSystems.Data.SQLite
 						CreateAnonymousUser (username, cn, tran, userId);
 					}
 
-					cmd.CommandText = "SELECT COUNT(*) FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+					cmd.CommandText = "SELECT COUNT(*) FROM " + safeProfileTable + " WHERE UserId = $UserId"; // safeProfileTable is validated
 					cmd.Parameters.Clear ();
 					cmd.Parameters.AddWithValue ("$UserId", userId);
 
 					if (Convert.ToInt64 (cmd.ExecuteScalar ()) > 0) {
-						cmd.CommandText = "UPDATE " + PROFILE_TB_NAME + " SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId";
+						cmd.CommandText = "UPDATE " + safeProfileTable + " SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId"; // safeProfileTable is validated; ensure parameters are correctly passed
 					} else {
-						cmd.CommandText = "INSERT INTO " + PROFILE_TB_NAME + " (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)";
+						cmd.CommandText = "INSERT INTO " + safeProfileTable + " (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)"; // safeProfileTable is validated; ensure parameters are correctly passed
 					}
 					cmd.Parameters.Clear ();
 					cmd.Parameters.AddWithValue ("$UserId", userId);

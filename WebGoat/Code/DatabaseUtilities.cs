@@ -201,7 +201,17 @@ namespace OWASP.WebGoat.NET
 		{
 			if (userid.Length > 4)
 				userid = userid.Substring (0, 4);
-			String output = (String)DoScalar ("SELECT Email FROM UserList WHERE UserID = '" + userid + "'", GetGoatDBConnection ());
+			SqliteConnection conn = GetGoatDBConnection();
+SqliteCommand cmd = new SqliteCommand("SELECT Email FROM UserList WHERE UserID = @UserID", conn);
+cmd.Parameters.AddWithValue("@UserID", userid);
+string output = string.Empty;
+try {
+	output = (string)cmd.ExecuteScalar();
+} catch (SqliteException ex) {
+	output = "<br/>SQL Exception: " + ex.Message + " - SELECT Email FROM UserList WHERE UserID = @UserID";
+} catch (Exception ex) {
+	output = "<br/>Exception: " + ex.Message + " - SELECT Email FROM UserList WHERE UserID = @UserID";
+}
 			if (output != null)
 				return output;
 			else 
@@ -210,8 +220,26 @@ namespace OWASP.WebGoat.NET
 
 		public DataTable GetMailingListInfoByEmailAddress (string email)
 		{
-			string sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = '" + email + "'";
-			DataTable result = DoQuery (sql, GetGoatDBConnection ());
+			SqliteConnection conn = GetGoatDBConnection();
+			SqliteCommand cmd = new SqliteCommand("SELECT FirstName, LastName, Email FROM MailingList where Email = @Email", conn);
+			cmd.Parameters.AddWithValue("@Email", email);
+			DataTable result = new DataTable();
+			using (var reader = cmd.ExecuteReader()) {
+				for (int i = 0; i < reader.FieldCount; i++) {
+					DataColumn col = new DataColumn();
+					col.DataType = reader.GetFieldType(i);
+					col.ColumnName = reader.GetName(i);
+					result.Columns.Add(col);
+				}
+				while (reader.Read()) {
+					DataRow row = result.NewRow();
+					for (int i = 0; i < reader.FieldCount; i++) {
+						if (!reader.IsDBNull(i))
+							row[i] = reader.GetValue(i);
+					}
+					result.Rows.Add(row);
+				}
+			}
 			return result;
 		}
 

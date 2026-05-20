@@ -551,8 +551,9 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                 {
                     connection.Open();
 
-                    string sql = "select email from CustomerLogin where customerNumber = " + num;
+                    string sql = "select email from CustomerLogin where customerNumber = @customerNumber";
                     SqliteCommand cmd = new SqliteCommand(sql, connection);
+                    cmd.Parameters.AddWithValue("@customerNumber", num);  // Verify that '@customerNumber' matches the placeholder in the SQL query
                     output = (string)cmd.ExecuteScalar();
                 }
                 

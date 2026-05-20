@@ -19,7 +19,7 @@ namespace OWASP.WebGoat.NET
             lblMessage.Visible = false;
             txtEmail.Enabled = true;
             if (!Page.IsPostBack)
-                LoadComments();
+                FixedLoadComments();
 
         }
 
@@ -30,11 +30,11 @@ namespace OWASP.WebGoat.NET
                 string error_message = du.AddComment("user_cmt", txtEmail.Text, txtComment.Text);
                 txtComment.Text = error_message;
                 lblMessage.Visible = true;
-                LoadComments();
+                FixedLoadComments();
             }
             catch (Exception ex)
             {
-                lblMessage.Text = ex.Message;
+                lblMessage.Text = Server.HtmlEncode(ex.Message);
                 lblMessage.Visible = true;
             }
 		}
@@ -52,7 +52,8 @@ namespace OWASP.WebGoat.NET
             lblComments.Text = comments;
         }
 
-        void FixedLoadComments()
+        // FIX: Use HTML encoding to mitigate XSS vulnerability in dynamically rendered user input
+         void FixedLoadComments()
         {
             DataSet ds = du.GetComments("user_cmt");
             string comments = string.Empty;

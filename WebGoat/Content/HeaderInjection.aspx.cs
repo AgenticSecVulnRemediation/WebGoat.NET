@@ -7,6 +7,8 @@ using System.Web.UI.WebControls;
 using System.Collections;
 using System.Collections.Specialized;
 
+using Some.Security.Utility;
+
 namespace OWASP.WebGoat.NET
 {
     public partial class HeaderInjection : System.Web.UI.Page
@@ -16,7 +18,9 @@ namespace OWASP.WebGoat.NET
             if (Request.QueryString["Cookie"] != null)
             {
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
+                cookie.Value = SignAndValidateCookie(Request.QueryString["Cookie"]);
+                cookie.HttpOnly = true;
+                cookie.Secure = true;
 
                 Response.Cookies.Add(cookie);
             }

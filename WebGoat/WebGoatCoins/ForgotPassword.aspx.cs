@@ -41,6 +41,7 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             
                    
             HttpCookie cookie = new HttpCookie("encr_sec_qu_ans");
+cookie.HttpOnly = true; // Added to mitigate vulnerability by making the cookie inaccessible to client-side scripts
 
             //encode twice for more security!
 

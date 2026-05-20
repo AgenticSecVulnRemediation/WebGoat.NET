@@ -1209,7 +1209,7 @@ namespace TechInfoSystems.Data.SQLite
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
 					cmd.CommandText = "SELECT Count(*) FROM " + USER_TB_NAME +
-								"WHERE LoweredUsername LIKE $UsernameSearch AND ApplicationId = $ApplicationId";
+								" WHERE LoweredUsername LIKE $UsernameSearch AND ApplicationId = $ApplicationId";
 
 					cmd.Parameters.AddWithValue ("$UsernameSearch", usernameToMatch.ToLowerInvariant ());
 					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);

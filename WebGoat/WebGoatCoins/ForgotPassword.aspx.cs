@@ -46,6 +46,9 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
 
+                        cookie.HttpOnly = true;
+            cookie.Secure = true;
+            cookie.SameSite = SameSiteMode.Strict;
             Response.Cookies.Add(cookie);
         }
 

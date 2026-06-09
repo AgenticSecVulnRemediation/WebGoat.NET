@@ -41,11 +41,21 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             
                    
             HttpCookie cookie = new HttpCookie("encr_sec_qu_ans");
+            // Ensure the cookie is only sent over secure channels
+            cookie.Secure = true;
+            // Prevent client-side scripts from accessing the cookie
+            cookie.HttpOnly = true;
+            // Optionally, if supported, enforce SameSite policy (requires .NET 4.7.2 or later)
+            // cookie.SameSite = SameSiteMode.Strict; // Replace with appropriate value if needed
 
             //encode twice for more security!
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
 
+            cookie.Secure = true;
+            cookie.HttpOnly = true;
+            // Optionally, if supported, enforce SameSite policy (requires .NET 4.7.2 or later)
+            // cookie.SameSite = SameSiteMode.Strict;
             Response.Cookies.Add(cookie);
         }
 

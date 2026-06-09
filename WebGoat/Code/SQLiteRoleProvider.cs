@@ -290,9 +290,9 @@ namespace TechInfoSystems.Data.SQLite
 
 				using (SqliteCommand cmd = cn.CreateCommand()) {
 					cmd.CommandText = "DELETE FROM " + USERS_IN_ROLES_TB_NAME + " WHERE (RoleId IN"
-														 + " (SELECT RoleId FROM " + ROLE_TB_NAME + " WHERE LoweredRoleName = $RoleName))";
+														 + " (SELECT RoleId FROM " + ROLE_TB_NAME + " WHERE LoweredRoleName = ?))"; // parameterized query
 
-					cmd.Parameters.AddWithValue ("$RoleName", roleName.ToLowerInvariant ());
+					cmd.Parameters.AddWithValue ("?", roleName.ToLowerInvariant ());
 
 					cmd.ExecuteNonQuery ();
 				}

@@ -666,11 +666,12 @@ namespace TechInfoSystems.Data.SQLite
 				SqliteConnection cn = GetDbConnectionForRole ();
 				try {
 					using (SqliteCommand cmd = cn.CreateCommand()) {
-						cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
+						cmd.CommandText = "INSERT INTO [aspnet_Applications] (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
 
 						string roleApplicationId = Guid.NewGuid ().ToString ();
 
-						cmd.Parameters.AddWithValue ("$ApplicationId", roleApplicationId);
+						// Parameters for SQL command are added securely below. Confirm they are not modified:
+                        cmd.Parameters.AddWithValue ("$ApplicationId", roleApplicationId);
 						cmd.Parameters.AddWithValue ("$ApplicationName", _applicationName);
 						cmd.Parameters.AddWithValue ("$Description", String.Empty);
 

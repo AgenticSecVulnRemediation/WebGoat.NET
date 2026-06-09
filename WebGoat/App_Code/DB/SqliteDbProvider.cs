@@ -492,22 +492,43 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             DataSet ds = new DataSet();
 
             //catNumber is optional.  If it is greater than 0, add the clause to both statements.
-            string catClause = string.Empty;
-            if (catNumber >= 1)
-                catClause += " where catNumber = " + catNumber; 
+
 
 
             using (SqliteConnection connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
 
-                sql = "select * from Categories" + catClause;
-                da = new SqliteDataAdapter(sql, connection);
+                if (catNumber >= 1)
+                {
+                    sql = "select * from Categories where catNumber = @catNumber";
+                    SqliteCommand cmd = new SqliteCommand(sql, connection);
+                    cmd.Parameters.AddWithValue("@catNumber", catNumber);
+                    da = new SqliteDataAdapter(cmd);
+                }
+                else
+                {
+                    sql = "select * from Categories";
+                    da = new SqliteDataAdapter(sql, connection);
+                }
                 da.Fill(ds, "categories");
 
-                sql = "select * from Products" + catClause;
-                da = new SqliteDataAdapter(sql, connection);
-                da.Fill(ds, "products");
+                if (catNumber >= 1)
+                {
+                    sql = "select * from Products where catNumber = @catNumber";
+                    using (SqliteCommand cmd = new SqliteCommand(sql, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@catNumber", catNumber);
+                        da = new SqliteDataAdapter(cmd);
+                        da.Fill(ds, "products");
+                    }
+                }
+                else
+                {
+                    sql = "select * from Products";
+                    da = new SqliteDataAdapter(sql, connection);
+                    da.Fill(ds, "products");
+                }
 
 
                 //category / products relationship

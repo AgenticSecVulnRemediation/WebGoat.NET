@@ -298,10 +298,10 @@ namespace TechInfoSystems.Data.SQLite
 				}
 
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "DELETE FROM " + ROLE_TB_NAME + " WHERE LoweredRoleName = $RoleName AND ApplicationId = $ApplicationId";
+					cmd.CommandText = "DELETE FROM " + ROLE_TB_NAME + " WHERE LoweredRoleName = ? AND ApplicationId = ?";
 
-					cmd.Parameters.AddWithValue ("$RoleName", roleName.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
+					cmd.Parameters.AddWithValue(null, roleName.ToLowerInvariant());
+					cmd.Parameters.AddWithValue(null, _applicationId); // Parameter order must match placeholder order in the query
 
 					cmd.ExecuteNonQuery ();
 				}

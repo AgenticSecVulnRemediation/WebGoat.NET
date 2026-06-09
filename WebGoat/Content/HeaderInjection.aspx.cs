@@ -15,9 +15,14 @@ namespace OWASP.WebGoat.NET
         {
             if (Request.QueryString["Cookie"] != null)
             {
+                // Validate and secure cookie value (developer to implement ValidateAndSignCookieValue)
+                string rawCookieValue = Request.QueryString["Cookie"];
+                // TODO: Replace with your actual validation and signature logic
+                string safeCookieValue = ValidateAndSignCookieValue(rawCookieValue);
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
-
+                cookie.Value = safeCookieValue;
+                cookie.HttpOnly = true;
+                cookie.Secure = true;
                 Response.Cookies.Add(cookie);
             }
             else if (Request.QueryString["Header"] != null)

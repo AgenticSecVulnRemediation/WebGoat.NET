@@ -20,15 +20,22 @@ namespace OWASP.WebGoat.NET
             string userName = txtUsername.Text;
             string password = txtPassword.Text;
 
-            Regex testPassword = new Regex(userName);
-            Match match = testPassword.Match(password);
-            if (match.Success)
+            try
             {
-                lblError.Text = "Do not include name in password.";
+                Regex testPassword = new Regex(userName, RegexOptions.None, TimeSpan.FromSeconds(2));
+                Match match = testPassword.Match(password);
+                if (match.Success)
+                {
+                    lblError.Text = "Do not include name in password.";
+                }
+                else
+                {
+                    lblError.Text = "Good password.";
+                }
             }
-            else
+            catch (ArgumentException)
             {
-                lblError.Text = "Good password.";
+                lblError.Text = "Invalid regex pattern provided.";
             }
         }
     }

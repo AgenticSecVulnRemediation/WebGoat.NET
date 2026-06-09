@@ -393,8 +393,11 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             {
                 connection.Open();
 
-                string sql = "select * from Orders where customerNumber = " + customerID;
-                SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
+                string sql = "select * from Orders where customerNumber = @customerNumber";
+                // Create command with parameterized query
+                SqliteCommand cmd = new SqliteCommand(sql, connection);
+                cmd.Parameters.AddWithValue("@customerNumber", customerID);
+                SqliteDataAdapter da = new SqliteDataAdapter(cmd);
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 

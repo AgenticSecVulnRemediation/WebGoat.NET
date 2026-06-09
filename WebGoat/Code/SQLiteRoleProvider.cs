@@ -382,12 +382,10 @@ namespace TechInfoSystems.Data.SQLite
 			SqliteConnection cn = GetDbConnectionForRole ();
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT r.RoleName FROM " + ROLE_TB_NAME + " r INNER JOIN " + USERS_IN_ROLES_TB_NAME
-						+ " uir ON r.RoleId = uir.RoleId INNER JOIN " + USER_TB_NAME + " u ON uir.UserId = u.UserId"
-						+ " WHERE (u.LoweredUsername = $Username) AND (u.ApplicationId = $MembershipApplicationId)";
+					cmd.CommandText = "SELECT r.RoleName FROM [aspnet_Roles] r INNER JOIN [aspnet_UsersInRoles] uir ON r.RoleId = uir.RoleId INNER JOIN [aspnet_Users] u ON uir.UserId = u.UserId WHERE u.LoweredUsername = $Username AND u.ApplicationId = $MembershipApplicationId";
 
-					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$MembershipApplicationId", _membershipApplicationId);
+					cmd.Parameters.AddWithValue("$Username", username.ToLowerInvariant());
+					cmd.Parameters.AddWithValue("$MembershipApplicationId", _membershipApplicationId);
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();

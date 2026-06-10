@@ -652,7 +652,7 @@ namespace TechInfoSystems.Data.SQLite
 
 					if (userId != null) {
 						// User exists?
-						cmd.CommandText = "SELECT PropertyNames, PropertyValuesString, PropertyValuesBinary FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+						cmd.CommandText = $"SELECT PropertyNames, PropertyValuesString, PropertyValuesBinary FROM {PROFILE_TB_NAME} WHERE UserId = $UserId"; // PROFILE_TB_NAME is constant, ensure safe value if needed
 						cmd.Parameters.Clear ();
 						cmd.Parameters.AddWithValue ("$UserId", userId);
 

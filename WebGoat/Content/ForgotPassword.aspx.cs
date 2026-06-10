@@ -40,9 +40,13 @@ namespace OWASP.WebGoat.NET
             
                    
             HttpCookie cookie = new HttpCookie("encr_sec_qu_ans");
+            cookie.HttpOnly = true;
+            cookie.Secure = true;
+            cookie.SameSite = System.Web.SameSiteMode.Strict;
 
             //encode twice for more security!
 
+            // TODO: Double encoding is not sufficient; consider using signing or proper integrity validation if necessary
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
 
             Response.Cookies.Add(cookie); 

@@ -1338,7 +1338,8 @@ namespace TechInfoSystems.Data.SQLite
 			_passwordStrengthRegularExpression = _passwordStrengthRegularExpression.Trim ();
 			if (_passwordStrengthRegularExpression.Length > 0) {
 				try {
-					new Regex (_passwordStrengthRegularExpression);
+					// TODO: Adjust the timeout value as needed based on performance requirements.
+					new Regex (_passwordStrengthRegularExpression, RegexOptions.None, TimeSpan.FromSeconds(1));
 				} catch (ArgumentException ex) {
 					throw new ProviderException (ex.Message, ex);
 				}

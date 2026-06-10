@@ -424,9 +424,7 @@ namespace TechInfoSystems.Data.SQLite
 			SqliteConnection cn = GetDbConnectionForRole ();
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT u.Username FROM " + USER_TB_NAME + " u INNER JOIN " + USERS_IN_ROLES_TB_NAME
-						+ " uir ON u.UserId = uir.UserId INNER JOIN " + ROLE_TB_NAME + " r ON uir.RoleId = r.RoleId"
-						+ " WHERE (r.LoweredRoleName = $RoleName) AND (r.ApplicationId = $ApplicationId)";
+					cmd.CommandText = $"SELECT u.Username FROM {USER_TB_NAME} u INNER JOIN {USERS_IN_ROLES_TB_NAME} uir ON u.UserId = uir.UserId INNER JOIN {ROLE_TB_NAME} r ON uir.RoleId = r.RoleId WHERE r.LoweredRoleName = $RoleName AND r.ApplicationId = $ApplicationId";
 
 					cmd.Parameters.AddWithValue ("$RoleName", roleName.ToLowerInvariant ());
 					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);

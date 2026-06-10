@@ -514,13 +514,14 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public DataSet GetEmailByName(string name)
         {
-            string sql = "select firstName, lastName, email from Employees where firstName like '" + name + "%' or lastName like '" + name + "%'";
+            string sql = "select firstName, lastName, email from Employees where firstName like @name or lastName like @name";
             
             
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
                 DataSet ds = new DataSet();
+                da.SelectCommand.Parameters.AddWithValue("@name", name + "%");
                 da.Fill(ds);
 
                 if (ds.Tables[0].Rows.Count == 0)

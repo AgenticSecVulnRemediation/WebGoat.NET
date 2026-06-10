@@ -492,12 +492,20 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
 
-                sql = "select * from Categories" + catClause;
-                da = new MySqlDataAdapter(sql, connection);
+                sql = "select * from Categories" + (catNumber >= 1 ? " where catNumber = @catNumber" : "");
+                MySqlCommand cmd = new MySqlCommand(sql, connection);
+                if(catNumber >= 1) {
+                     cmd.Parameters.AddWithValue("@catNumber", catNumber);
+                }
+                da = new MySqlDataAdapter(cmd);
                 da.Fill(ds, "categories");
 
-                sql = "select * from Products" + catClause;
-                da = new MySqlDataAdapter(sql, connection);
+                sql = "select * from Products" + (catNumber >= 1 ? " where catNumber = @catNumber" : "");
+                MySqlCommand cmdProd = new MySqlCommand(sql, connection);
+                if(catNumber >= 1) {
+                     cmdProd.Parameters.AddWithValue("@catNumber", catNumber);
+                }
+                da = new MySqlDataAdapter(cmdProd);
                 da.Fill(ds, "products");
 
 

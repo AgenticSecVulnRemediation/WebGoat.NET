@@ -17,7 +17,7 @@ namespace OWASP.WebGoat.NET
         protected void Page_Load(object sender, EventArgs e)
         {
             if (Request["city"] != null)
-                LoadCity(Request["city"]);
+                FixedLoadCity(Request["city"]);
         }
 
 		void LoadCity (String city)
@@ -28,10 +28,11 @@ namespace OWASP.WebGoat.NET
             dtlView.DataBind();
 		}
 
+        // FixedLoadCity method sanitizes user input using Server.HtmlEncode to prevent XSS
         void FixedLoadCity (String city)
         {
             DataSet ds = du.GetOffice(city);
-            lblOutput.Text = "Here are the details for our " + Server.HtmlEncode(city) + " Office";
+            lblOutput.Text = "Here are the details for our " + HttpUtility.HtmlEncode(city) + " Office";  // Using HttpUtility.HtmlEncode to ensure proper output encoding and prevent XSS
             dtlView.DataSource = ds.Tables[0];
             dtlView.DataBind();
         }

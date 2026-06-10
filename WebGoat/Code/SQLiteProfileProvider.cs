@@ -24,7 +24,7 @@ namespace TechInfoSystems.Data.SQLite
 		private static string _connectionString;
 		private const string HTTP_TRANSACTION_ID = "SQLiteTran";
 		private const string USER_TB_NAME = "[aspnet_Users]";
-		private const string PROFILE_TB_NAME = "[aspnet_Profile]";
+		private const string PROFILE_TB_NAME = "UserProfile";  // PROFILE_TB_NAME is a compile-time constant; SQL identifiers cannot be parameterized and cannot be influenced by external input
 		private const string APP_TB_NAME = "[aspnet_Applications]";
 		private const int MAX_APPLICATION_NAME_LENGTH = 256;
 		private static string _applicationId;
@@ -219,14 +219,18 @@ namespace TechInfoSystems.Data.SQLite
 						CreateAnonymousUser (username, cn, tran, userId);
 					}
 
-					cmd.CommandText = "SELECT COUNT(*) FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+					// SQL identifiers (such as table names) cannot be parameterized; PROFILE_TB_NAME is a compile-time constant
+				// Using constant PROFILE_TB_NAME; SQL identifiers cannot be parameterized and are safe from external influence
+				cmd.CommandText = "SELECT COUNT(*) FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
 					cmd.Parameters.Clear ();
 					cmd.Parameters.AddWithValue ("$UserId", userId);
 
 					if (Convert.ToInt64 (cmd.ExecuteScalar ()) > 0) {
-						cmd.CommandText = "UPDATE " + PROFILE_TB_NAME + " SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId";
+						// SQL identifiers (such as table names) cannot be parameterized; using the constant PROFILE_TB_NAME
+				cmd.CommandText = "UPDATE " + PROFILE_TB_NAME + " SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId";
 					} else {
-						cmd.CommandText = "INSERT INTO " + PROFILE_TB_NAME + " (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)";
+						// SQL identifiers (such as table names) cannot be parameterized; using the constant PROFILE_TB_NAME
+				cmd.CommandText = "INSERT INTO " + PROFILE_TB_NAME + " (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)";
 					}
 					cmd.Parameters.Clear ();
 					cmd.Parameters.AddWithValue ("$UserId", userId);

@@ -7,6 +7,8 @@ using System.Web.UI.WebControls;
 using System.Collections;
 using System.Collections.Specialized;
 
+using System.Security.Cryptography;
+
 namespace OWASP.WebGoat.NET
 {
     public partial class HeaderInjection : System.Web.UI.Page
@@ -16,7 +18,18 @@ namespace OWASP.WebGoat.NET
             if (Request.QueryString["Cookie"] != null)
             {
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
+                string cookieInput = Request.QueryString["Cookie"];
+                // Basic validation: allow only alphanumeric characters and length 1 to 50.
+                if (!System.Text.RegularExpressions.Regex.IsMatch(cookieInput, "^[a-zA-Z0-9]{1,50}$"))
+                {
+                    // If validation fails, assign a default safe value
+                    cookieInput = "default";
+                }
+                // TODO: Replace with actual signing logic or call to the security helper method.
+                string signedCookieValue = cookieInput; // Placeholder for signed value.
+                cookie.Value = signedCookieValue;
+                cookie.HttpOnly = true;
+                cookie.Secure = true;
 
                 Response.Cookies.Add(cookie);
             }

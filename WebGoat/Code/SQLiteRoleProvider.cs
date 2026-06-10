@@ -467,15 +467,14 @@ namespace TechInfoSystems.Data.SQLite
 			SqliteConnection cn = GetDbConnectionForRole ();
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT COUNT(*) FROM " + USERS_IN_ROLES_TB_NAME + " uir INNER JOIN "
-						+ USER_TB_NAME + " u ON uir.UserId = u.UserId INNER JOIN " + ROLE_TB_NAME + " r ON uir.RoleId = r.RoleId "
-						+ " WHERE u.LoweredUsername = $Username AND u.ApplicationId = $MembershipApplicationId"
-						+ " AND r.LoweredRoleName = $RoleName AND r.ApplicationId = $ApplicationId";
+					cmd.CommandText = "SELECT COUNT(*) FROM [aspnet_UsersInRoles] uir INNER JOIN [aspnet_Users] u ON uir.UserId = u.UserId INNER JOIN [aspnet_Roles] r ON uir.RoleId = r.RoleId WHERE u.LoweredUsername = $Username AND u.ApplicationId = $MembershipApplicationId AND r.LoweredRoleName = $RoleName AND r.ApplicationId = $ApplicationId";
 
-					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$RoleName", roleName.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$MembershipApplicationId", _membershipApplicationId);
-					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
+					cmd.Parameters.AddRange(new[] {
+						new SqliteParameter("$Username", username.ToLowerInvariant()),
+						new SqliteParameter("$RoleName", roleName.ToLowerInvariant()),
+						new SqliteParameter("$MembershipApplicationId", _membershipApplicationId),
+						new SqliteParameter("$ApplicationId", _applicationId)
+					});
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();

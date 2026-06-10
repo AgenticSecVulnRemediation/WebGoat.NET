@@ -88,9 +88,20 @@ namespace OWASP.WebGoat.NET
 			return output;
 		}
 		
-		private string DoScalar (String SQL, SqliteConnection conn)
+		private string DoScalar (String SQL, SqliteConnection conn, object[] parameters = null)
 		{
 			var cmd = new SqliteCommand (SQL, conn);
+			if(parameters != null) {
+				var regex = new System.Text.RegularExpressions.Regex("@\\w+");
+				var matches = regex.Matches(SQL);
+				var added = new System.Collections.Generic.HashSet<string>();
+				foreach(System.Text.RegularExpressions.Match match in matches) {
+					if(!added.Contains(match.Value)) {
+						cmd.Parameters.AddWithValue(match.Value, parameters[added.Count]);
+						added.Add(match.Value);
+					}
+				}
+			}
 			var output = string.Empty;
 			
 			try {
@@ -141,9 +152,20 @@ namespace OWASP.WebGoat.NET
 			return result;
 		}
 		*/
-		private DataTable DoQuery (string SQL, SqliteConnection conn)
+		private DataTable DoQuery (string SQL, SqliteConnection conn, object[] parameters = null)
 		{
 			var cmd = new SqliteCommand (SQL, conn);
+			if(parameters != null) {
+				var regex = new System.Text.RegularExpressions.Regex("@\\w+");
+				var matches = regex.Matches(SQL);
+				var added = new System.Collections.Generic.HashSet<string>();
+				foreach(System.Text.RegularExpressions.Match match in matches) {
+					if(!added.Contains(match.Value)) {
+						cmd.Parameters.AddWithValue(match.Value, parameters[added.Count]);
+						added.Add(match.Value);
+					}
+				}
+			}
 			DataTable dt = new DataTable ();
 			using (var reader = cmd.ExecuteReader ()) {
 				
@@ -201,7 +223,7 @@ namespace OWASP.WebGoat.NET
 		{
 			if (userid.Length > 4)
 				userid = userid.Substring (0, 4);
-			String output = (String)DoScalar ("SELECT Email FROM UserList WHERE UserID = '" + userid + "'", GetGoatDBConnection ());
+			String output = (String)DoScalar ("SELECT Email FROM UserList WHERE UserID = @UserID", GetGoatDBConnection(), new object[]{ userid });
 			if (output != null)
 				return output;
 			else 
@@ -210,8 +232,8 @@ namespace OWASP.WebGoat.NET
 
 		public DataTable GetMailingListInfoByEmailAddress (string email)
 		{
-			string sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = '" + email + "'";
-			DataTable result = DoQuery (sql, GetGoatDBConnection ());
+			string sql = "SELECT FirstName, LastName, Email FROM MailingList WHERE Email = @Email";
+			DataTable result = DoQuery (sql, GetGoatDBConnection(), new object[]{ email });
 			return result;
 		}
 

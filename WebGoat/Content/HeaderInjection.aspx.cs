@@ -15,10 +15,20 @@ namespace OWASP.WebGoat.NET
         {
             if (Request.QueryString["Cookie"] != null)
             {
-                HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
-
-                Response.Cookies.Add(cookie);
+                string userCookie = Request.QueryString["Cookie"];
+                // Validate the cookie value using a regex; replace the pattern below with an appropriate one
+                if (System.Text.RegularExpressions.Regex.IsMatch(userCookie, "^[a-zA-Z0-9]+$"))
+                {
+                    HttpCookie cookie = new HttpCookie("UserAddedCookie");
+                    cookie.Value = userCookie;
+                    cookie.HttpOnly = true; // Prevent client-side script access
+                    cookie.Secure = true;   // Ensure transmission only over HTTPS
+                    Response.Cookies.Add(cookie);
+                }
+                else
+                {
+                    // Optionally handle invalid cookie values
+                }
             }
             else if (Request.QueryString["Header"] != null)
             {

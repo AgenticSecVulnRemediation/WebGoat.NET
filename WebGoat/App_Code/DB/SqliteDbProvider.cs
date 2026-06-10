@@ -262,7 +262,7 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public string AddComment(string productCode, string email, string comment)
         {
-            string sql = "insert into Comments(productCode, email, comment) values ('" + productCode + "','" + email + "','" + comment + "');";
+            string sql = "insert into Comments(productCode, email, comment) values (@productCode, @email, @comment);";
             string output = null;
             
             try
@@ -272,6 +272,9 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                 {
                     connection.Open();
                     SqliteCommand command = new SqliteCommand(sql, connection);
+                    command.Parameters.AddWithValue("@productCode", productCode);
+                    command.Parameters.AddWithValue("@email", email);
+                    command.Parameters.AddWithValue("@comment", comment); // TODO: Verify that all parameters are properly bound.
                     command.ExecuteNonQuery();
                 }
             }

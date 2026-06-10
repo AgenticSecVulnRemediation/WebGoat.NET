@@ -324,7 +324,8 @@ namespace TechInfoSystems.Data.SQLite
 			if (numNonAlphaNumericChars < this.MinRequiredNonAlphanumericCharacters) {
 				throw new ArgumentException (String.Format (CultureInfo.CurrentCulture, "There must be at least {0} non alpha numeric characters.", this.MinRequiredNonAlphanumericCharacters));
 			}
-			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (newPassword, this.PasswordStrengthRegularExpression)) {
+			            // Adjust the timeout value (currently set to 100 milliseconds) as appropriate for your application's performance requirements
+            if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch(newPassword, this.PasswordStrengthRegularExpression, RegexOptions.None, TimeSpan.FromMilliseconds(100))) {
 				throw new ArgumentException ("The password does not match the regular expression in the config file.");
 			}
 

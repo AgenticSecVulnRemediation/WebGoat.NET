@@ -88,6 +88,30 @@ namespace OWASP.WebGoat.NET
 			return output;
 		}
 		
+		// New overload to support parameterized commands for non-query statements
+		private string DoNonQuery(string SQL, object[] parameters, SqliteConnection conn)
+		{
+			var cmd = new SqliteCommand(SQL, conn);
+			// Adding parameters for the parameterized query; adjust parameter names if necessary
+			if(parameters != null && parameters.Length == 3) {
+				cmd.Parameters.AddWithValue("@title", parameters[0]);
+				cmd.Parameters.AddWithValue("@email", parameters[1]);
+				cmd.Parameters.AddWithValue("@message", parameters[2]);
+			}
+			var output = string.Empty;
+			try {
+				cmd.ExecuteNonQuery();
+				output += "<br/>SQL Executed: " + SQL;
+			} catch (SqliteException ex) {
+				output += "<br/>SQL Exception: " + ex.Message;
+				output += SQL;
+			} catch (Exception ex) {
+				output += "<br/>Exception: " + ex.Message;
+				output += SQL;
+			}
+			return output;
+		}
+		
 		private string DoScalar (String SQL, SqliteConnection conn)
 		{
 			var cmd = new SqliteCommand (SQL, conn);
@@ -231,8 +255,8 @@ namespace OWASP.WebGoat.NET
 
 		public string AddNewPosting (String title, String email, String message)
 		{
-			string sql = "insert into Postings(title, email, message) values ('" + title + "','" + email + "','" + message + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			string sql = "insert into Postings(title, email, message) values (@title, @email, @message)";
+			string result = DoNonQuery (sql, new object[] { title, email, message }, GetGoatDBConnection ());
 			return result;
 		}
 

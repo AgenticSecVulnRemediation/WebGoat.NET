@@ -324,8 +324,13 @@ namespace TechInfoSystems.Data.SQLite
 			if (numNonAlphaNumericChars < this.MinRequiredNonAlphanumericCharacters) {
 				throw new ArgumentException (String.Format (CultureInfo.CurrentCulture, "There must be at least {0} non alpha numeric characters.", this.MinRequiredNonAlphanumericCharacters));
 			}
-			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (newPassword, this.PasswordStrengthRegularExpression)) {
-				throw new ArgumentException ("The password does not match the regular expression in the config file.");
+			if ((this.PasswordStrengthRegularExpression.Length > 0)) {
+				// Use a timeout to prevent ReDoS attacks. Replace 100ms with an appropriate timeout as needed.
+				Regex regex = new Regex(this.PasswordStrengthRegularExpression, RegexOptions.None, TimeSpan.FromMilliseconds(100));
+				if (!regex.IsMatch(newPassword)) {
+					throw new ArgumentException("The password does not match the regular expression in the config file.");
+				}
+			}
 			}
 
 			string encodedPwd = EncodePassword (newPassword, passwordFormat, salt);
@@ -510,7 +515,14 @@ namespace TechInfoSystems.Data.SQLite
 				return null;
 			}
 
-			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (password, this.PasswordStrengthRegularExpression)) {
+			if ((this.PasswordStrengthRegularExpression.Length > 0)) {
+				// Use a timeout to prevent ReDoS attacks. Replace 100ms with an appropriate timeout as needed.
+				Regex regex = new Regex(this.PasswordStrengthRegularExpression, RegexOptions.None, TimeSpan.FromMilliseconds(100));
+				if (!regex.IsMatch(password)) {
+					status = MembershipCreateStatus.InvalidPassword;
+					return null;
+				}
+			}
 				status = MembershipCreateStatus.InvalidPassword;
 				return null;
 			}

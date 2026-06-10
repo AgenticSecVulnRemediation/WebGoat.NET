@@ -115,16 +115,17 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             string encoded_password = Encoder.Encode(password);
             
             //check email/password
-            string sql = "select * from CustomerLogin where email = '" + email + 
-                "' and password = '" + encoded_password + "';";
+            string sql = "select * from CustomerLogin where email = @email and password = @password";
                         
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
-            
-                //TODO: User reader instead (for all calls)
+                MySqlCommand cmd = new MySqlCommand(sql, connection);
+                // Add parameters to the command; ensure values are properly bound
+                cmd.Parameters.AddWithValue("@email", email);
+                cmd.Parameters.AddWithValue("@password", encoded_password);
+
+                MySqlDataAdapter da = new MySqlDataAdapter(cmd);
                 DataSet ds = new DataSet();
-            
                 da.Fill(ds);
                 
                 try

@@ -640,10 +640,11 @@ namespace TechInfoSystems.Data.SQLite
 						userId = cmd.ExecuteScalar () as string;
 					}
 
-					cmd.CommandText = "DELETE FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+					cmd.CommandText = "DELETE FROM " + USER_TB_NAME + " WHERE LoweredUsername = @Username AND ApplicationId = @ApplicationId";
 
-					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
+					cmd.Parameters.Clear();
+					cmd.Parameters.AddWithValue ("@Username", username.ToLowerInvariant());
+					cmd.Parameters.AddWithValue ("@ApplicationId", _applicationId);
 
 					int rowsAffected = cmd.ExecuteNonQuery ();
 

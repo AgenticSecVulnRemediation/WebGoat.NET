@@ -26,6 +26,8 @@ namespace OWASP.WebGoat.NET
 
                 //Info leak
                 HttpCookie cookie = new HttpCookie("Server", Encoder.Encode(Server.MachineName));
+                cookie.Secure = true; // Ensures the cookie is transmitted only over HTTPS
+                cookie.HttpOnly = true; // Prevents client-side script access to the cookie
                 Response.Cookies.Add(cookie);
             }
             else

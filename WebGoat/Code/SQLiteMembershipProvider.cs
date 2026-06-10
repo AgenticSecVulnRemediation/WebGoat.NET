@@ -7,6 +7,7 @@ using Mono.Data.Sqlite;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System;
 using System.Text.RegularExpressions;
 using System.Web.Security;
 
@@ -324,7 +325,7 @@ namespace TechInfoSystems.Data.SQLite
 			if (numNonAlphaNumericChars < this.MinRequiredNonAlphanumericCharacters) {
 				throw new ArgumentException (String.Format (CultureInfo.CurrentCulture, "There must be at least {0} non alpha numeric characters.", this.MinRequiredNonAlphanumericCharacters));
 			}
-			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (newPassword, this.PasswordStrengthRegularExpression)) {
+			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch(newPassword, this.PasswordStrengthRegularExpression, RegexOptions.None, TimeSpan.FromSeconds(1))) {
 				throw new ArgumentException ("The password does not match the regular expression in the config file.");
 			}
 
@@ -510,7 +511,7 @@ namespace TechInfoSystems.Data.SQLite
 				return null;
 			}
 
-			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (password, this.PasswordStrengthRegularExpression)) {
+			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch(password, this.PasswordStrengthRegularExpression, RegexOptions.None, TimeSpan.FromSeconds(1))) {
 				status = MembershipCreateStatus.InvalidPassword;
 				return null;
 			}

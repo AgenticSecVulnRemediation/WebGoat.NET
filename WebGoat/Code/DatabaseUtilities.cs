@@ -88,6 +88,25 @@ namespace OWASP.WebGoat.NET
 			return output;
 		}
 		
+		        }
+
+		// Overloaded DoNonQuery that accepts a SqliteCommand with parameters
+		private string DoNonQuery(SqliteCommand command)
+		{
+			var output = string.Empty;
+			try {
+				command.ExecuteNonQuery();
+				output += "<br/>SQL Executed: " + command.CommandText;
+			} catch (SqliteException ex) {
+				output += "<br/>SQL Exception: " + ex.Message;
+				output += command.CommandText;
+			} catch (Exception ex) {
+				output += "<br/>Exception: " + ex.Message;
+				output += command.CommandText;
+			}
+			return output;
+		}
+
 		private string DoScalar (String SQL, SqliteConnection conn)
 		{
 			var cmd = new SqliteCommand (SQL, conn);
@@ -231,8 +250,13 @@ namespace OWASP.WebGoat.NET
 
 		public string AddNewPosting (String title, String email, String message)
 		{
-			string sql = "insert into Postings(title, email, message) values ('" + title + "','" + email + "','" + message + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			string sql = "insert into Postings(title, email, message) values (@title, @Email, @message)";
+			// Using parameterized query with explicit parameter addition. Choose the appropriate method based on your framework implementation.
+			SqliteCommand command = new SqliteCommand(sql, GetGoatDBConnection());
+			command.Parameters.AddWithValue("@title", title);
+			command.Parameters.AddWithValue("@Email", email);
+			command.Parameters.AddWithValue("@message", message);
+			string result = DoNonQuery(command);
 			return result;
 		}
 

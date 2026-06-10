@@ -1,11 +1,12 @@
 using System;
 using System.Data;
-using Mono.Data.Sqlite;
+
 using log4net;
 using System.Reflection;
 using System.IO;
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.Data.Sqlite;
 
 namespace OWASP.WebGoat.NET.App_Code.DB
 {
@@ -416,12 +417,16 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             {
                 connection.Open();
 
-                sql = "select * from Products where productCode = '" + productCode + "'";
-                da = new SqliteDataAdapter(sql, connection);
+                sql = "select * from Products where productCode = @productCode";
+                SqliteCommand cmd = new SqliteCommand(sql, connection);
+                cmd.Parameters.AddWithValue("@productCode", productCode);
+                da = new SqliteDataAdapter(cmd);
                 da.Fill(ds, "products");
 
-                sql = "select * from Comments where productCode = '" + productCode + "'";
-                da = new SqliteDataAdapter(sql, connection);
+                sql = "select * from Comments where productCode = @productCode";
+                cmd = new SqliteCommand(sql, connection);
+                cmd.Parameters.AddWithValue("@productCode", productCode);
+                da = new SqliteDataAdapter(cmd);
                 da.Fill(ds, "comments");
 
                 DataRelation dr = new DataRelation("prod_comments",

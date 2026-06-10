@@ -1,11 +1,11 @@
 using System;
 using System.Data;
-using MySql.Data.MySqlClient;
 using log4net;
 using System.Reflection;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using MySql.Data.MySqlClient;
 
 namespace OWASP.WebGoat.NET.App_Code.DB
 {
@@ -536,10 +536,10 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             try
             {
             
-                output = (String)MySqlHelper.ExecuteScalar(_connectionString, "select email from CustomerLogin where customerNumber = " + num);
+                output = (String)MySqlHelper.ExecuteScalar(_connectionString, "select email from CustomerLogin where customerNumber = @num", new MySqlParameter("@num", num));
                 /*using (MySqlConnection connection = new MySqlConnection(_connectionString))
                 {
-                    string sql = "select email from CustomerLogin where customerNumber = " + num;
+                    string sql = "select email from CustomerLogin where customerNumber = @num";
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
                     output = (string)cmd.ExecuteScalar();
                 }*/

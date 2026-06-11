@@ -44,7 +44,11 @@ namespace OWASP.WebGoat.NET
             //encode twice for more security!
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
+            cookie.Secure = true; // Ensures the cookie is transmitted only over HTTPS
+            cookie.HttpOnly = true; // Prevents JavaScript access to the cookie
 
+            cookie.Secure = true; // Ensures the cookie is transmitted only over HTTPS
+            cookie.HttpOnly = true; // Prevents JavaScript access to the cookie
             Response.Cookies.Add(cookie); 
         }
 

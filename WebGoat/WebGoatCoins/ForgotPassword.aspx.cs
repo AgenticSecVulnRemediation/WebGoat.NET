@@ -41,10 +41,21 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             
                    
             HttpCookie cookie = new HttpCookie("encr_sec_qu_ans");
+            // Set the HttpOnly flag to prevent access via client-side scripts
+            cookie.HttpOnly = true;
+            // Set the Secure flag to ensure the cookie is sent only over HTTPS
+            cookie.Secure = true;
+            // Optionally, consider adding a digital signature mechanism to the cookie's value for integrity validation.
 
             //encode twice for more security!
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
+
+            // Set the HttpOnly flag to prevent access via client-side scripts
+            cookie.HttpOnly = true;
+            // Set the Secure flag to ensure the cookie is sent only over HTTPS
+            cookie.Secure = true;
+            // Optionally, consider adding a digital signature mechanism to the cookie's value for integrity validation.
 
             Response.Cookies.Add(cookie);
         }

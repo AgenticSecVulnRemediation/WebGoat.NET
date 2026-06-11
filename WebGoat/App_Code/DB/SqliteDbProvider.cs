@@ -501,13 +501,35 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             {
                 connection.Open();
 
-                sql = "select * from Categories" + catClause;
-                da = new SqliteDataAdapter(sql, connection);
-                da.Fill(ds, "categories");
+                if(catNumber >= 1)
+                {
+                    sql = "select * from Categories where catNumber = @catNumber";
+                    SqliteCommand command = new SqliteCommand(sql, connection);
+                    command.Parameters.AddWithValue("@catNumber", catNumber);
+                    da = new SqliteDataAdapter(command);
+                    da.Fill(ds, "categories");
+                }
+                else
+                {
+                    sql = "select * from Categories";
+                    da = new SqliteDataAdapter(sql, connection);
+                    da.Fill(ds, "categories");
+                }
 
-                sql = "select * from Products" + catClause;
-                da = new SqliteDataAdapter(sql, connection);
-                da.Fill(ds, "products");
+                if(catNumber >= 1)
+                {
+                    sql = "select * from Products where catNumber = @catNumber";
+                    SqliteCommand command = new SqliteCommand(sql, connection);
+                    command.Parameters.AddWithValue("@catNumber", catNumber);
+                    da = new SqliteDataAdapter(command);
+                    da.Fill(ds, "products");
+                }
+                else
+                {
+                    sql = "select * from Products";
+                    da = new SqliteDataAdapter(sql, connection);
+                    da.Fill(ds, "products");
+                }
 
 
                 //category / products relationship

@@ -641,9 +641,9 @@ namespace TechInfoSystems.Data.SQLite
 			SqliteConnection cn = GetDbConnectionForProfile ();
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $UserName AND ApplicationId = $ApplicationId";
-					cmd.Parameters.AddWithValue ("$UserName", username.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
+					cmd.CommandText = string.Format("SELECT UserId FROM {0} WHERE LoweredUsername = $UserName AND ApplicationId = $ApplicationId", USER_TB_NAME);
+					cmd.Parameters.AddWithValue ("$UserName", username.ToLowerInvariant ()); // Parameters safely passed via AddWithValue; no modification required.
+					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId); // Parameters safely passed via AddWithValue; no modification required.
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();

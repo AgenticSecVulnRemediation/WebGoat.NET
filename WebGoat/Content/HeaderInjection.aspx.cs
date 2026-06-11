@@ -6,6 +6,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Collections;
 using System.Collections.Specialized;
+using System.Text.RegularExpressions;
 
 namespace OWASP.WebGoat.NET
 {
@@ -16,7 +17,19 @@ namespace OWASP.WebGoat.NET
             if (Request.QueryString["Cookie"] != null)
             {
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
+                                string cookieInput = Request.QueryString["Cookie"];
+                // TODO: Replace with proper validation as appropriate for your application.
+                if(Regex.IsMatch(cookieInput, "^[a-zA-Z0-9]*$"))
+                {
+                    cookie.Value = cookieInput;
+                }
+                else
+                {
+                    cookie.Value = "";
+                }
+                cookie.HttpOnly = true;
+                cookie.Secure = true;
+                // cookie.SameSite = SameSiteMode.Strict; // Uncomment if supported by your framework
 
                 Response.Cookies.Add(cookie);
             }

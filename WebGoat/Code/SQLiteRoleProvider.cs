@@ -602,15 +602,12 @@ namespace TechInfoSystems.Data.SQLite
 			SqliteConnection cn = GetDbConnectionForRole ();
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT u.Username FROM " + USERS_IN_ROLES_TB_NAME + " uir INNER JOIN " + USER_TB_NAME
-						+ " u ON uir.UserId = u.UserId INNER JOIN " + ROLE_TB_NAME + " r ON r.RoleId = uir.RoleId"
-						+ " WHERE u.LoweredUsername LIKE $UsernameSearch AND r.LoweredRoleName = $RoleName AND u.ApplicationId = $MembershipApplicationId"
-						+ " AND r.ApplicationId = $ApplicationId";
+					cmd.CommandText = "SELECT u.Username FROM " + USERS_IN_ROLES_TB_NAME + " uir INNER JOIN " + USER_TB_NAME + " u ON uir.UserId = u.UserId INNER JOIN " + ROLE_TB_NAME + " r ON r.RoleId = uir.RoleId WHERE u.LoweredUsername LIKE ? AND r.LoweredRoleName = ? AND u.ApplicationId = ? AND r.ApplicationId = ?";
 
-					cmd.Parameters.AddWithValue ("$UsernameSearch", usernameToMatch);
-					cmd.Parameters.AddWithValue ("$RoleName", roleName.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$MembershipApplicationId", _membershipApplicationId);
-					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
+					cmd.Parameters.AddWithValue(null, usernameToMatch);
+					cmd.Parameters.AddWithValue(null, roleName.ToLowerInvariant());
+					cmd.Parameters.AddWithValue(null, _membershipApplicationId);
+					cmd.Parameters.AddWithValue(null, _applicationId);
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();

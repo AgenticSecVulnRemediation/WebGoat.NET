@@ -202,10 +202,11 @@ namespace TechInfoSystems.Data.SQLite
 					tran = cn.BeginTransaction ();
 
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId;";
+					cmd.CommandText = string.Format("SELECT UserId FROM {0} WHERE LoweredUsername = ? AND ApplicationId = ?", USER_TB_NAME);
 
-					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
+					cmd.Parameters.AddWithValue (null, username.ToLowerInvariant ());
+					cmd.Parameters.AddWithValue (null, _membershipApplicationId);
+					// Ensure that USER_TB_NAME is a trusted constant
 
 					string userId = cmd.ExecuteScalar () as string;
 

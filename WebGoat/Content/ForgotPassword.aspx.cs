@@ -45,6 +45,10 @@ namespace OWASP.WebGoat.NET
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
 
+            cookie.Secure = true; // Ensures the cookie is only transmitted over HTTPS.
+            cookie.HttpOnly = true; // Makes the cookie inaccessible to JavaScript to mitigate XSS attacks.
+            // Optionally set SameSite attribute if supported by the framework
+            // cookie.SameSite = SameSiteMode.Strict; // Uncomment and adjust based on desired policy.
             Response.Cookies.Add(cookie); 
         }
 

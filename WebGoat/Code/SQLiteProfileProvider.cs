@@ -808,6 +808,8 @@ namespace TechInfoSystems.Data.SQLite
 
 			using (SqliteCommand cmd = cn.CreateCommand()) {
 				cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+				// USER_TB_NAME is an immutable constant and should never be influenced by user input
+                // USER_TB_NAME is a constant and should never be influenced by user input  // Note: USER_TB_NAME is an immutable constant and should never be influenced by user input
 
 				cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
 				cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
@@ -818,8 +820,7 @@ namespace TechInfoSystems.Data.SQLite
 				string userId = cmd.ExecuteScalar () as string;
 				if (userId != null) {
 					cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
-					cmd.Parameters.Clear ();
-					cmd.Parameters.Add ("$UserId", DbType.String, 36).Value = userId;
+				cmd.Parameters.AddWithValue ("$UserId", userId);  // Verify that 'userId' holds the correct value
 
 					deleteSuccessful = (cmd.ExecuteNonQuery () != 0);
 				}

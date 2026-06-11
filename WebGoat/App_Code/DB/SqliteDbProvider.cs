@@ -286,7 +286,7 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public string UpdateCustomerPassword(int customerNumber, string password)
         {
-            string sql = "update CustomerLogin set password = '" + Encoder.Encode(password) + "' where customerNumber = " + customerNumber;
+            string sql = "UPDATE CustomerLogin SET password = @Password WHERE customerNumber = @CustomerNumber";
             string output = null;
             try
             {
@@ -296,7 +296,9 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                     connection.Open();
 
                     SqliteCommand command = new SqliteCommand(sql, connection);
-                
+                    command.Parameters.AddWithValue("@Password", Encoder.Encode(password));
+                    command.Parameters.AddWithValue("@CustomerNumber", customerNumber);
+                    
                     int rows_added = command.ExecuteNonQuery();
                     
                     log.Info("Rows Added: " + rows_added + " to comment table");

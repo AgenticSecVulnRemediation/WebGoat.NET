@@ -486,18 +486,24 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             //catNumber is optional.  If it is greater than 0, add the clause to both statements.
             string catClause = string.Empty;
             if (catNumber >= 1)
-                catClause += " where catNumber = " + catNumber; 
+                catClause = " WHERE catNumber = @catNumber"; // Using parameter placeholder to prevent SQL injection 
 
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
 
-                sql = "select * from Categories" + catClause;
-                da = new MySqlDataAdapter(sql, connection);
+                MySqlCommand cmd = new MySqlCommand("select * from Categories" + catClause, connection);
+                if (!string.IsNullOrEmpty(catClause)) {
+                    cmd.Parameters.AddWithValue("@catNumber", catNumber); // FIXME: Ensure catNumber is the intended value
+                }
+                da = new MySqlDataAdapter(cmd);
                 da.Fill(ds, "categories");
 
-                sql = "select * from Products" + catClause;
-                da = new MySqlDataAdapter(sql, connection);
+                MySqlCommand cmdProd = new MySqlCommand("select * from Products" + catClause, connection);
+                if (!string.IsNullOrEmpty(catClause)) {
+                    cmdProd.Parameters.AddWithValue("@catNumber", catNumber); // FIXME: Ensure catNumber is the intended value
+                }
+                da = new MySqlDataAdapter(cmdProd);
                 da.Fill(ds, "products");
 
 

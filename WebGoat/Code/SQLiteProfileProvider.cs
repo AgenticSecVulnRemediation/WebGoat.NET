@@ -410,13 +410,13 @@ namespace TechInfoSystems.Data.SQLite
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
 					cmd.CommandText = "SELECT COUNT(*) FROM " + USER_TB_NAME + " u, " + PROFILE_TB_NAME + " p " +
-														"WHERE u.ApplicationId = $ApplicationId AND u.LastActivityDate <= $LastActivityDate AND u.UserId = p.UserId" + GetClauseForAuthenticationOptions (authenticationOption);
+														"WHERE u.ApplicationId = @ApplicationId AND u.LastActivityDate <= @LastActivityDate AND u.UserId = p.UserId" + GetClauseForAuthenticationOptions (authenticationOption);
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();
 
-					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
-					cmd.Parameters.AddWithValue ("$LastActivityDate", userInactiveSinceDate);
+					cmd.Parameters.AddWithValue ("@ApplicationId", _membershipApplicationId);
+					cmd.Parameters.AddWithValue ("@LastActivityDate", userInactiveSinceDate);
 
 					return cmd.ExecuteNonQuery ();
 				}

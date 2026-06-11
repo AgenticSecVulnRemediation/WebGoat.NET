@@ -11,6 +11,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Web.Profile;
 using System.Xml.Serialization;
+using System.Text.RegularExpressions;
 
 namespace TechInfoSystems.Data.SQLite
 {
@@ -24,7 +25,7 @@ namespace TechInfoSystems.Data.SQLite
 		private static string _connectionString;
 		private const string HTTP_TRANSACTION_ID = "SQLiteTran";
 		private const string USER_TB_NAME = "[aspnet_Users]";
-		private const string PROFILE_TB_NAME = "[aspnet_Profile]";
+		private const string PROFILE_TB_NAME = "aspnet_Profile";
 		private const string APP_TB_NAME = "[aspnet_Applications]";
 		private const int MAX_APPLICATION_NAME_LENGTH = 256;
 		private static string _applicationId;
@@ -224,9 +225,9 @@ namespace TechInfoSystems.Data.SQLite
 					cmd.Parameters.AddWithValue ("$UserId", userId);
 
 					if (Convert.ToInt64 (cmd.ExecuteScalar ()) > 0) {
-						cmd.CommandText = "UPDATE " + PROFILE_TB_NAME + " SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId";
+						cmd.CommandText = "UPDATE \"" + PROFILE_TB_NAME + "\" SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId";
 					} else {
-						cmd.CommandText = "INSERT INTO " + PROFILE_TB_NAME + " (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)";
+						cmd.CommandText = "INSERT INTO \"" + PROFILE_TB_NAME + "\" (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)";
 					}
 					cmd.Parameters.Clear ();
 					cmd.Parameters.AddWithValue ("$UserId", userId);

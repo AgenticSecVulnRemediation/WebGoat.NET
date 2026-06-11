@@ -76,30 +76,34 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             string encoded_password = Encoder.Encode(password);
             
             //check email/password
-            string sql = "select * from CustomerLogin where email = '" + email + "' and password = '" + 
-                         encoded_password + "';";
+            string sql = "select * from CustomerLogin where email = @email and password = @password;";
                         
             using (SqliteConnection connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
 
-                SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
-            
-                //TODO: User reader instead (for all calls)
-                DataSet ds = new DataSet();
-            
-                da.Fill(ds);
-                
-                try
+                using (SqliteCommand command = new SqliteCommand(sql, connection))
                 {
-                    return ds.Tables[0].Rows.Count == 0;
-                }
-                catch (Exception ex)
-                {
-                    //Log this and pass the ball along.
-                    log.Error("Error checking login", ex);
+                    command.Parameters.AddWithValue("@email", email);
+                    command.Parameters.AddWithValue("@password", encoded_password);
+                    SqliteDataAdapter da = new SqliteDataAdapter(command);
                     
-                    throw new Exception("Error checking login", ex);
+                    //TODO: User reader instead (for all calls)
+                    DataSet ds = new DataSet();
+                
+                    da.Fill(ds);
+                    
+                    try
+                    {
+                        return ds.Tables[0].Rows.Count == 0;
+                    }
+                    catch (Exception ex)
+                    {
+                        //Log this and pass the ball along.
+                        log.Error("Error checking login", ex);
+                        
+                        throw new Exception("Error checking login", ex);
+                    }
                 }
             }
         }

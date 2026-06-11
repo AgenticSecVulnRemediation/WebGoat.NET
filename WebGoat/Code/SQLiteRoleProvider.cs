@@ -342,8 +342,11 @@ namespace TechInfoSystems.Data.SQLite
 			SqliteConnection cn = GetDbConnectionForRole ();
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT RoleName FROM " + ROLE_TB_NAME + " WHERE ApplicationId = $ApplicationId";
-					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
+					                    // Ensure that the table name is a known constant. If ROLE_TB_NAME is a constant such as 'aspnet_Roles', inline it directly.
+                    cmd.CommandText = "SELECT RoleName FROM aspnet_Roles WHERE ApplicationId = $ApplicationId";
+					cmd.Parameters.Clear();
+					var appIdParam = new SqliteParameter("$ApplicationId", System.Data.DbType.String) { Value = _applicationId };
+					cmd.Parameters.Add(appIdParam);
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();

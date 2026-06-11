@@ -412,13 +412,23 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                sql = "select * from Products where productCode = '" + productCode + "'";
-                da = new MySqlDataAdapter(sql, connection);
-                da.Fill(ds, "products");
+                sql = "select * from Products where productCode = @productCode";
+                using (MySqlCommand cmdProducts = new MySqlCommand(sql, connection))
+                {
+                    // Using parameterized query to mitigate SQL injection for Products
+                    cmdProducts.Parameters.AddWithValue("@productCode", productCode);
+                    da = new MySqlDataAdapter(cmdProducts);
+                    da.Fill(ds, "products");
+                }
 
-                sql = "select * from Comments where productCode = '" + productCode + "'";
-                da = new MySqlDataAdapter(sql, connection);
-                da.Fill(ds, "comments");
+                sql = "select * from Comments where productCode = @productCode";
+                using (MySqlCommand cmdComments = new MySqlCommand(sql, connection))
+                {
+                    // Using parameterized query to mitigate SQL injection for Comments
+                    cmdComments.Parameters.AddWithValue("@productCode", productCode);
+                    da = new MySqlDataAdapter(cmdComments);
+                    da.Fill(ds, "comments");
+                }
 
                 DataRelation dr = new DataRelation("prod_comments",
                 ds.Tables["products"].Columns["productCode"], //category table

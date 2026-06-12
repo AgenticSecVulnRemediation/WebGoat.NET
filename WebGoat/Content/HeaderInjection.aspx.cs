@@ -11,12 +11,21 @@ namespace OWASP.WebGoat.NET
 {
     public partial class HeaderInjection : System.Web.UI.Page
     {
+        private string ValidateCookieInput(string input)
+        {
+            // TODO: Implement appropriate validation, sanitization, and/or integrity checking (e.g., using HMAC or encryption) for the cookie value
+            // Replace the placeholder below with the actual logic
+            return input;  // Replace with the validated value
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (Request.QueryString["Cookie"] != null)
             {
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
+                cookie.Value = ValidateCookieInput(Request.QueryString["Cookie"]);
+                cookie.HttpOnly = true;
+                cookie.Secure = true;
 
                 Response.Cookies.Add(cookie);
             }

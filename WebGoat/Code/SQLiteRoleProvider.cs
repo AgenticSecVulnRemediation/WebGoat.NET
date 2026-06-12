@@ -604,13 +604,13 @@ namespace TechInfoSystems.Data.SQLite
 				using (SqliteCommand cmd = cn.CreateCommand()) {
 					cmd.CommandText = "SELECT u.Username FROM " + USERS_IN_ROLES_TB_NAME + " uir INNER JOIN " + USER_TB_NAME
 						+ " u ON uir.UserId = u.UserId INNER JOIN " + ROLE_TB_NAME + " r ON r.RoleId = uir.RoleId"
-						+ " WHERE u.LoweredUsername LIKE $UsernameSearch AND r.LoweredRoleName = $RoleName AND u.ApplicationId = $MembershipApplicationId"
-						+ " AND r.ApplicationId = $ApplicationId";
+						+ " WHERE u.LoweredUsername LIKE @UsernameSearch AND r.LoweredRoleName = @RoleName AND u.ApplicationId = @MembershipApplicationId"
+						+ " AND r.ApplicationId = @ApplicationId";
 
-					cmd.Parameters.AddWithValue ("$UsernameSearch", usernameToMatch);
-					cmd.Parameters.AddWithValue ("$RoleName", roleName.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$MembershipApplicationId", _membershipApplicationId);
-					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
+					cmd.Parameters.AddWithValue ("@UsernameSearch", usernameToMatch);
+					cmd.Parameters.AddWithValue ("@RoleName", roleName.ToLowerInvariant ());
+					cmd.Parameters.AddWithValue ("@MembershipApplicationId", _membershipApplicationId);
+					cmd.Parameters.AddWithValue ("@ApplicationId", _applicationId);
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();

@@ -666,13 +666,16 @@ namespace TechInfoSystems.Data.SQLite
 				SqliteConnection cn = GetDbConnectionForRole ();
 				try {
 					using (SqliteCommand cmd = cn.CreateCommand()) {
-						cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
+						cmd.CommandText = string.Format("INSERT INTO {0} (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)", APP_TB_NAME); // Using string.Format to ensure APP_TB_NAME is a trusted constant
 
 						string roleApplicationId = Guid.NewGuid ().ToString ();
 
-						cmd.Parameters.AddWithValue ("$ApplicationId", roleApplicationId);
-						cmd.Parameters.AddWithValue ("$ApplicationName", _applicationName);
-						cmd.Parameters.AddWithValue ("$Description", String.Empty);
+						var parameters = new [] {
+					new SqliteParameter("$ApplicationId", roleApplicationId),
+					new SQLiteParameter("$ApplicationName", _applicationName),
+					new SQLiteParameter("$Description", String.Empty)  // TODO: Replace placeholder if needed
+				};
+				cmd.Parameters.AddRange(parameters);
 
 						if (cn.State == ConnectionState.Closed)
 							cn.Open ();

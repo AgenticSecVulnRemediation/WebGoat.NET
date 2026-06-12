@@ -641,9 +641,11 @@ namespace TechInfoSystems.Data.SQLite
 			SqliteConnection cn = GetDbConnectionForProfile ();
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $UserName AND ApplicationId = $ApplicationId";
-					cmd.Parameters.AddWithValue ("$UserName", username.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
+					string safeTableName = ValidateTableName(USER_TB_NAME); // Ensure this function validates and whitelists the table name
+				cmd.CommandText = string.Format("SELECT UserId FROM {0} WHERE LoweredUsername = $UserName AND ApplicationId = $ApplicationId", safeTableName);
+					cmd.Parameters.Clear();
+					cmd.Parameters.Add(new SqliteParameter("$UserName", username.ToLowerInvariant()));
+					cmd.Parameters.Add(new SqliteParameter("$ApplicationId", _membershipApplicationId));
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();

@@ -510,9 +510,13 @@ namespace TechInfoSystems.Data.SQLite
 				return null;
 			}
 
-			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (password, this.PasswordStrengthRegularExpression)) {
-				status = MembershipCreateStatus.InvalidPassword;
-				return null;
+			if (this.PasswordStrengthRegularExpression.Length > 0) {
+				// Instantiate Regex with a timeout. Adjust the timeout value as appropriate (e.g., TimeSpan.FromSeconds(1)).
+				var regex = new Regex(this.PasswordStrengthRegularExpression, RegexOptions.None, TimeSpan.FromSeconds(1));
+				if (!regex.IsMatch(password)) {
+					status = MembershipCreateStatus.InvalidPassword;
+					return null;
+				}
 			}
 
 			#endregion

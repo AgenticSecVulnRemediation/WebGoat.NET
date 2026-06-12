@@ -6,6 +6,9 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Collections;
 using System.Collections.Specialized;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace OWASP.WebGoat.NET
 {
@@ -15,10 +18,20 @@ namespace OWASP.WebGoat.NET
         {
             if (Request.QueryString["Cookie"] != null)
             {
-                HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
-
-                Response.Cookies.Add(cookie);
+                string cookieInput = Request.QueryString["Cookie"];
+                if (Regex.IsMatch(cookieInput, "^[A-Za-z0-9]{1,50}$"))
+                {
+                    string signedValue = SignCookieValue(cookieInput);
+                    HttpCookie cookie = new HttpCookie("UserAddedCookie", signedValue);
+                    cookie.HttpOnly = true;
+                    cookie.Secure = true;
+                    cookie.SameSite = SameSiteMode.Strict;
+                    Response.Cookies.Add(cookie);
+                }
+                else
+                {
+                    System.Diagnostics.Trace.WriteLine("Invalid cookie value received.");
+                }
             }
             else if (Request.QueryString["Header"] != null)
             {
@@ -43,5 +56,17 @@ namespace OWASP.WebGoat.NET
             //possibly going to be used later for something interesting
 
         }
+
+        private string SignCookieValue(string value)
+        {
+            string secretKey = "ReplaceWithYourSecretKey"; // TODO: Retrieve secret key from secure configuration
+            using (HMACSHA256 hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)))
+            {
+                byte[] hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(value));
+                string hash = Convert.ToBase64String(hashBytes);
+                return value + "|" + hash;
+            }
+        }
+
     }
 }

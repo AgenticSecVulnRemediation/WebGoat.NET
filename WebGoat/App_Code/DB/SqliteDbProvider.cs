@@ -416,12 +416,18 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             {
                 connection.Open();
 
-                sql = "select * from Products where productCode = '" + productCode + "'";
-                da = new SqliteDataAdapter(sql, connection);
+                sql = "select * from Products where productCode = @productCode";
+                SqliteCommand cmdProducts = new SqliteCommand(sql, connection);
+                // Add parameter for productCode (replace <placeholder> with actual value if needed)
+                cmdProducts.Parameters.AddWithValue("@productCode", productCode);
+                da = new SqliteDataAdapter(cmdProducts);
                 da.Fill(ds, "products");
 
-                sql = "select * from Comments where productCode = '" + productCode + "'";
-                da = new SqliteDataAdapter(sql, connection);
+                sql = "select * from Comments where productCode = @productCode";
+                SqliteCommand cmdComments = new SqliteCommand(sql, connection);
+                // Add parameter for productCode (ensure consistency with previous parameter usage)
+                cmdComments.Parameters.AddWithValue("@productCode", productCode);
+                da = new SqliteDataAdapter(cmdComments);
                 da.Fill(ds, "comments");
 
                 DataRelation dr = new DataRelation("prod_comments",

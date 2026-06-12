@@ -201,18 +201,49 @@ namespace OWASP.WebGoat.NET
 		{
 			if (userid.Length > 4)
 				userid = userid.Substring (0, 4);
-			String output = (String)DoScalar ("SELECT Email FROM UserList WHERE UserID = '" + userid + "'", GetGoatDBConnection ());
-			if (output != null)
-				return output;
-			else 
-				return "Email for userid: " + userid + " not found<p/>";
+			// Changed to use a parameterized query. TODO: Replace placeholder method with proper implementation for parameter insertion if needed.
+			var conn = GetGoatDBConnection();
+			using(var cmd = new SqliteCommand("SELECT Email FROM UserList WHERE UserID = @userid", conn))
+			{
+				cmd.Parameters.AddWithValue("@userid", userid);
+				String output = (String)cmd.ExecuteScalar();
+				if (output != null)
+					return output;
+				else 
+					return "Email for userid: " + userid + " not found<p/>";
+			}
 		}
 
 		public DataTable GetMailingListInfoByEmailAddress (string email)
 		{
-			string sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = '" + email + "'";
-			DataTable result = DoQuery (sql, GetGoatDBConnection ());
-			return result;
+			// Changed to use a parameterized query. TODO: Verify proper syntax for parameter insertion based on the database library in use.
+			var conn = GetGoatDBConnection();
+			using(var cmd = new SqliteCommand("SELECT FirstName, LastName, Email FROM MailingList WHERE Email = @Email", conn))
+			{
+				cmd.Parameters.AddWithValue("@Email", email);
+				DataTable dt = new DataTable();
+				using(var reader = cmd.ExecuteReader())
+				{
+					// Add all the columns.
+					for (int i = 0; i < reader.FieldCount; i++) {
+						DataColumn col = new DataColumn();
+						col.DataType = reader.GetFieldType(i);
+						col.ColumnName = reader.GetName(i);
+						dt.Columns.Add(col);
+					}
+					
+					while (reader.Read()) {
+						DataRow row = dt.NewRow();
+						for (int i = 0; i < reader.FieldCount; i++) {
+							if (reader.IsDBNull(i))
+								continue;
+							row[dt.Columns[i].ColumnName] = reader.GetValue(i);
+						}
+						dt.Rows.Add(row);
+					}
+				}
+				return dt;
+			}
 		}
 
 		public string AddToMailingList (string first, string last, string email)

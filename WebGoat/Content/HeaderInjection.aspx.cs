@@ -7,6 +7,8 @@ using System.Web.UI.WebControls;
 using System.Collections;
 using System.Collections.Specialized;
 
+using System.Text.RegularExpressions;
+
 namespace OWASP.WebGoat.NET
 {
     public partial class HeaderInjection : System.Web.UI.Page
@@ -15,10 +17,15 @@ namespace OWASP.WebGoat.NET
         {
             if (Request.QueryString["Cookie"] != null)
             {
-                HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
-
-                Response.Cookies.Add(cookie);
+                string cookieFromQuery = Request.QueryString["Cookie"];
+                if (Regex.IsMatch(cookieFromQuery, @"^[a-zA-Z0-9]+$"))
+                {
+                    HttpCookie cookie = new HttpCookie("UserAddedCookie");
+                    cookie.Value = cookieFromQuery;
+                    cookie.HttpOnly = true;
+                    cookie.Secure = true;
+                    Response.Cookies.Add(cookie);
+                }
             }
             else if (Request.QueryString["Header"] != null)
             {

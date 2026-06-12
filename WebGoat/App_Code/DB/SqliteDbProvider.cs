@@ -132,13 +132,15 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             try
             {
                 //get data
-                string sql = "select * from CustomerLogin where email = '" + email + "';";
+                string sql = "select * from CustomerLogin where email = @Email";;
                 
                 using (SqliteConnection connection = new SqliteConnection(_connectionString))
                 {
                     connection.Open();
 
-                    SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
+                    SqliteCommand cmd = new SqliteCommand(sql, connection);
+                    cmd.Parameters.AddWithValue("@Email", email); // TODO: Replace with appropriate parameter configuration if needed
+                    SqliteDataAdapter da = new SqliteDataAdapter(cmd);
                     DataSet ds = new DataSet();
                     da.Fill(ds);
 

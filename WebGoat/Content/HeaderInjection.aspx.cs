@@ -15,9 +15,20 @@ namespace OWASP.WebGoat.NET
         {
             if (Request.QueryString["Cookie"] != null)
             {
+                string cookieInput = Request.QueryString["Cookie"];
+                // Validate cookie value to allow only safe characters (alphanumeric)
+                if (!System.Text.RegularExpressions.Regex.IsMatch(cookieInput, "^[a-zA-Z0-9]+$"))
+                {
+                    // If validation fails, use a default safe value or handle accordingly
+                    cookieInput = "";
+                }
+                // Optionally sign the cookie value. Replace 'CookiePurpose' with your application-specific value.
+                byte[] protectedBytes = System.Web.Security.MachineKey.Protect(System.Text.Encoding.UTF8.GetBytes(cookieInput), "CookiePurpose");
+                string protectedValue = System.Convert.ToBase64String(protectedBytes);
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
-
+                cookie.Value = protectedValue;
+                cookie.HttpOnly = true;
+                cookie.Secure = true;
                 Response.Cookies.Add(cookie);
             }
             else if (Request.QueryString["Header"] != null)

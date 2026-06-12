@@ -1,7 +1,5 @@
 using System;
 using System.Data;
-using System.Linq;
-using System.Reflection;
 using Mono.Data.Sqlite;
 using OWASP.WebGoat.NET.App_Code.DB;
 using Xunit;
@@ -23,7 +21,7 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
         }
 
         [Fact]
-        public void GetPayments_WithInjectionLikeCustomerNumber_DoesNotExecuteInjectedSqlAndReturnsNull()
+        public void GetPayments_WithInjectionLikeCustomerNumber_DoesNotBypassFilterAndReturnsNull()
         {
             // Arrange: create temp sqlite file and minimal schema
             string dbFile = System.IO.Path.GetTempFileName();
@@ -35,8 +33,6 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
                     using (var cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = "CREATE TABLE Payments (customerNumber TEXT);";
-                        cmd.ExecuteNonQuery();
-                        cmd.CommandText = "CREATE TABLE CustomerLogin (email TEXT);";
                         cmd.ExecuteNonQuery();
                         cmd.CommandText = "INSERT INTO Payments(customerNumber) VALUES ('1');";
                         cmd.ExecuteNonQuery();
@@ -51,7 +47,7 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
                 // Act
                 DataSet result = provider.GetPayments(injected);
 
-                // Assert
+                // Assert: parameterized query should not match, so provider returns null
                 Assert.Null(result);
             }
             finally

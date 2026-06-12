@@ -219,14 +219,15 @@ namespace TechInfoSystems.Data.SQLite
 						CreateAnonymousUser (username, cn, tran, userId);
 					}
 
-					cmd.CommandText = "SELECT COUNT(*) FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+					                    // Verify that PROFILE_TB_NAME is hard-coded and not externally influenced
+                    cmd.CommandText = "SELECT COUNT(*) FROM aspnet_Profile WHERE UserId = $UserId";
 					cmd.Parameters.Clear ();
 					cmd.Parameters.AddWithValue ("$UserId", userId);
 
 					if (Convert.ToInt64 (cmd.ExecuteScalar ()) > 0) {
-						cmd.CommandText = "UPDATE " + PROFILE_TB_NAME + " SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId";
+						                        cmd.CommandText = "UPDATE aspnet_Profile SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId";
 					} else {
-						cmd.CommandText = "INSERT INTO " + PROFILE_TB_NAME + " (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)";
+						                        cmd.CommandText = "INSERT INTO aspnet_Profile (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)";
 					}
 					cmd.Parameters.Clear ();
 					cmd.Parameters.AddWithValue ("$UserId", userId);

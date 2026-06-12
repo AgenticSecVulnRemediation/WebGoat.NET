@@ -202,10 +202,10 @@ namespace TechInfoSystems.Data.SQLite
 					tran = cn.BeginTransaction ();
 
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId;";
+					cmd.CommandText = string.Format("SELECT UserId FROM {0} WHERE LoweredUsername = @Username AND ApplicationId = @ApplicationId;", USER_TB_NAME);
 
-					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
+					cmd.Parameters.AddWithValue ("@Username", username.ToLowerInvariant ());
+					cmd.Parameters.AddWithValue ("@ApplicationId", _membershipApplicationId);
 
 					string userId = cmd.ExecuteScalar () as string;
 
@@ -807,10 +807,10 @@ namespace TechInfoSystems.Data.SQLite
 				cn.Open ();
 
 			using (SqliteCommand cmd = cn.CreateCommand()) {
-				cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+				cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = @Username AND ApplicationId = @ApplicationId";
 
-				cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-				cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
+				cmd.Parameters.AddWithValue ("@Username", username.ToLowerInvariant ());
+				cmd.Parameters.AddWithValue ("@ApplicationId", _membershipApplicationId);
 
 				if (tran != null)
 					cmd.Transaction = tran;

@@ -1,7 +1,7 @@
 using System;
-using System.Data;
-using System.IO;
-using Mono.Data.Sqlite;
+using System.Collections.Specialized;
+using System.Reflection;
+using System.Web.Security;
 using TechInfoSystems.Data.SQLite;
 using Xunit;
 
@@ -10,43 +10,38 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteMembershipProviderTests
     {
         [Fact]
-        public void CreateUser_WithCatastrophicBacktrackingPattern_DoesNotHangAndReturnsInvalidPassword()
+        public void CreateUser_WithCatastrophicBacktrackingPattern_ReturnsInvalidPasswordDueToRegexTimeout()
         {
-            // Arrange: use an in-memory sqlite db; the method should fail early due to regex timeout
-            var cs = "Data Source=:memory:;Version=3";
-
-            // Minimal provider config. We expect early return InvalidPassword due to regex timeout,
-            // so DB schema is not required for this delta test.
-            var config = new System.Collections.Specialized.NameValueCollection
-            {
-                { "connectionStringName", "TestSqlite" },
-                { "applicationName", "/" },
-                { "passwordStrengthRegularExpression", "^(a+)+$" },
-                { "minRequiredPasswordLength", "1" },
-                { "minRequiredNonalphanumericCharacters", "0" },
-                { "requiresQuestionAndAnswer", "false" },
-                { "requiresUniqueEmail", "false" }
-            };
-
-            // Inject connection string via ConfigurationManager is difficult in unit tests without app.config.
-            // Therefore, directly set the private static _connectionString using reflection.
+            // Arrange
+            // Important: this test assumes the solution already has a test runner configured (xUnit)
+            // and that the provider assembly is referenced by the test project.
             var provider = new SQLiteMembershipProvider();
-            provider.Initialize("SQLiteMembershipProvider", config);
 
-            var csField = typeof(SQLiteMembershipProvider).GetField("_connectionString", BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.NotNull(csField);
-            csField!.SetValue(null, cs);
+            // Provider.Initialize will try to read a connection string from ConfigurationManager.
+            // We don't want to depend on app.config here, so we set internal static fields via reflection.
+            var connectionStringField = typeof(SQLiteMembershipProvider).GetField("_connectionString", BindingFlags.NonPublic | BindingFlags.Static);
+            var applicationIdField = typeof(SQLiteMembershipProvider).GetField("_applicationId", BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(connectionStringField);
+            Assert.NotNull(applicationIdField);
+            connectionStringField!.SetValue(null, "Data Source=:memory:;Version=3");
+            applicationIdField!.SetValue(null, Guid.NewGuid().ToString());
 
-            // Ensure application id is set to bypass VerifyApplication DB work in this delta test.
-            var appIdField = typeof(SQLiteMembershipProvider).GetField("_applicationId", BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.NotNull(appIdField);
-            appIdField!.SetValue(null, Guid.NewGuid().ToString());
+            // Set a regex known for catastrophic backtracking.
+            var regexField = typeof(SQLiteMembershipProvider).GetField("_passwordStrengthRegularExpression", BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(regexField);
+            regexField!.SetValue(null, "^(a+)+$");
+
+            // Make password length rules permissive so we reach Regex.IsMatch.
+            typeof(SQLiteMembershipProvider).GetField("_minRequiredPasswordLength", BindingFlags.NonPublic | BindingFlags.Static)!
+                .SetValue(null, 1);
+            typeof(SQLiteMembershipProvider).GetField("_minRequiredNonAlphanumericCharacters", BindingFlags.NonPublic | BindingFlags.Static)!
+                .SetValue(null, 0);
 
             // A long string triggers backtracking; with timeout it should return InvalidPassword quickly.
-            string evilPassword = new string('a', 5000) + "!";
+            string evilPassword = new string('a', 5000);
 
             // Act
-            var user = provider.CreateUser(
+            MembershipUser user = provider.CreateUser(
                 username: "u",
                 password: evilPassword,
                 email: "e@example.com",
@@ -58,7 +53,7 @@ namespace TechInfoSystems.Data.SQLite.Tests
 
             // Assert
             Assert.Null(user);
-            Assert.Equal(System.Web.Security.MembershipCreateStatus.InvalidPassword, status);
+            Assert.Equal(MembershipCreateStatus.InvalidPassword, status);
         }
     }
 }

@@ -202,12 +202,12 @@ namespace TechInfoSystems.Data.SQLite
 					tran = cn.BeginTransaction ();
 
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId;";
+					cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = ? AND ApplicationId = ?;";
 
-					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
+					// cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
+					// cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
 
-					string userId = cmd.ExecuteScalar () as string;
+					string userId = cmd.ExecuteScalar(new object[] { username.ToLowerInvariant(), _membershipApplicationId }) as string;
 
 					if ((userId == null) && (userIsAuthenticated))
 						return; // User is logged on but no record exists in user table. This should never happen, but if it doesn, just exit.

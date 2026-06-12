@@ -23,6 +23,7 @@ namespace TechInfoSystems.Data.SQLite
 
 		private static string _connectionString;
 		private const string HTTP_TRANSACTION_ID = "SQLiteTran";
+				// USER_TB_NAME is a trusted constant. If dynamic, validate against allowed table names.
 		private const string USER_TB_NAME = "[aspnet_Users]";
 		private const string PROFILE_TB_NAME = "[aspnet_Profile]";
 		private const string APP_TB_NAME = "[aspnet_Applications]";
@@ -238,7 +239,7 @@ namespace TechInfoSystems.Data.SQLite
 					cmd.ExecuteNonQuery ();
 
 					// Update activity field
-					cmd.CommandText = "UPDATE " + USER_TB_NAME + " SET LastActivityDate = $LastActivityDate WHERE UserId = $UserId";
+					cmd.CommandText = $"UPDATE {USER_TB_NAME} SET LastActivityDate = $LastActivityDate WHERE UserId = $UserId";
 					cmd.Parameters.Clear ();
 					cmd.Parameters.AddWithValue ("$LastActivityDate", DateTime.UtcNow);
 					cmd.Parameters.AddWithValue ("$UserId", userId);

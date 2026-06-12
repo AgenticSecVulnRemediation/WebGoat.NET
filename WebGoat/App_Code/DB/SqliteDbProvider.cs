@@ -139,6 +139,7 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                     connection.Open();
 
                     SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
+                    da.SelectCommand.Parameters.AddWithValue("@name", name);
                     DataSet ds = new DataSet();
                     da.Fill(ds);
 
@@ -523,7 +524,7 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public DataSet GetEmailByName(string name)
         {
-            string sql = "select firstName, lastName, email from Employees where firstName like '" + name + "%' or lastName like '" + name + "%'";
+            string sql = "select firstName, lastName, email from Employees where firstName like @name || '%' or lastName like @name || '%'";
             
             
             using (SqliteConnection connection = new SqliteConnection(_connectionString))

@@ -1359,8 +1359,8 @@ namespace TechInfoSystems.Data.SQLite
 
 					_applicationId = Guid.NewGuid ().ToString ();
 					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
-					cmd.Parameters.AddWithValue ("ApplicationName", _applicationName);
-					cmd.Parameters.AddWithValue ("Description", String.Empty);
+					cmd.Parameters.AddWithValue ("$ApplicationName", _applicationName);
+					cmd.Parameters.AddWithValue ("$Description", String.Empty);
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();

@@ -1,4 +1,5 @@
 using System;
+using MySql.Data.MySqlClient;
 using System.Data;
 using MySql.Data.MySqlClient;
 using log4net;
@@ -412,12 +413,16 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                sql = "select * from Products where productCode = '" + productCode + "'";
-                da = new MySqlDataAdapter(sql, connection);
+                sql = "SELECT * FROM Products WHERE productCode = @productCode";
+                MySqlCommand cmd = new MySqlCommand(sql, connection);
+                cmd.Parameters.AddWithValue("@productCode", productCode); // TODO: Replace with proper parameter handling if necessary
+                da = new MySqlDataAdapter(cmd);
                 da.Fill(ds, "products");
 
-                sql = "select * from Comments where productCode = '" + productCode + "'";
-                da = new MySqlDataAdapter(sql, connection);
+                sql = "SELECT * FROM Comments WHERE productCode = @productCode";
+                MySqlCommand cmdComments = new MySqlCommand(sql, connection);
+                cmdComments.Parameters.AddWithValue("@productCode", productCode); // TODO: Replace with proper parameter handling if necessary
+                da = new MySqlDataAdapter(cmdComments);
                 da.Fill(ds, "comments");
 
                 DataRelation dr = new DataRelation("prod_comments",

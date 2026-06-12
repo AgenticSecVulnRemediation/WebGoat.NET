@@ -536,7 +536,8 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             try
             {
             
-                output = (String)MySqlHelper.ExecuteScalar(_connectionString, "select email from CustomerLogin where customerNumber = " + num);
+                // NOTE: Using parameterized query to prevent SQL Injection. Ensure '@num' matches the expected parameter type.
+                output = (String)MySqlHelper.ExecuteScalar(_connectionString, "select email from CustomerLogin where customerNumber = @num", new MySqlParameter("@num", num)); // Parameter binding added for security
                 /*using (MySqlConnection connection = new MySqlConnection(_connectionString))
                 {
                     string sql = "select email from CustomerLogin where customerNumber = " + num;

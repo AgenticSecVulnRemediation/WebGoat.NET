@@ -46,6 +46,8 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
 
+                        // Ensure HttpOnly flag is set for security review
+            cookie.HttpOnly = true;
             Response.Cookies.Add(cookie);
         }
 

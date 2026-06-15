@@ -7,6 +7,8 @@ using System.Web.UI.WebControls;
 using System.Collections;
 using System.Collections.Specialized;
 
+using System.Text.RegularExpressions;
+
 namespace OWASP.WebGoat.NET
 {
     public partial class HeaderInjection : System.Web.UI.Page
@@ -15,8 +17,16 @@ namespace OWASP.WebGoat.NET
         {
             if (Request.QueryString["Cookie"] != null)
             {
+                string cookieValue = Request.QueryString["Cookie"];
+                if (!IsValidCookieValue(cookieValue))
+                { 
+                    // TODO: Replace with appropriate error handling or default value
+                    cookieValue = "defaultValue"; 
+                }
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
+                cookie.Value = cookieValue;
+                cookie.HttpOnly = true; // Prevents access via client-side scripts
+                cookie.Secure = true;   // Ensures the cookie is sent only over HTTPS
 
                 Response.Cookies.Add(cookie);
             }
@@ -43,5 +53,11 @@ namespace OWASP.WebGoat.NET
             //possibly going to be used later for something interesting
 
         }
+
+        private bool IsValidCookieValue(string cookieValue)
+        {
+            return Regex.IsMatch(cookieValue, "^[a-zA-Z0-9]*$");
+        }
+
     }
 }

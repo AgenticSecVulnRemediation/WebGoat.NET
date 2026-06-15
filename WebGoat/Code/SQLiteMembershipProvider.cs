@@ -632,7 +632,8 @@ namespace TechInfoSystems.Data.SQLite
 					// Get UserId if necessary.
 					string userId = null;
 					if (deleteAllRelatedData) {
-						cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+						                        // Ensure USER_TB_NAME is a trusted constant. If not, replace with the actual table name.
+                        cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
 
 						cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
 						cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
@@ -640,7 +641,8 @@ namespace TechInfoSystems.Data.SQLite
 						userId = cmd.ExecuteScalar () as string;
 					}
 
-					cmd.CommandText = "DELETE FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+					                    cmd.Parameters.Clear();
+                    cmd.CommandText = "DELETE FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
 
 					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
 					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);

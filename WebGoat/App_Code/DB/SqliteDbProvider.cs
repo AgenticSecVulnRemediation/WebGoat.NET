@@ -493,8 +493,9 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
             //catNumber is optional.  If it is greater than 0, add the clause to both statements.
             string catClause = string.Empty;
-            if (catNumber >= 1)
-                catClause += " where catNumber = " + catNumber; 
+            if (catNumber >= 1) {
+                    catClause = " where catNumber = @catNumber";  // Use parameter placeholder instead of concatenation
+                } 
 
 
             using (SqliteConnection connection = new SqliteConnection(_connectionString))
@@ -502,12 +503,22 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                 connection.Open();
 
                 sql = "select * from Categories" + catClause;
-                da = new SqliteDataAdapter(sql, connection);
-                da.Fill(ds, "categories");
+                using (SqliteCommand cmd = new SqliteCommand(sql, connection)) {
+                    if (catNumber >= 1) {
+                        cmd.Parameters.AddWithValue("@catNumber", catNumber);  // Adds the parameter in a safe, parameterized way
+                    }
+                    da = new SqliteDataAdapter(cmd);
+                    da.Fill(ds, "categories");
+                }
 
                 sql = "select * from Products" + catClause;
-                da = new SqliteDataAdapter(sql, connection);
-                da.Fill(ds, "products");
+                using (SqliteCommand cmd = new SqliteCommand(sql, connection)) {
+                    if (catNumber >= 1) {
+                        cmd.Parameters.AddWithValue("@catNumber", catNumber);  // Adds the parameter in a safe, parameterized way
+                    }
+                    da = new SqliteDataAdapter(cmd);
+                    da.Fill(ds, "products");
+                }
 
 
                 //category / products relationship

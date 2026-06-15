@@ -11,6 +11,8 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Web.Profile;
 using System.Xml.Serialization;
+using System.Runtime.Serialization;
+using System.Collections.Generic;
 
 namespace TechInfoSystems.Data.SQLite
 {
@@ -19,7 +21,23 @@ namespace TechInfoSystems.Data.SQLite
 	/// </summary>
 	public sealed class SQLiteProfileProvider : ProfileProvider
 	{
-		#region Private Fields
+		        private class RestrictedBinder : SerializationBinder {
+            // TODO: Update the allowedTypes list with the fully qualified names of safe types
+            private static readonly HashSet<string> allowedTypes = new HashSet<string> {
+                "Namespace.SafeType1",
+                "Namespace.SafeType2"
+                // Add other allowed types as needed
+            };
+
+            public override Type BindToType(string assemblyName, string typeName) {
+                if (allowedTypes.Contains(typeName)) {
+                    return Type.GetType($"{typeName}, {assemblyName}");
+                } else {
+                    throw new SerializationException($"Deserialization of type {typeName} is not allowed.");
+                }
+            }
+        }
+#region Private Fields
 
 		private static string _connectionString;
 		private const string HTTP_TRANSACTION_ID = "SQLiteTran";
@@ -1044,7 +1062,10 @@ namespace TechInfoSystems.Data.SQLite
 					try
 					{
 						ms = new MemoryStream(buf);
-						return (new BinaryFormatter()).Deserialize(ms);
+						// Create a BinaryFormatter with a custom SerializationBinder to restrict allowed types
+						BinaryFormatter formatter = new BinaryFormatter();
+						formatter.Binder = new RestrictedBinder();
+						return formatter.Deserialize(ms);
 					}
 					finally
 					{

@@ -88,6 +88,26 @@ namespace OWASP.WebGoat.NET
 			return output;
 		}
 		
+		private string DoNonQuery (String SQL, SqliteConnection conn, Tuple<string, string, string> parameters)
+		{
+			var cmd = new SqliteCommand(SQL, conn);
+			cmd.Parameters.AddWithValue("@first", parameters.Item1);
+			cmd.Parameters.AddWithValue("@last", parameters.Item2);
+			cmd.Parameters.AddWithValue("@email", parameters.Item3);
+			var output = string.Empty;
+			try {
+				cmd.ExecuteNonQuery();
+				output += "<br/>SQL Executed: " + SQL;
+			} catch (SqliteException ex) {
+				output += "<br/>SQL Exception: " + ex.Message;
+				output += SQL;
+			} catch (Exception ex) {
+				output += "<br/>Exception: " + ex.Message;
+				output += SQL;
+			}
+			return output;
+		}
+
 		private string DoScalar (String SQL, SqliteConnection conn)
 		{
 			var cmd = new SqliteCommand (SQL, conn);
@@ -217,8 +237,8 @@ namespace OWASP.WebGoat.NET
 
 		public string AddToMailingList (string first, string last, string email)
 		{
-			string sql = "insert into mailinglist (firstname, lastname, email) values ('" + first + "', '" + last + "', '" + email + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			string sql = "insert into mailinglist (firstname, lastname, email) values (@first, @last, @email)";
+			string result = DoNonQuery(sql, GetGoatDBConnection(), new Tuple<string, string, string>(first, last, email));
 			return result;
 		}
 

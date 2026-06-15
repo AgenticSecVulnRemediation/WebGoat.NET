@@ -45,6 +45,9 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             //encode twice for more security!
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
+            // TODO: Ensure that the application is hosted over HTTPS to use the Secure flag effectively.
+            cookie.HttpOnly = true; // This flag ensures that the cookie is inaccessible to client-side scripts
+            cookie.Secure = true; // This flag ensures that the cookie is only sent over HTTPS
 
             Response.Cookies.Add(cookie);
         }

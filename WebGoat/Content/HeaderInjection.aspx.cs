@@ -6,6 +6,9 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Collections;
 using System.Collections.Specialized;
+using System.Text;
+using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 
 namespace OWASP.WebGoat.NET
 {
@@ -15,10 +18,21 @@ namespace OWASP.WebGoat.NET
         {
             if (Request.QueryString["Cookie"] != null)
             {
-                HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
-
-                Response.Cookies.Add(cookie);
+                string rawCookieValue = Request.QueryString["Cookie"]; 
+                string validatedCookieValue;
+                if (IsValidCookieValue(rawCookieValue, out validatedCookieValue))
+                {
+                    string signedCookie = SignCookieValue(validatedCookieValue);
+                    HttpCookie cookie = new HttpCookie("UserAddedCookie");
+                    cookie.Value = signedCookie; // The value in the format: <validated>|<HMAC signature>
+                    cookie.HttpOnly = true; // Mitigates client side script access
+                    cookie.Secure = true;   // Ensures the cookie is only sent over HTTPS
+                    Response.Cookies.Add(cookie);
+                }
+                else
+                {
+                    // Optionally log invalid cookie input and do not set cookie
+                }
             }
             else if (Request.QueryString["Header"] != null)
             {
@@ -43,5 +57,25 @@ namespace OWASP.WebGoat.NET
             //possibly going to be used later for something interesting
 
         }
+
+        public bool IsValidCookieValue(string input, out string validatedValue) {
+            string pattern = "^[a-zA-Z0-9_-]+$";
+            if (!String.IsNullOrEmpty(input) && Regex.IsMatch(input, pattern)) {
+                validatedValue = input;
+                return true;
+            }
+            validatedValue = null;
+            return false;
+        }
+
+        public string SignCookieValue(string validatedValue) {
+            string secretKey = "YourSecretKeyHere";
+            using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey))) {
+                byte[] hashValue = hmac.ComputeHash(Encoding.UTF8.GetBytes(validatedValue));
+                string signature = Convert.ToBase64String(hashValue);
+                return validatedValue + "|" + signature;
+            }
+        }
+
     }
 }

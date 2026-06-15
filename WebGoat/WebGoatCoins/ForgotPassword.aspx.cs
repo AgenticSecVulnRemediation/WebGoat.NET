@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using System.Security.Cryptography;
+using System.Text;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using OWASP.WebGoat.NET.App_Code;
@@ -13,6 +15,8 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
     {
     
         private IDbProvider du = Settings.CurrentDbProvider;
+        // Secret key for HMAC signing of cookies. Replace the placeholder value with a secure key.
+        private static readonly string secretKey = "ReplaceThisWithASecretKey";
         
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -45,6 +49,15 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             //encode twice for more security!
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
+            // Compute HMAC signature for cookie integrity
+            string signature = ComputeHmac(cookie.Value);
+            cookie.Value = cookie.Value + "|" + signature;
+            // Set cookie to be HttpOnly to prevent client-side script access
+            cookie.HttpOnly = true;
+            // Set cookie to be secure so that it is sent only over HTTPS
+            cookie.Secure = true;
+            // Optionally, set the SameSite attribute to 'Strict'
+            cookie.SameSite = System.Web.SameSiteMode.Strict;
 
             Response.Cookies.Add(cookie);
         }
@@ -53,10 +66,16 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
         {
             try
             {
-                //get the security question answer from the cookie
-                string encrypted_password = Request.Cookies["encr_sec_qu_ans"].Value.ToString();
+                // Get the security question answer from the cookie with integrity check
+                string cookieValue = Request.Cookies["encr_sec_qu_ans"].Value.ToString();
+                string[] parts = cookieValue.Split('|');
+                if (parts.Length != 2 || ComputeHmac(parts[0]) != parts[1])
+                {
+                    throw new Exception("Cookie integrity check failed.");
+                }
+                string encrypted_password = parts[0];
                 
-                //decode it (twice for extra security!)
+                // Decode it (twice for extra security!)
                 string security_answer = Encoder.Decode(Encoder.Decode(encrypted_password));
                 
                 if (security_answer.Trim().ToLower().Equals(txtAnswer.Text.Trim().ToLower()))
@@ -82,6 +101,16 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
         {
             string password = du.GetPasswordByEmail(email);
             return password;
+        }
+
+        // Computes HMAC signature using HMACSHA256 algorithm for cookie integrity
+        private string ComputeHmac(string data)
+        {
+            using (HMACSHA256 hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)))
+            {
+                byte[] hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
+                return Convert.ToBase64String(hash);
+            }
         }
 
     }

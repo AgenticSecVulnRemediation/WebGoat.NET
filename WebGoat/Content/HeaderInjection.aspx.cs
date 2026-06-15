@@ -15,9 +15,18 @@ namespace OWASP.WebGoat.NET
         {
             if (Request.QueryString["Cookie"] != null)
             {
+                string userCookie = Request.QueryString["Cookie"];
+                // TODO: Replace the regex below with a proper validation logic for the cookie value as per security requirements.
+                if (!System.Text.RegularExpressions.Regex.IsMatch(userCookie, "^[a-zA-Z0-9]*$"))
+                {
+                    // If validation fails, assign a default safe value or log as needed.
+                    userCookie = "defaultSafeValue";
+                }
+                // TODO: Optionally, sign the cookie value using cryptographic signing (e.g., HMAC) to ensure its integrity.
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
-
+                cookie.Value = userCookie;
+                cookie.HttpOnly = true;
+                cookie.Secure = true;
                 Response.Cookies.Add(cookie);
             }
             else if (Request.QueryString["Header"] != null)

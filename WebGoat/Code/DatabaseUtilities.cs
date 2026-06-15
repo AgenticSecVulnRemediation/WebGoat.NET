@@ -210,15 +210,15 @@ namespace OWASP.WebGoat.NET
 
 		public DataTable GetMailingListInfoByEmailAddress (string email)
 		{
-			string sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = '" + email + "'";
-			DataTable result = DoQuery (sql, GetGoatDBConnection ());
+			string sql = "SELECT FirstName, LastName, Email FROM MailingList WHERE Email = @Email";
+			DataTable result = DoQuery (sql, GetGoatDBConnection (), new object[] { email });
 			return result;
 		}
 
 		public string AddToMailingList (string first, string last, string email)
 		{
-			string sql = "insert into mailinglist (firstname, lastname, email) values ('" + first + "', '" + last + "', '" + email + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			string sql = "insert into mailinglist (firstname, lastname, email) values (@First, @Last, @Email)";
+			string result = DoNonQuery (sql, GetGoatDBConnection (), new object[] { first, last, email });
 			return result;
 		}
 

@@ -226,14 +226,16 @@ namespace TechInfoSystems.Data.SQLite
 					if (Convert.ToInt64 (cmd.ExecuteScalar ()) > 0) {
 						cmd.CommandText = "UPDATE " + PROFILE_TB_NAME + " SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId";
 					} else {
-						cmd.CommandText = "INSERT INTO " + PROFILE_TB_NAME + " (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)";
+						cmd.CommandText = $"INSERT INTO {PROFILE_TB_NAME} (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)";
 					}
 					cmd.Parameters.Clear ();
-					cmd.Parameters.AddWithValue ("$UserId", userId);
-					cmd.Parameters.AddWithValue ("$PropertyNames", names);
-					cmd.Parameters.AddWithValue ("$PropertyValuesString", values);
-					cmd.Parameters.AddWithValue ("$PropertyValuesBinary", buf);
-					cmd.Parameters.AddWithValue ("$LastUpdatedDate", DateTime.UtcNow);
+					cmd.Parameters.AddRange(new[] {
+					    new SqliteParameter("$UserId", userId),
+					    new SqliteParameter("$PropertyNames", names),
+					    new SqliteParameter("$PropertyValuesString", values),
+					    new SqliteParameter("$PropertyValuesBinary", buf),
+					    new SqliteParameter("$LastUpdatedDate", DateTime.UtcNow)
+					});
 
 					cmd.ExecuteNonQuery ();
 

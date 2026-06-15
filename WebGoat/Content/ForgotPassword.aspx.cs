@@ -44,6 +44,14 @@ namespace OWASP.WebGoat.NET
             //encode twice for more security!
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
+            cookie.HttpOnly = true; // sets the cookie to be inaccessible to client-side scripts
+            cookie.Secure = true;   // ensures the cookie is sent only over HTTPS
+            // Optional: Uncomment the line below if your environment supports SameSite attribute for additional CSRF mitigation, and replace 'Strict' with the appropriate value if needed:
+            // cookie.SameSite = System.Web.SameSiteMode.Strict;
+            cookie.HttpOnly = true; // sets the cookie to be inaccessible to client-side scripts
+            cookie.Secure = true;   // ensures the cookie is sent only over HTTPS
+            // Optional: Uncomment the line below if your environment supports SameSite attribute for additional CSRF mitigation, and replace 'Strict' with the appropriate value if needed:
+            // cookie.SameSite = System.Web.SameSiteMode.Strict;
 
             Response.Cookies.Add(cookie); 
         }

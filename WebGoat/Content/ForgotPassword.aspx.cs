@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Configuration;
+using System.Security.Cryptography;
+using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -40,11 +43,16 @@ namespace OWASP.WebGoat.NET
             
                    
             HttpCookie cookie = new HttpCookie("encr_sec_qu_ans");
-
-            //encode twice for more security!
-
-            cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
-
+            cookie.HttpOnly = true;
+            cookie.Secure = true;
+            string encodedValue = Encoder.Encode(Encoder.Encode(result[1]));
+            string secretKey = ConfigurationManager.AppSettings["CookieSecretKey"]; // TODO: Replace with proper key management solution
+            using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)))
+            {
+                byte[] hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(encodedValue));
+                string signature = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+                cookie.Value = encodedValue + ":" + signature;
+            }
             Response.Cookies.Add(cookie); 
         }
 
@@ -52,11 +60,27 @@ namespace OWASP.WebGoat.NET
         {
             try
             {
-                //get the security question answer from the cookie
-                string encrypted_password = Request.Cookies["encr_sec_qu_ans"].Value.ToString();
-                
-                //decode it (twice for extra security!)
-                string security_answer = Encoder.Decode(Encoder.Decode(encrypted_password));
+                //get the security question answer from the cookie with integrity verification
+                HttpCookie cookie = Request.Cookies["encr_sec_qu_ans"];
+                if (cookie == null) { throw new Exception("Missing cookie."); }
+                string cookieVal = cookie.Value;
+                string[] parts = cookieVal.Split(':');
+                if (parts.Length != 2) { throw new Exception("Invalid cookie format."); }
+                string encodedValue = parts[0];
+                string signature = parts[1];
+                string secretKey = ConfigurationManager.AppSettings["CookieSecretKey"]; // TODO: Replace with proper key management solution
+                using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey)))
+                {
+                    byte[] hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(encodedValue));
+                    string computedSignature = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+                    if (computedSignature != signature)
+                    {
+                        // Integrity check failed, clear cookie and throw error
+                        Response.Cookies.Remove("encr_sec_qu_ans");
+                        throw new Exception("Cookie integrity check failed.");
+                    }
+                }
+                string security_answer = Encoder.Decode(Encoder.Decode(encodedValue));
                 
                 if (security_answer.Trim().ToLower().Equals(txtAnswer.Text.Trim().ToLower()))
                 {

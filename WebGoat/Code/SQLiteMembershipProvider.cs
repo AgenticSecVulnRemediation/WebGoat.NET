@@ -683,8 +683,8 @@ namespace TechInfoSystems.Data.SQLite
 			SqliteConnection cn = GetDBConnectionForMembership ();
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "SELECT Count(*) FROM " + USER_TB_NAME + " WHERE ApplicationId = $ApplicationId AND IsAnonymous='0'";
-					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
+					cmd.CommandText = string.Format("SELECT Count(*) FROM {0} WHERE ApplicationId = $ApplicationId AND IsAnonymous='0'", USER_TB_NAME);
+					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId); // Parameter binding: Ensure '$ApplicationId' is correctly bound. Replace placeholder values if necessary.
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();

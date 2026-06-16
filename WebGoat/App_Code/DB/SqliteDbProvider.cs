@@ -1,3 +1,4 @@
+using System.Data.SQLite;
 using System;
 using System.Data;
 using Mono.Data.Sqlite;
@@ -501,12 +502,22 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             {
                 connection.Open();
 
-                sql = "select * from Categories" + catClause;
+                if (catNumber >= 1)
+                    sql = "select * from Categories where catNumber = @catNumber";
+                else
+                    sql = "select * from Categories";
                 da = new SqliteDataAdapter(sql, connection);
+                if (catNumber >= 1)
+                    da.SelectCommand.Parameters.AddWithValue("@catNumber", catNumber);
                 da.Fill(ds, "categories");
 
-                sql = "select * from Products" + catClause;
+                if (catNumber >= 1)
+                    sql = "select * from Products where catNumber = @catNumber";
+                else
+                    sql = "select * from Products";
                 da = new SqliteDataAdapter(sql, connection);
+                if (catNumber >= 1)
+                    da.SelectCommand.Parameters.AddWithValue("@catNumber", catNumber);
                 da.Fill(ds, "products");
 
 

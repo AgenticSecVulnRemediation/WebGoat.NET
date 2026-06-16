@@ -7,6 +7,7 @@ using Mono.Data.Sqlite;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System;
 using System.Text.RegularExpressions;
 using System.Web.Security;
 
@@ -214,6 +215,12 @@ namespace TechInfoSystems.Data.SQLite
 			_minRequiredNonAlphanumericCharacters = Convert.ToInt32 (GetConfigValue (config ["minRequiredNonalphanumericCharacters"], "1"));
 			_minRequiredPasswordLength = Convert.ToInt32 (GetConfigValue (config ["minRequiredPasswordLength"], "7"));
 			_passwordStrengthRegularExpression = Convert.ToString (GetConfigValue (config ["passwordStrengthRegularExpression"], ""));
+			if (config["regexTimeout"] != null) {
+				int timeoutValue;
+				if (int.TryParse(config["regexTimeout"], out timeoutValue)) {
+					_regexMatchTimeout = TimeSpan.FromMilliseconds(timeoutValue);
+				}
+			}
 			_enablePasswordReset = Convert.ToBoolean (GetConfigValue (config ["enablePasswordReset"], "true"));
 			_enablePasswordRetrieval = Convert.ToBoolean (GetConfigValue (config ["enablePasswordRetrieval"], "false"));
 			_requiresQuestionAndAnswer = Convert.ToBoolean (GetConfigValue (config ["requiresQuestionAndAnswer"], "false"));
@@ -1329,6 +1336,7 @@ namespace TechInfoSystems.Data.SQLite
 
 		#region Private Methods
 
+		private static TimeSpan _regexMatchTimeout = TimeSpan.FromMilliseconds(500);
 		private static void ValidatePwdStrengthRegularExpression ()
 		{
 			// Validate regular expression, if supplied.
@@ -1338,7 +1346,7 @@ namespace TechInfoSystems.Data.SQLite
 			_passwordStrengthRegularExpression = _passwordStrengthRegularExpression.Trim ();
 			if (_passwordStrengthRegularExpression.Length > 0) {
 				try {
-					new Regex (_passwordStrengthRegularExpression);
+					new Regex (_passwordStrengthRegularExpression, RegexOptions.None, _regexMatchTimeout);
 				} catch (ArgumentException ex) {
 					throw new ProviderException (ex.Message, ex);
 				}

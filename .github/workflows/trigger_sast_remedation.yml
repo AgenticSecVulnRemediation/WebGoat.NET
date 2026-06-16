@@ -44,7 +44,7 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.DMS_BEARER_TOKEN }}" \
             -d '{
               "usecase_id": 11683,
-              "reference_id": "Third-Party SAST to RapidFix Remediation",
+              "reference_id": "Security Vulnerability Remediation V2.6",
               "input": {
                 "messages": [
                   {

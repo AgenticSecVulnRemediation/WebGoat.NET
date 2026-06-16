@@ -324,7 +324,8 @@ namespace TechInfoSystems.Data.SQLite
 			if (numNonAlphaNumericChars < this.MinRequiredNonAlphanumericCharacters) {
 				throw new ArgumentException (String.Format (CultureInfo.CurrentCulture, "There must be at least {0} non alpha numeric characters.", this.MinRequiredNonAlphanumericCharacters));
 			}
-			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (newPassword, this.PasswordStrengthRegularExpression)) {
+			TimeSpan regexTimeout = TimeSpan.FromSeconds(1); // TODO: Replace with an appropriate timeout
+			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch(newPassword, this.PasswordStrengthRegularExpression, RegexOptions.None, regexTimeout)) {
 				throw new ArgumentException ("The password does not match the regular expression in the config file.");
 			}
 
@@ -510,7 +511,9 @@ namespace TechInfoSystems.Data.SQLite
 				return null;
 			}
 
-			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (password, this.PasswordStrengthRegularExpression)) {
+			// Set a regex timeout value (adjust the value as needed)
+            TimeSpan regexTimeout = TimeSpan.FromSeconds(1); // TODO: Replace with an appropriate timeout
+            if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (password, this.PasswordStrengthRegularExpression, RegexOptions.None, regexTimeout)) {
 				status = MembershipCreateStatus.InvalidPassword;
 				return null;
 			}

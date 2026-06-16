@@ -13,11 +13,22 @@ namespace OWASP.WebGoat.NET
     {
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Check if the 'Cookie' query parameter is present and valid
             if (Request.QueryString["Cookie"] != null)
             {
-                HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
+                string rawCookieValue = Request.QueryString["Cookie"];
+                // TODO: Replace the following validation with appropriate logic (e.g. regex or business rules) for acceptable cookie values
+                if (!System.Text.RegularExpressions.Regex.IsMatch(rawCookieValue, "^[a-zA-Z0-9]*$")) {
+                    // Optionally log the incident and set a safe default value
+                    rawCookieValue = "defaultSafeValue"; // OR consider rejecting the request
+                }
 
+                HttpCookie cookie = new HttpCookie("UserAddedCookie");
+                cookie.Value = rawCookieValue;
+                // Set secure flags to reduce risk
+                cookie.HttpOnly = true;  // Prevent access from client-side scripts
+                // If the application uses HTTPS, uncomment the following line
+                // cookie.Secure = true; 
                 Response.Cookies.Add(cookie);
             }
             else if (Request.QueryString["Header"] != null)

@@ -666,13 +666,13 @@ namespace TechInfoSystems.Data.SQLite
 				SqliteConnection cn = GetDbConnectionForRole ();
 				try {
 					using (SqliteCommand cmd = cn.CreateCommand()) {
-						cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
+						cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES (@ApplicationId, @ApplicationName, @Description)";
 
 						string roleApplicationId = Guid.NewGuid ().ToString ();
 
-						cmd.Parameters.AddWithValue ("$ApplicationId", roleApplicationId);
-						cmd.Parameters.AddWithValue ("$ApplicationName", _applicationName);
-						cmd.Parameters.AddWithValue ("$Description", String.Empty);
+						cmd.Parameters.AddWithValue ("@ApplicationId", roleApplicationId);
+						cmd.Parameters.AddWithValue ("@ApplicationName", _applicationName);
+						cmd.Parameters.AddWithValue ("@Description", String.Empty);
 
 						if (cn.State == ConnectionState.Closed)
 							cn.Open ();
@@ -692,8 +692,8 @@ namespace TechInfoSystems.Data.SQLite
 								// Need to insert record for the membership application.
 								_membershipApplicationId = Guid.NewGuid ().ToString ();
 
-								cmd.Parameters ["$ApplicationId"].Value = _membershipApplicationId;
-								cmd.Parameters ["$ApplicationName"].Value = _membershipApplicationName;
+								cmd.Parameters ["@ApplicationId"].Value = _membershipApplicationId;
+								cmd.Parameters ["@ApplicationName"].Value = _membershipApplicationName;
 
 								cmd.ExecuteNonQuery ();
 							}

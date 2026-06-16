@@ -1,0 +1,190 @@
+# =============================================================================
+# =============================================================================
+# Workflow: Trigger SAST Remediation Pipeline
+# Description: Calls the AES execution API to initiate the Third-Party SAST
+#              to RapidFix Remediation workflow, polls for completion, and
+#              prints the execution output once finished.
+# =============================================================================
+
+name: Trigger SAST Remediation
+
+on:
+  # Manual trigger from GitHub UI
+  workflow_dispatch:
+
+  # Automatic trigger on PR merge to master
+  pull_request:
+    types:
+      - closed
+    branches:
+      - master
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Trigger the AES execution and capture the execution_id
+  # ---------------------------------------------------------------------------
+  trigger-execution:
+    name: Trigger AES Execution
+    runs-on: ubuntu-latest
+
+    # Only run on manual dispatch OR when a PR is actually merged (not just closed)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+
+    outputs:
+      execution_id: ${{ steps.trigger.outputs.execution_id }}
+
+    steps:
+      - name: Trigger SAST to RapidFix Remediation
+        id: trigger
+        run: |
+          RESPONSE=$(curl -s -X POST "${{ secrets.DMS_BASE_URL }}/aes/executions" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.DMS_BEARER_TOKEN }}" \
+            -d '{
+              "usecase_id": 11683,
+              "reference_id": "Third-Party SAST to RapidFix Remediation",
+              "input": {
+                "messages": [
+                  {
+                    "content": "Proceed with the following details and make sure to use the following parameters \nOwner: AgenticSecVulnRemediation\nrepo_name: Webgoat.NET\nbranch: master\nscan_namel: webgoat_net_scan\nappId: 4b188875-97b6-4bd1-8887-431fe6692805",
+                    "role": "user"
+                  }
+                ]
+              },
+              "callback_url": "https://example.com/"
+            }' \
+            --fail-with-body)
+
+          echo "Create execution response:"
+          echo "$RESPONSE" | jq .
+
+          EXECUTION_ID=$(echo "$RESPONSE" | jq -r '.data.id')
+
+          if [ -z "$EXECUTION_ID" ] || [ "$EXECUTION_ID" = "null" ]; then
+            echo "ERROR: Failed to extract execution_id from response."
+            exit 1
+          fi
+
+          echo "Execution triggered successfully. execution_id: $EXECUTION_ID"
+          echo "execution_id=$EXECUTION_ID" >> "$GITHUB_OUTPUT"
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Poll the execution status until a terminal state is reached
+  #         Polls every 30 seconds, times out after 30 minutes (60 attempts)
+  #         exec_status: 0=new, 1=in-progress, 2=completed, 3=failed
+  #         Always exits cleanly and forwards exec_status to the next job
+  # ---------------------------------------------------------------------------
+  poll-execution-status:
+    name: Poll Execution Status
+    runs-on: ubuntu-latest
+    needs: trigger-execution
+
+    outputs:
+      exec_status: ${{ steps.poll.outputs.exec_status }}
+
+    steps:
+      - name: Poll Until Terminal State
+        id: poll
+        run: |
+          EXECUTION_ID="${{ needs.trigger-execution.outputs.execution_id }}"
+          MAX_ATTEMPTS=100
+          POLL_INTERVAL=30
+          ATTEMPT=0
+
+          echo "Starting polling for execution_id: $EXECUTION_ID"
+          echo "Max wait time: $((MAX_ATTEMPTS * POLL_INTERVAL / 60)) minutes"
+
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            echo ""
+            echo "--- Poll attempt $ATTEMPT / $MAX_ATTEMPTS ---"
+
+            RESPONSE=$(curl -s -X GET \
+              "${{ secrets.DMS_BASE_URL }}/aes/executions/$EXECUTION_ID" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer ${{ secrets.DMS_BEARER_TOKEN }}" \
+              --fail-with-body)
+
+            if [ $? -ne 0 ]; then
+              echo "ERROR: Failed to reach the execution status endpoint."
+              exit 1
+            fi
+
+            EXEC_STATUS=$(echo "$RESPONSE" | jq -r '.data[0].exec_status')
+
+            case "$EXEC_STATUS" in
+              0)
+                echo "Status: New (0) — waiting for execution to start..."
+                ;;
+              1)
+                echo "Status: In-Progress (1) — execution is running..."
+                ;;
+              2)
+                echo "Status: Completed (2) — execution finished successfully."
+                echo "exec_status=$EXEC_STATUS" >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+              3)
+                echo "Status: Failed (3) — execution encountered an error."
+                echo "exec_status=$EXEC_STATUS" >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+              *)
+                echo "ERROR: Unexpected exec_status value: '$EXEC_STATUS'. Full response:"
+                echo "$RESPONSE" | jq .
+                exit 1
+                ;;
+            esac
+
+            echo "Next poll in ${POLL_INTERVAL}s..."
+            sleep $POLL_INTERVAL
+          done
+
+          echo ""
+          echo "ERROR: Timed out after $((MAX_ATTEMPTS * POLL_INTERVAL / 60)) minutes waiting for execution_id $EXECUTION_ID to complete."
+          exit 1
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Fetch and display the final execution output
+  #         Fails the workflow if exec_status was 3 (failed)
+  # ---------------------------------------------------------------------------
+  display-execution-output:
+    name: Display Execution Output
+    runs-on: ubuntu-latest
+    needs: [trigger-execution, poll-execution-status]
+
+    steps:
+      - name: Fetch and Print Execution Output
+        run: |
+          EXECUTION_ID="${{ needs.trigger-execution.outputs.execution_id }}"
+          EXEC_STATUS="${{ needs.poll-execution-status.outputs.exec_status }}"
+
+          RESPONSE=$(curl -s -X GET \
+            "${{ secrets.DMS_BASE_URL }}/aes/executions/$EXECUTION_ID" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.DMS_BEARER_TOKEN }}" \
+            --fail-with-body)
+
+          if [ $? -ne 0 ]; then
+            echo "ERROR: Failed to fetch execution output."
+            exit 1
+          fi
+
+          if [ "$EXEC_STATUS" = "2" ]; then
+            echo "Execution completed successfully."
+            echo ""
+            echo "=============================== EXECUTION OUTPUT ==============================="
+            echo "$RESPONSE" | jq '.data[0].output'
+            echo "================================================================================"
+          elif [ "$EXEC_STATUS" = "3" ]; then
+            echo "Execution failed."
+            echo ""
+            echo "=============================== EXECUTION OUTPUT ==============================="
+            echo "$RESPONSE" | jq '.data[0].output'
+            echo "================================= ERROR DETAILS ================================"
+            echo "$RESPONSE" | jq '.data[0].error'
+            echo "================================================================================"
+            exit 1
+          fi

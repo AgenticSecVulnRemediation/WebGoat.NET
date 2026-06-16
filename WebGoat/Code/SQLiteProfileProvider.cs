@@ -652,9 +652,9 @@ namespace TechInfoSystems.Data.SQLite
 
 					if (userId != null) {
 						// User exists?
-						cmd.CommandText = "SELECT PropertyNames, PropertyValuesString, PropertyValuesBinary FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+						cmd.CommandText = "SELECT PropertyNames, PropertyValuesString, PropertyValuesBinary FROM " + PROFILE_TB_NAME + " WHERE UserId = ?"; // Parameterized query
 						cmd.Parameters.Clear ();
-						cmd.Parameters.AddWithValue ("$UserId", userId);
+						cmd.Parameters.AddWithValue ("?", userId);
 
 
 						using (SqliteDataReader dr = cmd.ExecuteReader()) {
@@ -670,7 +670,7 @@ namespace TechInfoSystems.Data.SQLite
 						cmd.CommandText = "UPDATE " + USER_TB_NAME + " SET LastActivityDate = $LastActivityDate WHERE UserId = $UserId";
 						cmd.Parameters.Clear ();
 						cmd.Parameters.AddWithValue ("$LastActivityDate", DateTime.UtcNow);
-						cmd.Parameters.AddWithValue ("$UserId", userId);
+						cmd.Parameters.AddWithValue ("?", userId);
 
 						cmd.ExecuteNonQuery ();
 					}

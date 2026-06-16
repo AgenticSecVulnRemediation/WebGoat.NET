@@ -70,9 +70,10 @@ namespace OWASP.WebGoat.NET
 			RunSQLFromFile (cn, filename);
 		}
 		
-		private string DoNonQuery (String SQL, SqliteConnection conn)
+		private string DoNonQuery (String SQL, SqliteConnection conn, params SqliteParameter[] parameters)
 		{
 			var cmd = new SqliteCommand (SQL, conn);
+			foreach(var parameter in parameters) { cmd.Parameters.Add(parameter); }
 			var output = string.Empty;
 			
 			try {
@@ -141,9 +142,10 @@ namespace OWASP.WebGoat.NET
 			return result;
 		}
 		*/
-		private DataTable DoQuery (string SQL, SqliteConnection conn)
+		private DataTable DoQuery (string SQL, SqliteConnection conn, params SqliteParameter[] parameters)
 		{
 			var cmd = new SqliteCommand (SQL, conn);
+			foreach(var parameter in parameters) { cmd.Parameters.Add(parameter); }
 			DataTable dt = new DataTable ();
 			using (var reader = cmd.ExecuteReader ()) {
 				
@@ -210,15 +212,15 @@ namespace OWASP.WebGoat.NET
 
 		public DataTable GetMailingListInfoByEmailAddress (string email)
 		{
-			string sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = '" + email + "'";
-			DataTable result = DoQuery (sql, GetGoatDBConnection ());
+			string sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = @Email";
+			DataTable result = DoQuery (sql, GetGoatDBConnection(), new SqliteParameter("@Email", email));
 			return result;
 		}
 
 		public string AddToMailingList (string first, string last, string email)
 		{
-			string sql = "insert into mailinglist (firstname, lastname, email) values ('" + first + "', '" + last + "', '" + email + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			string sql = "insert into mailinglist (firstname, lastname, email) values (@First, @Last, @Email)";
+			string result = DoNonQuery (sql, GetGoatDBConnection(), new SqliteParameter("@First", first), new SqliteParameter("@Last", last), new SqliteParameter("@Email", email));
 			return result;
 		}
 

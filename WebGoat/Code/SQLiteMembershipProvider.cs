@@ -44,6 +44,7 @@ namespace TechInfoSystems.Data.SQLite
 		private static int _minRequiredNonAlphanumericCharacters;
 		private static int _minRequiredPasswordLength;
 		private static string _passwordStrengthRegularExpression;
+		private static readonly TimeSpan _regexTimeout = TimeSpan.FromMilliseconds(1000); // Timeout placeholder - adjust as needed
 		private static readonly DateTime _minDate = DateTime.ParseExact ("01/01/1753", "d", CultureInfo.InvariantCulture);
 
 		#endregion
@@ -1338,7 +1339,7 @@ namespace TechInfoSystems.Data.SQLite
 			_passwordStrengthRegularExpression = _passwordStrengthRegularExpression.Trim ();
 			if (_passwordStrengthRegularExpression.Length > 0) {
 				try {
-					new Regex (_passwordStrengthRegularExpression);
+					new Regex (_passwordStrengthRegularExpression, RegexOptions.None, _regexTimeout); // timeout value (currently set as 1000ms) is a placeholder, adjust as needed
 				} catch (ArgumentException ex) {
 					throw new ProviderException (ex.Message, ex);
 				}

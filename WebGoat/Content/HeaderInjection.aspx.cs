@@ -16,7 +16,12 @@ namespace OWASP.WebGoat.NET
             if (Request.QueryString["Cookie"] != null)
             {
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
+                string validatedCookie = ValidateCookieInput(Request.QueryString["Cookie"]); // TODO: Implement validation logic for cookie input.
+                cookie.Value = validatedCookie;
+                cookie.HttpOnly = true; // Prevents client-side script access
+                cookie.Secure = true;   // Ensures cookie is sent over HTTPS
+                cookie.Value = SignCookieValue(cookie.Value); // TODO: Implement cookie signing logic
+
 
                 Response.Cookies.Add(cookie);
             }

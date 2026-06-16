@@ -44,6 +44,13 @@ namespace OWASP.WebGoat.NET
             //encode twice for more security!
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
+            cookie.HttpOnly = true;
+            cookie.Secure = true;
+            // If supported, set the SameSite attribute to further restrict cookie flow:
+            // cookie.SameSite = SameSiteMode.Strict;
+            cookie.HttpOnly = true;
+            cookie.Secure = true;
+            //cookie.SameSite = SameSiteMode.Strict;
 
             Response.Cookies.Add(cookie); 
         }

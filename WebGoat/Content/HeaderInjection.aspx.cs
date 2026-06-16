@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -6,6 +7,8 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Collections;
 using System.Collections.Specialized;
+
+using System.Text.RegularExpressions;
 
 namespace OWASP.WebGoat.NET
 {
@@ -15,9 +18,15 @@ namespace OWASP.WebGoat.NET
         {
             if (Request.QueryString["Cookie"] != null)
             {
+                string inputCookie = Request.QueryString["Cookie"];
+                if (!Regex.IsMatch(inputCookie, "^[a-zA-Z0-9]+$"))
+                {
+                    throw new ArgumentException("Invalid cookie format");
+                }
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
-                cookie.Value = Request.QueryString["Cookie"];
-
+                cookie.Value = inputCookie;
+                cookie.HttpOnly = true;
+                cookie.Secure = true;
                 Response.Cookies.Add(cookie);
             }
             else if (Request.QueryString["Header"] != null)

@@ -201,7 +201,10 @@ namespace OWASP.WebGoat.NET
 		{
 			if (userid.Length > 4)
 				userid = userid.Substring (0, 4);
-			String output = (String)DoScalar ("SELECT Email FROM UserList WHERE UserID = '" + userid + "'", GetGoatDBConnection ());
+			SqliteConnection conn = GetGoatDBConnection ();
+			SqliteCommand cmd = new SqliteCommand("SELECT Email FROM UserList WHERE UserID = @userid", conn);
+			cmd.Parameters.AddWithValue("@userid", userid);
+			String output = (string)cmd.ExecuteScalar();
 			if (output != null)
 				return output;
 			else 
@@ -210,9 +213,52 @@ namespace OWASP.WebGoat.NET
 
 		public DataTable GetMailingListInfoByEmailAddress (string email)
 		{
-			string sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = '" + email + "'";
-			DataTable result = DoQuery (sql, GetGoatDBConnection ());
-			return result;
+			SqliteConnection conn = GetGoatDBConnection();
+			SqliteCommand cmd = new SqliteCommand("SELECT FirstName, LastName, Email FROM MailingList WHERE Email = @Email", conn);
+			cmd.Parameters.AddWithValue("@Email", email);
+			DataTable dt = new DataTable();
+			using(var reader = cmd.ExecuteReader())
+			{
+				for (int i = 0; i < reader.FieldCount; i++) {
+					DataColumn col = new DataColumn();
+					col.DataType = reader.GetFieldType(i);
+					col.ColumnName = reader.GetName(i);
+					dt.Columns.Add(col);
+				}
+				while(reader.Read()) {
+					DataRow row = dt.NewRow();
+					for (int i = 0; i < reader.FieldCount; i++) {
+						if(reader.IsDBNull(i))
+							continue;
+						if(reader.GetFieldType(i) == typeof(String))
+							row[dt.Columns[i].ColumnName] = reader.GetString(i);
+						else if(reader.GetFieldType(i) == typeof(Int16))
+							row[dt.Columns[i].ColumnName] = reader.GetInt16(i);
+						else if(reader.GetFieldType(i) == typeof(Int32))
+							row[dt.Columns[i].ColumnName] = reader.GetInt32(i);
+						else if(reader.GetFieldType(i) == typeof(Int64))
+							row[dt.Columns[i].ColumnName] = reader.GetInt64(i);
+						else if(reader.GetFieldType(i) == typeof(Boolean))
+							row[dt.Columns[i].ColumnName] = reader.GetBoolean(i);
+						else if(reader.GetFieldType(i) == typeof(Byte))
+							row[dt.Columns[i].ColumnName] = reader.GetByte(i);
+						else if(reader.GetFieldType(i) == typeof(Char))
+							row[dt.Columns[i].ColumnName] = reader.GetChar(i);
+						else if(reader.GetFieldType(i) == typeof(DateTime))
+							row[dt.Columns[i].ColumnName] = reader.GetDateTime(i);
+						else if(reader.GetFieldType(i) == typeof(Decimal))
+							row[dt.Columns[i].ColumnName] = reader.GetDecimal(i);
+						else if(reader.GetFieldType(i) == typeof(Double))
+							row[dt.Columns[i].ColumnName] = reader.GetDouble(i);
+						else if(reader.GetFieldType(i) == typeof(float))
+							row[dt.Columns[i].ColumnName] = reader.GetFloat(i);
+						else if(reader.GetFieldType(i) == typeof(Guid))
+							row[dt.Columns[i].ColumnName] = reader.GetGuid(i);
+					}
+					dt.Rows.Add(row);
+				}
+			}
+			return dt;
 		}
 
 		public string AddToMailingList (string first, string last, string email)

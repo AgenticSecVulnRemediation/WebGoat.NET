@@ -48,7 +48,7 @@ jobs:
               "input": {
                 "messages": [
                   {
-                    "content": "Proceed with the following details and make sure to use the following parameters \nOwner: AgenticSecVulnRemediation\nrepo_name: Webgoat.NET\nbranch: master\nscan_namel: webgoat_net_scan\nappId: 4b188875-97b6-4bd1-8887-431fe6692805",
+                    "content": "Proceed with the following details and make sure to use the following parameters \nOwner: AgenticSecVulnRemediation\nrepo_name: WebGoat.NET\nbranch: master\nscan_name: webgoat_net_scan\nappId: 4b188875-97b6-4bd1-8887-431fe6692805",
                     "role": "user"
                   }
                 ]

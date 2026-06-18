@@ -44,6 +44,7 @@ namespace TechInfoSystems.Data.SQLite
 		private static int _minRequiredNonAlphanumericCharacters;
 		private static int _minRequiredPasswordLength;
 		private static string _passwordStrengthRegularExpression;
+		private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(1);
 		private static readonly DateTime _minDate = DateTime.ParseExact ("01/01/1753", "d", CultureInfo.InvariantCulture);
 
 		#endregion
@@ -324,7 +325,7 @@ namespace TechInfoSystems.Data.SQLite
 			if (numNonAlphaNumericChars < this.MinRequiredNonAlphanumericCharacters) {
 				throw new ArgumentException (String.Format (CultureInfo.CurrentCulture, "There must be at least {0} non alpha numeric characters.", this.MinRequiredNonAlphanumericCharacters));
 			}
-			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (newPassword, this.PasswordStrengthRegularExpression)) {
+			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (newPassword, this.PasswordStrengthRegularExpression, RegexOptions.None, RegexTimeout)) {
 				throw new ArgumentException ("The password does not match the regular expression in the config file.");
 			}
 
@@ -510,7 +511,7 @@ namespace TechInfoSystems.Data.SQLite
 				return null;
 			}
 
-			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (password, this.PasswordStrengthRegularExpression)) {
+			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (password, this.PasswordStrengthRegularExpression, RegexOptions.None, RegexTimeout)) { // TODO: Adjust the timeout value as necessary
 				status = MembershipCreateStatus.InvalidPassword;
 				return null;
 			}

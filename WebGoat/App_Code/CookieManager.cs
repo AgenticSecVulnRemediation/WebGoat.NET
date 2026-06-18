@@ -21,6 +21,10 @@ namespace OWASP.WebGoat.NET.App_Code
             if (ticket.IsPersistent)
                 cookie.Expires = ticket.Expiration;
                 
+            // Ensure the cookie is sent only over HTTPS (if applicable; replace 'true' with appropriate condition if needed)
+            cookie.Secure = true;
+            // Prevent client-side scripts from accessing the cookie
+            cookie.HttpOnly = true;
             return cookie;
             
             //TODO: Not sure if not adding this extra cookie will give us problems. Let's try and see.

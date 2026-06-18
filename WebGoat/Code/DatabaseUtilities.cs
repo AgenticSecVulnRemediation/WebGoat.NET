@@ -201,7 +201,15 @@ namespace OWASP.WebGoat.NET
 		{
 			if (userid.Length > 4)
 				userid = userid.Substring (0, 4);
-			String output = (String)DoScalar ("SELECT Email FROM UserList WHERE UserID = '" + userid + "'", GetGoatDBConnection ());
+			String output = null;
+			SqliteConnection conn = GetGoatDBConnection();
+			SqliteCommand command = new SqliteCommand("SELECT Email FROM UserList WHERE UserID = @UserID", conn);
+			command.Parameters.AddWithValue("@UserID", userid);
+			try {
+				output = (string)command.ExecuteScalar();
+			} catch (Exception ex) {
+				output = "<br/>Exception: " + ex.Message;
+			}
 			if (output != null)
 				return output;
 			else 
@@ -210,8 +218,14 @@ namespace OWASP.WebGoat.NET
 
 		public DataTable GetMailingListInfoByEmailAddress (string email)
 		{
-			string sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = '" + email + "'";
-			DataTable result = DoQuery (sql, GetGoatDBConnection ());
+			DataTable result = new DataTable();
+			SqliteConnection conn = GetGoatDBConnection();
+			SqliteCommand command = new SqliteCommand("SELECT FirstName, LastName, Email FROM MailingList WHERE Email = @Email", conn);
+			command.Parameters.AddWithValue("@Email", email);
+			using(var reader = command.ExecuteReader())
+			{
+				result.Load(reader);
+			}
 			return result;
 		}
 

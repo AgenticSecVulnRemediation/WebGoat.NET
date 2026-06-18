@@ -1,4 +1,4 @@
-<%@ Page Title="" validateRequest="false" Language="C#" MasterPageFile="~/Resources/Master-Pages/Site.Master" AutoEventWireup="true" CodeBehind="ReflectedXSS.aspx.cs" Inherits="OWASP.WebGoat.NET.ReflectedXSS" %>
+<%@ Page Title="" validateRequest="true" Language="C#" MasterPageFile="~/Resources/Master-Pages/Site.Master" AutoEventWireup="true" CodeBehind="ReflectedXSS.aspx.cs" Inherits="OWASP.WebGoat.NET.ReflectedXSS" %>  /* If manual sanitization is required for specific inputs, integrate HttpUtility.HtmlEncode() accordingly. */
 <asp:Content ID="Content1" ContentPlaceHolderID="HeadContentPlaceHolder" runat="server">
 </asp:Content>
 

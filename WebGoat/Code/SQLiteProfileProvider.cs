@@ -11,6 +11,25 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Web.Profile;
 using System.Xml.Serialization;
+using System.Runtime.Serialization;
+using System.Collections.Generic;
+
+// NOTE: Update allowedTypes in SafeSerializationBinder with the fully qualified names of types that are safe to deserialize.
+internal sealed class SafeSerializationBinder : SerializationBinder {
+    private static readonly HashSet<string> allowedTypes = new HashSet<string> {
+        "YourNamespace.YourSafeType1",
+        "YourNamespace.YourSafeType2"
+        // Add additional safe types as required
+    };
+
+    public override Type BindToType(string assemblyName, string typeName) {
+        if (!allowedTypes.Contains(typeName)) {
+            throw new SerializationException($"Deserialization of type {typeName} is not allowed.");
+        }
+        return Type.GetType($"{typeName}, {assemblyName}");
+    }
+}
+
 
 namespace TechInfoSystems.Data.SQLite
 {
@@ -840,7 +859,7 @@ namespace TechInfoSystems.Data.SQLite
 				} else {
 					MemoryStream ms = new MemoryStream ((byte[])obj);
 					try {
-						val = (new BinaryFormatter ()).Deserialize (ms);
+						val = (new BinaryFormatter { Binder = new SafeSerializationBinder() }).Deserialize (ms);
 					} finally {
 						ms.Close ();
 					}
@@ -1044,7 +1063,7 @@ namespace TechInfoSystems.Data.SQLite
 					try
 					{
 						ms = new MemoryStream(buf);
-						return (new BinaryFormatter()).Deserialize(ms);
+						return (new BinaryFormatter { Binder = new SafeSerializationBinder() }).Deserialize(ms);
 					}
 					finally
 					{

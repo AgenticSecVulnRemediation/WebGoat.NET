@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Configuration;
@@ -7,6 +8,7 @@ using System.Data;
 using Mono.Data.Sqlite;
 using System.Globalization;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Web.Profile;
@@ -17,7 +19,27 @@ namespace TechInfoSystems.Data.SQLite
 	/// <summary>
 	/// Provides a Profile implementation whose data is stored in a SQLite database.
 	/// </summary>
-	public sealed class SQLiteProfileProvider : ProfileProvider
+	// BEGIN KnownTypesBinder - review and update allowed types as appropriate
+public class KnownTypesBinder : SerializationBinder {
+    // Define a whitelist of allowed types. Update this list to include only types that are safe to deserialize.
+    private static readonly HashSet<string> allowedTypes = new HashSet<string> {
+        // Example: "Namespace.SafeType, AssemblyName"
+        "System.String, mscorlib",
+        "System.Int32, mscorlib",
+        // TODO: Replace these placeholder entries with the actual allowed types
+    };
+
+    public override Type BindToType(string assemblyName, string typeName) {
+        string fullTypeName = string.Format("{0}, {1}", typeName, assemblyName);
+        if (!allowedTypes.Contains(fullTypeName)) {
+            throw new SerializationException($"Deserialization of type '{fullTypeName}' is not allowed.");
+        }
+        return Type.GetType(fullTypeName);
+    }
+}
+// END KnownTypesBinder
+
+public sealed class SQLiteProfileProvider : ProfileProvider
 	{
 		#region Private Fields
 
@@ -840,7 +862,9 @@ namespace TechInfoSystems.Data.SQLite
 				} else {
 					MemoryStream ms = new MemoryStream ((byte[])obj);
 					try {
-						val = (new BinaryFormatter ()).Deserialize (ms);
+						BinaryFormatter bf = new BinaryFormatter();
+                        bf.Binder = new KnownTypesBinder();
+                        val = bf.Deserialize(ms);
 					} finally {
 						ms.Close ();
 					}
@@ -1044,7 +1068,9 @@ namespace TechInfoSystems.Data.SQLite
 					try
 					{
 						ms = new MemoryStream(buf);
-						return (new BinaryFormatter()).Deserialize(ms);
+						BinaryFormatter bf = new BinaryFormatter();
+                        bf.Binder = new KnownTypesBinder();
+                        return bf.Deserialize(ms);
 					}
 					finally
 					{

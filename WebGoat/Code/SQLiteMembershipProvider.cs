@@ -324,8 +324,11 @@ namespace TechInfoSystems.Data.SQLite
 			if (numNonAlphaNumericChars < this.MinRequiredNonAlphanumericCharacters) {
 				throw new ArgumentException (String.Format (CultureInfo.CurrentCulture, "There must be at least {0} non alpha numeric characters.", this.MinRequiredNonAlphanumericCharacters));
 			}
-			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (newPassword, this.PasswordStrengthRegularExpression)) {
-				throw new ArgumentException ("The password does not match the regular expression in the config file.");
+			if ((this.PasswordStrengthRegularExpression.Length > 0)) {
+				Regex regex = new Regex(this.PasswordStrengthRegularExpression, RegexOptions.None, TimeSpan.FromMilliseconds(500));
+				if (!regex.IsMatch(newPassword)) {
+					throw new ArgumentException("The password does not match the regular expression in the config file.");
+				}
 			}
 
 			string encodedPwd = EncodePassword (newPassword, passwordFormat, salt);

@@ -7,6 +7,7 @@ using System.Data;
 using Mono.Data.Sqlite;
 using System.Globalization;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Web.Profile;
@@ -1044,7 +1045,9 @@ namespace TechInfoSystems.Data.SQLite
 					try
 					{
 						ms = new MemoryStream(buf);
-						return (new BinaryFormatter()).Deserialize(ms);
+						BinaryFormatter formatter = new BinaryFormatter();
+					formatter.Binder = new AllowedTypesBinder(); // AllowedTypesBinder is a custom binder that restricts deserialization to known safe types
+					return formatter.Deserialize(ms);
 					}
 					finally
 					{
@@ -1141,4 +1144,18 @@ namespace TechInfoSystems.Data.SQLite
 		#endregion
 
 	}
+
+	class AllowedTypesBinder : SerializationBinder {
+		// Define a list of allowed types. Replace <YourSafeType> with the type(s) expected from deserialization.
+		private static readonly Type[] allowedTypes = new Type[] { typeof(<YourSafeType>) };
+
+		public override Type BindToType(string assemblyName, string typeName) {
+			Type typeToDeserialize = Type.GetType(string.Format("{0}, {1}", typeName, assemblyName));
+			if (typeToDeserialize != null && Array.Exists(allowedTypes, t => t == typeToDeserialize)) {
+				return typeToDeserialize;
+			}
+			throw new SerializationException($"Deserialization of type {typeName} is not allowed.");
+		}
+	}
+
 }

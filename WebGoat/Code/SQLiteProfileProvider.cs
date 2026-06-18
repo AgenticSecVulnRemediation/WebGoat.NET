@@ -712,7 +712,8 @@ namespace TechInfoSystems.Data.SQLite
 				SqliteConnection cn = GetDbConnectionForProfile ();
 				try {
 					using (SqliteCommand cmd = cn.CreateCommand()) {
-						cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
+						// Ensure APP_TB_NAME is a constant or validated value before use
+            cmd.CommandText = string.Format("INSERT INTO {0} (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)", APP_TB_NAME);
 
 						string profileApplicationId = Guid.NewGuid ().ToString ();
 

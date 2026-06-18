@@ -224,9 +224,9 @@ namespace TechInfoSystems.Data.SQLite
 					cmd.Parameters.AddWithValue ("$UserId", userId);
 
 					if (Convert.ToInt64 (cmd.ExecuteScalar ()) > 0) {
-						cmd.CommandText = "UPDATE " + PROFILE_TB_NAME + " SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId";
+						cmd.CommandText = $"UPDATE {PROFILE_TB_NAME} SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId"; // Ensure that PROFILE_TB_NAME is a safe constant and not influenced by external input
 					} else {
-						cmd.CommandText = "INSERT INTO " + PROFILE_TB_NAME + " (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)";
+						cmd.CommandText = $"INSERT INTO {PROFILE_TB_NAME} (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)"; // Ensure that PROFILE_TB_NAME is a safe constant and not influenced by external input
 					}
 					cmd.Parameters.Clear ();
 					cmd.Parameters.AddWithValue ("$UserId", userId);

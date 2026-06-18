@@ -76,14 +76,19 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             string encoded_password = Encoder.Encode(password);
             
             //check email/password
-            string sql = "select * from CustomerLogin where email = '" + email + "' and password = '" + 
-                         encoded_password + "';";
+            string sql = "select * from CustomerLogin where email = @Email and password = @Password;";
                         
             using (SqliteConnection connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
 
-                SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
+                // Create a command using the parameterized query
+                SqliteCommand command = new SqliteCommand(sql, connection);
+                command.Parameters.AddWithValue("@Email", email);  // TODO: Replace with proper validation if needed
+                command.Parameters.AddWithValue("@Password", encoded_password);
+
+                // Use the command with the SqliteDataAdapter
+                SqliteDataAdapter da = new SqliteDataAdapter(command);
             
                 //TODO: User reader instead (for all calls)
                 DataSet ds = new DataSet();

@@ -45,6 +45,12 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             //encode twice for more security!
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
+            // Mark the cookie as HttpOnly to prevent client-side access
+            cookie.HttpOnly = true;
+            // Ensure the cookie is only sent over secure HTTPS connections
+            cookie.Secure = true;  // Note: This requires that your application is served over HTTPS
+            // Optionally, set the SameSite attribute to restrict cross-site requests (requires appropriate .NET version)
+            // cookie.SameSite = SameSiteMode.Strict;  // Uncomment and adjust as necessary
 
             Response.Cookies.Add(cookie);
         }

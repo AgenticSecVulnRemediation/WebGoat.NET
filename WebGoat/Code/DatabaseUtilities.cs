@@ -70,9 +70,14 @@ namespace OWASP.WebGoat.NET
 			RunSQLFromFile (cn, filename);
 		}
 		
-		private string DoNonQuery (String SQL, SqliteConnection conn)
+		private string DoNonQuery (String SQL, SqliteConnection conn, object[] parameters = null)
 		{
 			var cmd = new SqliteCommand (SQL, conn);
+			if (parameters != null) {
+				cmd.Parameters.AddWithValue("@first", parameters[0]);
+				cmd.Parameters.AddWithValue("@last", parameters[1]);
+				cmd.Parameters.AddWithValue("@email", parameters[2]);
+			}
 			var output = string.Empty;
 			
 			try {
@@ -217,8 +222,8 @@ namespace OWASP.WebGoat.NET
 
 		public string AddToMailingList (string first, string last, string email)
 		{
-			string sql = "insert into mailinglist (firstname, lastname, email) values ('" + first + "', '" + last + "', '" + email + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			string sql = "insert into mailinglist (firstname, lastname, email) values (@first, @last, @email)";
+			string result = DoNonQuery (sql, GetGoatDBConnection(), new object[] { first, last, email });
 			return result;
 		}
 

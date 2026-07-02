@@ -289,10 +289,13 @@ namespace TechInfoSystems.Data.SQLite
 					tran = cn.BeginTransaction ();
 
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "DELETE FROM " + USERS_IN_ROLES_TB_NAME + " WHERE (RoleId IN"
-														 + " (SELECT RoleId FROM " + ROLE_TB_NAME + " WHERE LoweredRoleName = $RoleName))";
+					// Hunk 1: Parameterized SQL command text update
+                string query = string.Format("DELETE FROM {0} WHERE RoleId IN (SELECT RoleId FROM {1} WHERE LoweredRoleName = @RoleName)", USERS_IN_ROLES_TB_NAME, ROLE_TB_NAME);
+					cmd.CommandText = query;
+														
 
-					cmd.Parameters.AddWithValue ("$RoleName", roleName.ToLowerInvariant ());
+					                // Hunk 2: Parameter update
+                cmd.Parameters.AddWithValue ("@RoleName", roleName.ToLowerInvariant ());
 
 					cmd.ExecuteNonQuery ();
 				}

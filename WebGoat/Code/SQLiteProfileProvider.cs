@@ -11,6 +11,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Web.Profile;
 using System.Xml.Serialization;
+using io.github.pixee.security.ValidatingObjectInputStreams;
 
 namespace TechInfoSystems.Data.SQLite
 {
@@ -840,7 +841,7 @@ namespace TechInfoSystems.Data.SQLite
 				} else {
 					MemoryStream ms = new MemoryStream ((byte[])obj);
 					try {
-						val = (new BinaryFormatter ()).Deserialize (ms);
+						val = ValidatingObjectInputStreams.From(ms).ReadObject();
 					} finally {
 						ms.Close ();
 					}
@@ -1044,7 +1045,7 @@ namespace TechInfoSystems.Data.SQLite
 					try
 					{
 						ms = new MemoryStream(buf);
-						return (new BinaryFormatter()).Deserialize(ms);
+						return ValidatingObjectInputStreams.From(ms).ReadObject();
 					}
 					finally
 					{

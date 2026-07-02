@@ -26,6 +26,10 @@ namespace OWASP.WebGoat.NET
 
                 //Info leak
                 HttpCookie cookie = new HttpCookie("Server", Encoder.Encode(Server.MachineName));
+                cookie.HttpOnly = true;
+                cookie.Secure = true; // If further integrity checking is required (e.g., signing the cookie), add the necessary code
+                cookie.HttpOnly = true;
+                cookie.Secure = true; // If further integrity checking is required (e.g., signing the cookie), add the necessary code here
                 Response.Cookies.Add(cookie);
             }
             else

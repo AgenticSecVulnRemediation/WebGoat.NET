@@ -8,6 +8,7 @@ using Mono.Data.Sqlite;
 using System.Globalization;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Web.Profile;
 using System.Xml.Serialization;
@@ -19,6 +20,18 @@ namespace TechInfoSystems.Data.SQLite
 	/// </summary>
 	public sealed class SQLiteProfileProvider : ProfileProvider
 	{
+		// Safe binder to restrict deserialization types
+		private class SafeSerializationBinder : SerializationBinder
+		{
+			public override Type BindToType(string assemblyName, string typeName)
+			{
+				// Allow only types from the current namespace
+				if (!string.IsNullOrEmpty(typeName) && typeName.StartsWith("TechInfoSystems.Data.SQLite"))
+					return Type.GetType($"{typeName}, {assemblyName}");
+				throw new SerializationException("Deserialization of type " + typeName + " is not allowed.");
+			}
+		}
+
 		#region Private Fields
 
 		private static string _connectionString;
@@ -840,7 +853,9 @@ namespace TechInfoSystems.Data.SQLite
 				} else {
 					MemoryStream ms = new MemoryStream ((byte[])obj);
 					try {
-						val = (new BinaryFormatter ()).Deserialize (ms);
+						BinaryFormatter bf = new BinaryFormatter();
+				bf.Binder = new SafeSerializationBinder();
+				val = bf.Deserialize(ms);
 					} finally {
 						ms.Close ();
 					}
@@ -1044,7 +1059,9 @@ namespace TechInfoSystems.Data.SQLite
 					try
 					{
 						ms = new MemoryStream(buf);
-						return (new BinaryFormatter()).Deserialize(ms);
+						BinaryFormatter bf = new BinaryFormatter();
+				bf.Binder = new SafeSerializationBinder();
+				return bf.Deserialize(ms);
 					}
 					finally
 					{

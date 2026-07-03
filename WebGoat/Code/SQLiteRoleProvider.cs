@@ -666,11 +666,15 @@ namespace TechInfoSystems.Data.SQLite
 				SqliteConnection cn = GetDbConnectionForRole ();
 				try {
 					using (SqliteCommand cmd = cn.CreateCommand()) {
-						cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
+						if (APP_TB_NAME != "[aspnet_Applications]") {
+				throw new InvalidOperationException("Invalid table name.");
+				}
+				cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
 
 						string roleApplicationId = Guid.NewGuid ().ToString ();
 
-						cmd.Parameters.AddWithValue ("$ApplicationId", roleApplicationId);
+						// NOTE: The following parameters are bound to the SQL command securely. Do not modify them to include any unsafe user input.
+							cmd.Parameters.AddWithValue ("$ApplicationId", roleApplicationId);
 						cmd.Parameters.AddWithValue ("$ApplicationName", _applicationName);
 						cmd.Parameters.AddWithValue ("$Description", String.Empty);
 

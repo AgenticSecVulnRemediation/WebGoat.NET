@@ -57,6 +57,10 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
 
             // put ticket into the cookie
             HttpCookie cookie = new HttpCookie(FormsAuthentication.FormsCookieName, encrypted_ticket);
+            cookie.HttpOnly = true;  // Prevents client-side script access
+            cookie.Secure = true;    // Ensures cookie is only sent over HTTPS
+            cookie.HttpOnly = true;
+            cookie.Secure = true;
 
             //set expiration date
             if (ticket.IsPersistent)

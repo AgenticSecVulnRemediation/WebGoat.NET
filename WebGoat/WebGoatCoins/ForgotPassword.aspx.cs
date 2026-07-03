@@ -6,6 +6,8 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using OWASP.WebGoat.NET.App_Code;
 using OWASP.WebGoat.NET.App_Code.DB;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace OWASP.WebGoat.NET.WebGoatCoins
 {
@@ -41,11 +43,13 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             
                    
             HttpCookie cookie = new HttpCookie("encr_sec_qu_ans");
-
-            //encode twice for more security!
-
-            cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
-
+            
+            string encodedValue = Encoder.Encode(Encoder.Encode(result[1]));
+            string signature = CreateHMAC(result[1], "<placeholder-secret-key>");
+            
+            cookie.Value = encodedValue + "|" + signature;
+            cookie.HttpOnly = true;
+            cookie.Secure = true;
             Response.Cookies.Add(cookie);
         }
 

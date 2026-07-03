@@ -12,6 +12,9 @@ using System.Text;
 using System.Web.Profile;
 using System.Xml.Serialization;
 
+using System.Runtime.Serialization;
+using System.Collections.Generic;
+
 namespace TechInfoSystems.Data.SQLite
 {
 	/// <summary>
@@ -599,7 +602,38 @@ namespace TechInfoSystems.Data.SQLite
 			}
 		}
 
-		private static void ParseDataFromDb (string[] names, string values, byte[] buf, SettingsPropertyValueCollection properties)
+		// Helper method to create a hardened BinaryFormatter with a whitelist binder
+private static BinaryFormatter CreateSecureBinaryFormatter()
+{
+    BinaryFormatter formatter = new BinaryFormatter();
+    formatter.Binder = new KnownTypesBinder() {
+        // TODO: Populate AllowedTypes with approved types (e.g., typeof(MyAllowedType), ...)
+        AllowedTypes = new List<Type> {
+            // Example: typeof(MyAllowedType)
+        }
+    };
+    return formatter;
+}
+
+// Custom binder that restricts deserialization to a whitelist of allowed types
+private sealed class KnownTypesBinder : SerializationBinder
+{
+    public List<Type> AllowedTypes { get; set; } = new List<Type>();
+
+    public override Type BindToType(string assemblyName, string typeName)
+    {
+        foreach (var type in AllowedTypes)
+        {
+            if (type.FullName == typeName)
+            {
+                return type;
+            }
+        }
+        throw new SerializationException("Type '" + typeName + "' is not allowed for deserialization.");
+    }
+}
+
+private static void ParseDataFromDb (string[] names, string values, byte[] buf, SettingsPropertyValueCollection properties)
 		{
 			if (names == null || values == null || buf == null || properties == null)
 				return;
@@ -840,7 +874,7 @@ namespace TechInfoSystems.Data.SQLite
 				} else {
 					MemoryStream ms = new MemoryStream ((byte[])obj);
 					try {
-						val = (new BinaryFormatter ()).Deserialize (ms);
+						val = CreateSecureBinaryFormatter().Deserialize(ms);
 					} finally {
 						ms.Close ();
 					}
@@ -1044,7 +1078,7 @@ namespace TechInfoSystems.Data.SQLite
 					try
 					{
 						ms = new MemoryStream(buf);
-						return (new BinaryFormatter()).Deserialize(ms);
+						return CreateSecureBinaryFormatter().Deserialize(ms);
 					}
 					finally
 					{

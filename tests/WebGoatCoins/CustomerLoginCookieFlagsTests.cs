@@ -1,23 +1,32 @@
 using System;
+using System.IO;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.WebGoatCoins.Tests
 {
     public class CustomerLoginCookieFlagsTests
     {
-        [Fact]
-        public void CustomerLogin_SetsAuthCookieHttpOnlyAndSecure_InSource()
+        private static string FindRepoRoot()
         {
-            // Delta test for PR: auth cookie is now marked HttpOnly and Secure.
-            // Source-level regression because ASP.NET types are hard to instantiate without web runtime.
-
-            var path = System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "WebGoat", "WebGoatCoins", "CustomerLogin.aspx.cs");
-            if (!System.IO.File.Exists(path))
+            var dir = new DirectoryInfo(AppContext.BaseDirectory);
+            while (dir != null)
             {
-                throw new InvalidOperationException($"Expected source file not found at {path}");
+                if (Directory.Exists(Path.Combine(dir.FullName, "WebGoat")) && File.Exists(Path.Combine(dir.FullName, "WebGoat", "WebGoatCoins", "CustomerLogin.aspx.cs")))
+                    return dir.FullName;
+                dir = dir.Parent;
             }
+            throw new DirectoryNotFoundException("Could not locate repo root containing 'WebGoat/WebGoatCoins/CustomerLogin.aspx.cs'.");
+        }
 
-            var text = System.IO.File.ReadAllText(path);
+        [Fact]
+        public void CustomerLogin_AuthCookie_IsHttpOnlyAndSecure()
+        {
+            // Delta assertion: auth cookie is now hardened with HttpOnly + Secure.
+            var root = FindRepoRoot();
+            var file = Path.Combine(root, "WebGoat", "WebGoatCoins", "CustomerLogin.aspx.cs");
+            var text = File.ReadAllText(file);
+
+            Assert.Contains("HttpCookie cookie = new HttpCookie(FormsAuthentication.FormsCookieName", text);
             Assert.Contains("cookie.HttpOnly = true", text);
             Assert.Contains("cookie.Secure = true", text);
         }

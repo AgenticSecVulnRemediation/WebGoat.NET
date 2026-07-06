@@ -1,24 +1,32 @@
 using System;
+using System.IO;
 using Xunit;
 
 namespace OWASP.WebGoat.NET.Tests
 {
     public class DefaultPageCookieHardeningTests
     {
-        [Fact]
-        public void DefaultPage_SetsServerCookieToHttpOnlyAndSecure_InSource()
+        private static string FindRepoRoot()
         {
-            // Delta test for PR: cookie hardening (HttpOnly + Secure) added to Default.aspx.cs
-            // Source-level regression: ensure the new flags are present in the file.
-
-            var path = System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "WebGoat", "Default.aspx.cs");
-            if (!System.IO.File.Exists(path))
+            var dir = new DirectoryInfo(AppContext.BaseDirectory);
+            while (dir != null)
             {
-                // If repository layout differs in test execution, fail with a clear message.
-                throw new InvalidOperationException($"Expected source file not found at {path}");
+                if (Directory.Exists(Path.Combine(dir.FullName, "WebGoat")) && File.Exists(Path.Combine(dir.FullName, "WebGoat", "Default.aspx.cs")))
+                    return dir.FullName;
+                dir = dir.Parent;
             }
+            throw new DirectoryNotFoundException("Could not locate repo root containing 'WebGoat/Default.aspx.cs'.");
+        }
 
-            var text = System.IO.File.ReadAllText(path);
+        [Fact]
+        public void DefaultPage_ServerCookie_IsHttpOnlyAndSecure()
+        {
+            // Delta assertion: the Server info-leak cookie is now hardened with HttpOnly + Secure.
+            var root = FindRepoRoot();
+            var file = Path.Combine(root, "WebGoat", "Default.aspx.cs");
+            var text = File.ReadAllText(file);
+
+            Assert.Contains("HttpCookie cookie = new HttpCookie(\"Server\"", text);
             Assert.Contains("cookie.HttpOnly = true", text);
             Assert.Contains("cookie.Secure = true", text);
         }

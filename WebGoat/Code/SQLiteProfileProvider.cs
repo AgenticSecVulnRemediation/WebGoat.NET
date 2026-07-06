@@ -219,21 +219,33 @@ namespace TechInfoSystems.Data.SQLite
 						CreateAnonymousUser (username, cn, tran, userId);
 					}
 
-					cmd.CommandText = "SELECT COUNT(*) FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+					cmd.CommandText = "SELECT COUNT(*) FROM " + PROFILE_TB_NAME + " WHERE UserId = ?"; // NOTE: Verify PROFILE_TB_NAME is a constant or validated value to avoid injection via table name
 					cmd.Parameters.Clear ();
-					cmd.Parameters.AddWithValue ("$UserId", userId);
+					// Using positional parameter as per security guidelines
+					cmd.Parameters.AddWithValue (null, userId);
 
 					if (Convert.ToInt64 (cmd.ExecuteScalar ()) > 0) {
-						cmd.CommandText = "UPDATE " + PROFILE_TB_NAME + " SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId";
+						cmd.CommandText = "UPDATE " + PROFILE_TB_NAME + " SET PropertyNames = ?, PropertyValuesString = ?, PropertyValuesBinary = ?, LastUpdatedDate = ? WHERE UserId = ?";
 					} else {
-						cmd.CommandText = "INSERT INTO " + PROFILE_TB_NAME + " (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)";
+						cmd.CommandText = "INSERT INTO " + PROFILE_TB_NAME + " (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES (?, ?, ?, ?, ?)";
 					}
 					cmd.Parameters.Clear ();
-					cmd.Parameters.AddWithValue ("$UserId", userId);
-					cmd.Parameters.AddWithValue ("$PropertyNames", names);
-					cmd.Parameters.AddWithValue ("$PropertyValuesString", values);
-					cmd.Parameters.AddWithValue ("$PropertyValuesBinary", buf);
-					cmd.Parameters.AddWithValue ("$LastUpdatedDate", DateTime.UtcNow);
+					// Ensure parameter ordering matches the query placeholders
+					// For UPDATE query (existing record): placeholders are (PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate, UserId)
+					// For INSERT query (new record): placeholders are (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate)
+					if (cmd.CommandText.StartsWith("UPDATE")) {
+						cmd.Parameters.AddWithValue(null, names);
+						cmd.Parameters.AddWithValue(null, values);
+						cmd.Parameters.AddWithValue(null, buf);
+						cmd.Parameters.AddWithValue(null, DateTime.UtcNow);
+						cmd.Parameters.AddWithValue(null, userId);
+					} else {
+						cmd.Parameters.AddWithValue(null, userId);
+						cmd.Parameters.AddWithValue(null, names);
+						cmd.Parameters.AddWithValue(null, values);
+						cmd.Parameters.AddWithValue(null, buf);
+						cmd.Parameters.AddWithValue(null, DateTime.UtcNow);
+					}
 
 					cmd.ExecuteNonQuery ();
 

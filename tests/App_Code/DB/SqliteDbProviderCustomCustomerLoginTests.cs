@@ -1,9 +1,10 @@
+using System;
 using System.IO;
 using Xunit;
 
-// Source-level regression test: locks in the security-relevant change introduced by PR 3945.
-// This test reads the patched source file and asserts the email lookup in CustomCustomerLogin
-// uses a parameter placeholder and binds it, instead of string concatenation.
+// Source-level regression test for PR 3945.
+// Reads the patched file from the repository checkout and asserts that CustomCustomerLogin
+// uses a parameter placeholder and binds it (no string concatenation).
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
@@ -12,17 +13,38 @@ namespace OWASP.WebGoat.NET.App_Code.DB.Tests
         [Fact]
         public void CustomCustomerLogin_EmailQuery_IsParameterized_AndBindsEmail()
         {
-            // Arrange
-            var path = Path.Combine("WebGoat", "App_Code", "DB", "SqliteDbProvider.cs");
-            var code = File.ReadAllText(path);
+            var code = ReadRepoFile("WebGoat", "App_Code", "DB", "SqliteDbProvider.cs");
 
-            // Act/Assert
             Assert.Contains("select * from CustomerLogin where email = @Email;", code);
-            Assert.Contains("Parameters.AddWithValue(\"@Email\", email", code);
+            Assert.Contains("cmd.Parameters.AddWithValue(\"@Email\", email", code);
             Assert.Contains("new SqliteDataAdapter(cmd)", code);
 
-            // Previously vulnerable pattern (string concatenation)
-            Assert.DoesNotContain("where email = '\" + email + \"'", code);
+            // Previously vulnerable concatenation patterns
+            Assert.DoesNotContain("where email = '" + "\" + email + \"" + "'", code);
+            Assert.DoesNotContain("where email = '" + "\" + email + \"" + "';", code);
+        }
+
+        private static string ReadRepoFile(params string[] parts)
+        {
+            // Prefer repo-root as current directory in CI; fall back to walking up from BaseDirectory.
+            string TryReadFrom(string root)
+            {
+                var p = Path.Combine(root, Path.Combine(parts));
+                return File.Exists(p) ? File.ReadAllText(p) : null;
+            }
+
+            var cwd = Directory.GetCurrentDirectory();
+            var fromCwd = TryReadFrom(cwd);
+            if (fromCwd != null) return fromCwd;
+
+            var dir = new DirectoryInfo(AppContext.BaseDirectory);
+            for (int i = 0; i < 10 && dir != null; i++, dir = dir.Parent)
+            {
+                var candidate = TryReadFrom(dir.FullName);
+                if (candidate != null) return candidate;
+            }
+
+            throw new FileNotFoundException($"Could not locate patched file: {Path.Combine(parts)} from cwd '{cwd}' or base '{AppContext.BaseDirectory}'.");
         }
     }
 }

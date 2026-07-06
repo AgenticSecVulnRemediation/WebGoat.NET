@@ -640,7 +640,7 @@ namespace TechInfoSystems.Data.SQLite
 						userId = cmd.ExecuteScalar () as string;
 					}
 
-					cmd.CommandText = "DELETE FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+					cmd.CommandText = string.Format("DELETE FROM {0} WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId", USER_TB_NAME);
 
 					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
 					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
@@ -649,7 +649,7 @@ namespace TechInfoSystems.Data.SQLite
 
 					if (deleteAllRelatedData && (!String.IsNullOrEmpty ((userId)))) {
 						// Delete from user/role relationship table.
-						cmd.CommandText = "DELETE FROM " + USERS_IN_ROLES_TB_NAME + " WHERE UserId = $UserId";
+						cmd.CommandText = string.Format("DELETE FROM {0} WHERE UserId = $UserId", USERS_IN_ROLES_TB_NAME);
 						cmd.Parameters.Clear ();
 						cmd.Parameters.AddWithValue ("$UserId", userId);
 						cmd.ExecuteNonQuery ();

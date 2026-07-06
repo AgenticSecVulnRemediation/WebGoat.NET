@@ -2,9 +2,7 @@ using System;
 using System.Text.RegularExpressions;
 using Xunit;
 
-// Delta test for PR 3948: Regex.IsMatch overload with an explicit timeout is used to mitigate ReDoS.
-// We keep this deterministic by directly asserting that the timeout-enabled overload throws
-// RegexMatchTimeoutException for a known catastrophic-backtracking pattern.
+// Delta test for PR 3948: timeout-aware regex evaluation mitigates ReDoS.
 
 namespace TechInfoSystems.Data.SQLite.Tests
 {

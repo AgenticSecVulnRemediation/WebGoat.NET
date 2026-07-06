@@ -1,33 +1,24 @@
+using System.IO;
 using Xunit;
 
-// Assumptions:
-// - Source namespace matches file path: OWASP.WebGoat.NET.App_Code.DB
-// This delta test focuses strictly on PR 3965: UpdateCustomerPassword now uses parameters
-// instead of string concatenation.
+// Source-level regression test for PR 3965: UpdateCustomerPassword uses parameterized SQL.
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class SqliteDbProviderUpdateCustomerPasswordTests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesParameterizedQuery_IncludesPasswordAndCustomerNumberParameters()
+        public void UpdateCustomerPassword_UsesParameters_ForPasswordAndCustomerNumber()
         {
-            // Arrange/Act
-            var snippet = GetPatchedSnippet();
+            var path = Path.Combine("WebGoat", "App_Code", "DB", "SqliteDbProvider.cs");
+            var code = File.ReadAllText(path);
 
-            // Assert
-            Assert.Contains("UPDATE CustomerLogin SET password = @Password WHERE customerNumber = @CustomerNumber", snippet);
-            Assert.Contains("Parameters.AddWithValue(\"@Password\"", snippet);
-            Assert.Contains("Parameters.AddWithValue(\"@CustomerNumber\"", snippet);
-            Assert.DoesNotContain("update CustomerLogin set password = '\" +", snippet);
-        }
+            Assert.Contains("UPDATE CustomerLogin SET password = @Password WHERE customerNumber = @CustomerNumber", code);
+            Assert.Contains("Parameters.AddWithValue(\"@Password\"", code);
+            Assert.Contains("Parameters.AddWithValue(\"@CustomerNumber\"", code);
 
-        private static string GetPatchedSnippet()
-        {
-            return @"string sql = \"UPDATE CustomerLogin SET password = @Password WHERE customerNumber = @CustomerNumber\";
-SqliteCommand command = new SqliteCommand(sql, connection);
-command.Parameters.AddWithValue(\"@Password\", Encoder.Encode(password));
-command.Parameters.AddWithValue(\"@CustomerNumber\", customerNumber);";
+            // Previously vulnerable concatenation
+            Assert.DoesNotContain("update CustomerLogin set password = '\" +", code);
         }
     }
 }

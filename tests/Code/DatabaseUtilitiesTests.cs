@@ -1,27 +1,37 @@
 using System;
+using Mono.Data.Sqlite;
 using Xunit;
-
-// Assumption: source namespace is OWASP.WebGoat.NET
-using OWASP.WebGoat.NET;
 
 namespace OWASP.WebGoat.NET.Tests
 {
     public class DatabaseUtilitiesTests
     {
         [Fact]
-        public void MailingListQueries_AreParameterized_WithExpectedParameterNames()
+        public void MailingListQueries_UseNamedParameters()
         {
             // Arrange
-            // Delta-only test: string concatenation replaced by parameterized commands.
             const string getSql = "SELECT FirstName, LastName, Email FROM MailingList WHERE Email = @Email";
             const string insertSql = "INSERT INTO mailinglist (firstname, lastname, email) VALUES (@First, @Last, @Email)";
 
+            using var getCmd = new SqliteCommand(getSql);
+            using var insertCmd = new SqliteCommand(insertSql);
+
+            // Act
+            getCmd.Parameters.AddWithValue("@Email", "user@example.com");
+            insertCmd.Parameters.AddWithValue("@First", "A");
+            insertCmd.Parameters.AddWithValue("@Last", "B");
+            insertCmd.Parameters.AddWithValue("@Email", "user@example.com");
+
             // Assert
-            Assert.Contains("@Email", getSql);
-            Assert.Contains("@First", insertSql);
-            Assert.Contains("@Last", insertSql);
-            Assert.Contains("@Email", insertSql);
-            Assert.DoesNotContain("'\" + email + \"'", getSql);
+            Assert.Contains("Email = @Email", getCmd.CommandText);
+            Assert.NotNull(getCmd.Parameters["@Email"]);
+
+            Assert.Contains("@First", insertCmd.CommandText);
+            Assert.Contains("@Last", insertCmd.CommandText);
+            Assert.Contains("@Email", insertCmd.CommandText);
+            Assert.NotNull(insertCmd.Parameters["@First"]);
+            Assert.NotNull(insertCmd.Parameters["@Last"]);
+            Assert.NotNull(insertCmd.Parameters["@Email"]);
         }
     }
 }

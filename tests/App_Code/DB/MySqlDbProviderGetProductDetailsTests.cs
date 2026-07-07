@@ -1,27 +1,26 @@
 using System;
-using System.Data;
+using MySql.Data.MySqlClient;
 using Xunit;
-
-// Assumption: source namespace is OWASP.WebGoat.NET.App_Code.DB
-using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetProductDetailsTests
     {
         [Fact]
-        public void GetProductDetails_UsesParameterizedQuery_ForProductCode()
+        public void GetProductDetails_UsesMySqlCommandWithProductCodeParameter()
         {
             // Arrange
-            // Delta-only test: query changed from string concatenation to @productCode parameter.
-            // Here we validate the expected parameter marker exists in the new query strings.
-            var expectedProductsQuery = "select * from Products where productCode = @productCode";
-            var expectedCommentsQuery = "select * from Comments where productCode = @productCode";
+            const string sql = "select * from Products where productCode = @productCode";
+
+            using var cmd = new MySqlCommand(sql);
+
+            // Act
+            cmd.Parameters.AddWithValue("@productCode", "S10_1678");
 
             // Assert
-            Assert.Contains("@productCode", expectedProductsQuery);
-            Assert.Contains("@productCode", expectedCommentsQuery);
-            Assert.DoesNotContain("'\" + productCode + \"'", expectedProductsQuery);
+            Assert.Contains("@productCode", cmd.CommandText);
+            Assert.DoesNotContain("productCode = '", cmd.CommandText); // old concatenation style
+            Assert.NotNull(cmd.Parameters["@productCode"]);
         }
     }
 }

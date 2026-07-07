@@ -41,6 +41,11 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             
                    
             HttpCookie cookie = new HttpCookie("encr_sec_qu_ans");
+            // Set cookie as Secure and HttpOnly to prevent tampering
+            cookie.Secure = true;
+            cookie.HttpOnly = true;
+            // Optionally, set the SameSite attribute. Uncomment and modify the following line if your framework supports it:
+            // cookie.SameSite = SameSiteMode.Strict; // or SameSiteMode.Lax
 
             //encode twice for more security!
 

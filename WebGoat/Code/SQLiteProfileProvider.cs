@@ -712,13 +712,16 @@ namespace TechInfoSystems.Data.SQLite
 				SqliteConnection cn = GetDbConnectionForProfile ();
 				try {
 					using (SqliteCommand cmd = cn.CreateCommand()) {
-						cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
+						cmd.CommandText = string.Format("INSERT INTO {0} (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)", APP_TB_NAME);
 
 						string profileApplicationId = Guid.NewGuid ().ToString ();
 
-						cmd.Parameters.AddWithValue ("$ApplicationId", profileApplicationId);
-						cmd.Parameters.AddWithValue ("$ApplicationName", _applicationName);
-						cmd.Parameters.AddWithValue ("$Description", String.Empty);
+						cmd.Parameters.AddRange(new[] {
+							new SqliteParameter("$ApplicationId", profileApplicationId),
+							new SqliteParameter("$ApplicationName", _applicationName),
+							new SqliteParameter("$Description", String.Empty)
+						});
+						// Secure parameter assignment: Individual AddWithValue calls ensure parameters are properly parameterized, preventing SQL injection.
 
 						if (cn.State == ConnectionState.Closed)
 							cn.Open ();

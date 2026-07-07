@@ -7,6 +7,7 @@ using System.Data;
 using Mono.Data.Sqlite;
 using System.Globalization;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Web.Profile;
@@ -840,7 +841,9 @@ namespace TechInfoSystems.Data.SQLite
 				} else {
 					MemoryStream ms = new MemoryStream ((byte[])obj);
 					try {
-						val = (new BinaryFormatter ()).Deserialize (ms);
+						BinaryFormatter formatter = new BinaryFormatter();
+                        formatter.Binder = KnownTypesBinder.Instance; // Use a custom binder that restricts allowed types
+                        val = formatter.Deserialize(ms);
 					} finally {
 						ms.Close ();
 					}

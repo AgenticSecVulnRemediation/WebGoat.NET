@@ -649,15 +649,15 @@ namespace TechInfoSystems.Data.SQLite
 
 					if (deleteAllRelatedData && (!String.IsNullOrEmpty ((userId)))) {
 						// Delete from user/role relationship table.
-						cmd.CommandText = "DELETE FROM " + USERS_IN_ROLES_TB_NAME + " WHERE UserId = $UserId";
+						cmd.CommandText = "DELETE FROM " + USERS_IN_ROLES_TB_NAME + " WHERE UserId = @UserId";
 						cmd.Parameters.Clear ();
-						cmd.Parameters.AddWithValue ("$UserId", userId);
+						cmd.Parameters.AddWithValue ("@UserId", userId);
 						cmd.ExecuteNonQuery ();
 
 						// Delete from profile table.
-						cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+						cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = @UserId";
 						cmd.Parameters.Clear ();
-						cmd.Parameters.AddWithValue ("$UserId", userId);
+						cmd.Parameters.AddWithValue ("@UserId", userId);
 						cmd.ExecuteNonQuery ();
 					}
 

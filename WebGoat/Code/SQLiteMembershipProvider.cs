@@ -649,13 +649,17 @@ namespace TechInfoSystems.Data.SQLite
 
 					if (deleteAllRelatedData && (!String.IsNullOrEmpty ((userId)))) {
 						// Delete from user/role relationship table.
-						cmd.CommandText = "DELETE FROM " + USERS_IN_ROLES_TB_NAME + " WHERE UserId = $UserId";
+						// SECURITY NOTE: The table name constant USERS_IN_ROLES_TB_NAME is hardcoded and not influenced by user input.
+// SECURITY NOTE: The userId value is safely bound to the query using parameterized binding (e.g., cmd.Parameters.AddWithValue) and is not concatenated directly.
+cmd.CommandText = "DELETE FROM " + USERS_IN_ROLES_TB_NAME + " WHERE UserId = $UserId";
 						cmd.Parameters.Clear ();
 						cmd.Parameters.AddWithValue ("$UserId", userId);
 						cmd.ExecuteNonQuery ();
 
 						// Delete from profile table.
-						cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+						// SECURITY NOTE: The table name constant PROFILE_TB_NAME is hardcoded and not influenced by user input.
+// SECURITY NOTE: The userId value is safely bound to the query using parameterized binding (e.g., cmd.Parameters.AddWithValue) and is not concatenated directly.
+cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
 						cmd.Parameters.Clear ();
 						cmd.Parameters.AddWithValue ("$UserId", userId);
 						cmd.ExecuteNonQuery ();

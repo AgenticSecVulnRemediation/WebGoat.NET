@@ -210,15 +210,37 @@ namespace OWASP.WebGoat.NET
 
 		public DataTable GetMailingListInfoByEmailAddress (string email)
 		{
-			string sql = "SELECT FirstName, LastName, Email FROM MailingList where Email = '" + email + "'";
-			DataTable result = DoQuery (sql, GetGoatDBConnection ());
+			// Parameterized query to prevent SQL injection
+			var conn = GetGoatDBConnection();
+			string sql = "SELECT FirstName, LastName, Email FROM MailingList WHERE Email = @Email";
+			var cmd = new SqliteCommand(sql, conn);
+			// Bind the parameter '@Email' to the provided email value
+			cmd.Parameters.AddWithValue("@Email", email);
+			DataTable result = new DataTable();
+			using (var reader = cmd.ExecuteReader())
+			{
+				result.Load(reader);
+			}
 			return result;
 		}
 
 		public string AddToMailingList (string first, string last, string email)
 		{
-			string sql = "insert into mailinglist (firstname, lastname, email) values ('" + first + "', '" + last + "', '" + email + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			// Parameterized query to prevent SQL injection
+			var conn = GetGoatDBConnection();
+			string sql = "INSERT INTO mailinglist (firstname, lastname, email) VALUES (@First, @Last, @Email)";
+			var cmd = new SqliteCommand(sql, conn);
+			// Bind parameters '@First', '@Last', '@Email' to the corresponding variables
+			cmd.Parameters.AddWithValue("@First", first);
+			cmd.Parameters.AddWithValue("@Last", last);
+			cmd.Parameters.AddWithValue("@Email", email);
+			string result = string.Empty;
+			try {
+				cmd.ExecuteNonQuery();
+				result = "<br/>SQL Executed: " + sql;
+			} catch (Exception ex) {
+				result = "<br/>Exception: " + ex.Message;
+			}
 			return result;
 		}
 

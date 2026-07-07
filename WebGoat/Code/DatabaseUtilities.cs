@@ -70,9 +70,15 @@ namespace OWASP.WebGoat.NET
 			RunSQLFromFile (cn, filename);
 		}
 		
-		private string DoNonQuery (String SQL, SqliteConnection conn)
+		private string DoNonQuery (String SQL, SqliteConnection conn, object[] parameters = null)
 		{
 			var cmd = new SqliteCommand (SQL, conn);
+			if(parameters != null && parameters.Length == 3)
+			{
+				cmd.Parameters.AddWithValue("@title", parameters[0]);
+				cmd.Parameters.AddWithValue("@email", parameters[1]);
+				cmd.Parameters.AddWithValue("@message", parameters[2]);
+			}
 			var output = string.Empty;
 			
 			try {
@@ -231,8 +237,8 @@ namespace OWASP.WebGoat.NET
 
 		public string AddNewPosting (String title, String email, String message)
 		{
-			string sql = "insert into Postings(title, email, message) values ('" + title + "','" + email + "','" + message + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			string sql = "insert into Postings(title, email, message) values (@title, @email, @message)";
+			string result = DoNonQuery (sql, GetGoatDBConnection(), new object[] { title, email, message }); // TODO: Review parameter binding in DoNonQuery if necessary
 			return result;
 		}
 

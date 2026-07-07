@@ -217,9 +217,25 @@ namespace OWASP.WebGoat.NET
 
 		public string AddToMailingList (string first, string last, string email)
 		{
-			string sql = "insert into mailinglist (firstname, lastname, email) values ('" + first + "', '" + last + "', '" + email + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
-			return result;
+			// Parameterized query to prevent SQL injection
+		string sql = "insert into mailinglist (firstname, lastname, email) values (@first, @last, @email)";
+			SqliteConnection conn = GetGoatDBConnection();
+			using (SqliteCommand cmd = new SqliteCommand(sql, conn))
+			{
+				cmd.Parameters.AddWithValue("@first", first);
+				cmd.Parameters.AddWithValue("@last", last);
+				cmd.Parameters.AddWithValue("@email", email);
+				string result;
+				try {
+					cmd.ExecuteNonQuery();
+					result = "<br/>SQL Executed: " + sql;
+				} catch (SqliteException ex) {
+					result = "<br/>SQL Exception: " + ex.Message + sql;
+				} catch (Exception ex) {
+					result = "<br/>Exception: " + ex.Message + sql;
+				}
+				return result;
+			}
 		}
 
 		public DataTable GetAllPostings ()

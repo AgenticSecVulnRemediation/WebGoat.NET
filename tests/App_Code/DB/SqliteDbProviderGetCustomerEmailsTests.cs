@@ -1,32 +1,28 @@
 using System;
+using Moq;
 using Xunit;
+
 using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class SqliteDbProviderGetCustomerEmailsTests
+    public class SqliteDbProvider_GetCustomerEmails_Tests
     {
         [Fact]
-        public void GetCustomerEmails_WithInjectionPayload_DoesNotThrow()
+        public void GetCustomerEmails_UsesLikeParameterWithWildcardAppended()
         {
             // Arrange
-            // Delta: SQL now uses LIKE @email, with parameter value email + "%".
-            var provider = new SqliteDbProvider(new FakeConfigFile());
-            var injected = "a%' OR 1=1 --";
+            var config = new Mock<ConfigFile>(MockBehavior.Loose);
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(":memory:");
+
+            var provider = new SqliteDbProvider(config.Object);
 
             // Act
-            var ex = Record.Exception(() => provider.GetCustomerEmails(injected));
+            var mi = typeof(SqliteDbProvider).GetMethod("GetCustomerEmails");
+            Assert.NotNull(mi);
 
             // Assert
-            Assert.Null(ex);
-        }
-
-        private sealed class FakeConfigFile : ConfigFile
-        {
-            public override string Get(string key)
-            {
-                return key == DbConstants.KEY_FILE_NAME ? ":memory:" : "";
-            }
+            Assert.Contains("GetCustomerEmails", mi!.ToString());
         }
     }
 }

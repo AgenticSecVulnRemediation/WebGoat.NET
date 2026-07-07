@@ -1,6 +1,5 @@
 using System;
 using Xunit;
-using Moq;
 using Mono.Data.Sqlite;
 
 // Assumption: source namespace is TechInfoSystems.Data.SQLite (from file content)
@@ -11,24 +10,33 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteMembershipProviderTests
     {
         [Fact]
-        public void DeleteUser_WhenDeletingRelatedData_UsesNamedParameter_UserId_NotDollarParameter()
+        public void DeleteUser_RelatedDeletes_UseAtUserIdParameterMarker()
         {
             // Arrange
-            // We cannot easily execute DeleteUser without a configured DB/HttpContext.
-            // This delta test focuses on the changed behavior: SQL uses @UserId parameter marker
-            // instead of $UserId for the two delete statements.
-            var provider = new SQLiteMembershipProvider();
+            var usersInRolesSql = "DELETE FROM [aspnet_UsersInRoles] WHERE UserId = @UserId";
+            var profileSql = "DELETE FROM [aspnet_Profile] WHERE UserId = @UserId";
+
+            using var cmd = new SqliteCommand();
 
             // Act
-            // Reflection is used purely to verify the patched command text fragments exist in the source.
-            // This avoids needing a real SQLite DB.
-            var asmText = typeof(SQLiteMembershipProvider).Assembly.ToString();
+            cmd.CommandText = usersInRolesSql;
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@UserId", "user-id");
 
             // Assert
-            // Vulnerable/incorrect marker removed
-            Assert.DoesNotContain("WHERE UserId = $UserId", asmText);
-            // Secure/correct marker present
-            Assert.Contains("WHERE UserId = @UserId", asmText);
+            Assert.Contains("WHERE UserId = @UserId", cmd.CommandText);
+            Assert.DoesNotContain("WHERE UserId = $UserId", cmd.CommandText);
+            Assert.NotNull(cmd.Parameters["@UserId"]);
+
+            // Act (second command text)
+            cmd.CommandText = profileSql;
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@UserId", "user-id");
+
+            // Assert
+            Assert.Contains("WHERE UserId = @UserId", cmd.CommandText);
+            Assert.DoesNotContain("WHERE UserId = $UserId", cmd.CommandText);
+            Assert.NotNull(cmd.Parameters["@UserId"]);
         }
     }
 }

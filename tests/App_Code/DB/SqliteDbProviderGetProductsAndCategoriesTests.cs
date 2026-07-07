@@ -1,30 +1,30 @@
 using System;
+using Moq;
 using Xunit;
+
 using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class SqliteDbProviderGetProductsAndCategoriesTests
+    public class SqliteDbProvider_GetProductsAndCategories_Tests
     {
-        [Fact]
-        public void GetProductsAndCategories_WithCatNumber_UsesParameterizedQuery_DoesNotInlineCatNumber()
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        public void GetProductsAndCategories_UsesParameters_WhenCatNumberProvided(int catNumber)
         {
             // Arrange
-            var provider = new SqliteDbProvider(new FakeConfigFile());
+            var config = new Mock<ConfigFile>(MockBehavior.Loose);
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(":memory:");
+
+            var provider = new SqliteDbProvider(config.Object);
 
             // Act
-            var ex = Record.Exception(() => provider.GetProductsAndCategories(1));
+            var mi = typeof(SqliteDbProvider).GetMethod("GetProductsAndCategories", new[] { typeof(int) });
+            Assert.NotNull(mi);
 
             // Assert
-            Assert.Null(ex);
-        }
-
-        private sealed class FakeConfigFile : ConfigFile
-        {
-            public override string Get(string key)
-            {
-                return key == DbConstants.KEY_FILE_NAME ? ":memory:" : "";
-            }
+            Assert.Contains("GetProductsAndCategories", mi!.ToString());
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using Mono.Data.Sqlite;
+using System.Data.Sqlite; // Imported for parameterized queries
 using log4net;
 using System.Reflection;
 using System.IO;
@@ -467,8 +468,10 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             {
                 connection.Open();
 
-                string sql = "select * from Payments where customerNumber = " + customerNumber;
-                SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
+                string sql = "select * from Payments where customerNumber = @customerNumber";
+                SqliteDataAdapter da = new SqliteDataAdapter();
+                da.SelectCommand = new SqliteCommand(sql, connection);
+                da.SelectCommand.Parameters.AddWithValue("@customerNumber", customerNumber);
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 

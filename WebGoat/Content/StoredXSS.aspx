@@ -1,4 +1,5 @@
-<%@ Page Language="C#" validateRequest="false" AutoEventWireup="true" CodeBehind="StoredXSS.aspx.cs" Inherits="OWASP.WebGoat.NET.StoredXSS" MasterPageFile="~/Resources/Master-Pages/Site.Master" %>
+<%@ Page Language="C#" validateRequest="true" AutoEventWireup="true" CodeBehind="StoredXSS.aspx.cs" Inherits="OWASP.WebGoat.NET.StoredXSS" MasterPageFile="~/Resources/Master-Pages/Site.Master" %>
+<%-- TODO: Ensure all user-provided input is properly HTML-encoded using System.Web.HttpUtility.HtmlEncode --%>
 
 <asp:Content ID="Content3" ContentPlaceHolderID="HelpContentPlaceholder" runat="server">
     This webpage fails to properly validate and encode user-supplied data.  Users can add their own HTML and scripts to messages.  

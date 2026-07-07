@@ -469,13 +469,13 @@ namespace TechInfoSystems.Data.SQLite
 				using (SqliteCommand cmd = cn.CreateCommand()) {
 					cmd.CommandText = "SELECT COUNT(*) FROM " + USERS_IN_ROLES_TB_NAME + " uir INNER JOIN "
 						+ USER_TB_NAME + " u ON uir.UserId = u.UserId INNER JOIN " + ROLE_TB_NAME + " r ON uir.RoleId = r.RoleId "
-						+ " WHERE u.LoweredUsername = $Username AND u.ApplicationId = $MembershipApplicationId"
-						+ " AND r.LoweredRoleName = $RoleName AND r.ApplicationId = $ApplicationId";
+						+ " WHERE u.LoweredUsername = @Username AND u.ApplicationId = @MembershipApplicationId"
+						+ " AND r.LoweredRoleName = @RoleName AND r.ApplicationId = @ApplicationId";
 
-					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$RoleName", roleName.ToLowerInvariant ());
-					cmd.Parameters.AddWithValue ("$MembershipApplicationId", _membershipApplicationId);
-					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
+					cmd.Parameters.AddWithValue ("@Username", username.ToLowerInvariant ());
+					cmd.Parameters.AddWithValue ("@RoleName", roleName.ToLowerInvariant ());
+					cmd.Parameters.AddWithValue ("@MembershipApplicationId", _membershipApplicationId);
+					cmd.Parameters.AddWithValue ("@ApplicationId", _applicationId);
 
 					if (cn.State == ConnectionState.Closed)
 						cn.Open ();

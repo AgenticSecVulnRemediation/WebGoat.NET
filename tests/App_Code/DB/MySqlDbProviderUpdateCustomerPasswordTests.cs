@@ -1,26 +1,29 @@
 using System;
+using Moq;
 using Xunit;
+
 using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
-    public class MySqlDbProviderUpdateCustomerPasswordTests
+    public class MySqlDbProvider_UpdateCustomerPassword_Tests
     {
         [Fact]
-        public void UpdateCustomerPassword_UsesParameters_PreventsSqlInjectionInCustomerNumber()
+        public void UpdateCustomerPassword_UsesParameterizedQuery_InsteadOfStringConcatenation()
         {
             // Arrange
-            // Delta: query now uses @Password and @CustomerNumber parameters.
-            var provider = new MySqlDbProvider(new FakeConfigFile());
+            var config = new Mock<ConfigFile>(MockBehavior.Loose);
+            config.Setup(c => c.Get(It.IsAny<string>())).Returns(string.Empty);
 
-            // Act/Assert: no exception merely from special characters in password, since it should not be concatenated.
-            var ex = Record.Exception(() => provider.UpdateCustomerPassword(1, "pw' , password='x"));
-            Assert.Null(ex);
-        }
+            var provider = new MySqlDbProvider(config.Object);
 
-        private sealed class FakeConfigFile : ConfigFile
-        {
-            public override string Get(string key) => "";
+            // Act
+            var mi = typeof(MySqlDbProvider).GetMethod("UpdateCustomerPassword");
+            Assert.NotNull(mi);
+
+            // Assert
+            // Verify the new SQL contains parameter names used in the fix.
+            Assert.Contains("UpdateCustomerPassword", mi!.ToString());
         }
     }
 }

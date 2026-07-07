@@ -523,14 +523,19 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
         public DataSet GetEmailByName(string name)
         {
-            string sql = "select firstName, lastName, email from Employees where firstName like '" + name + "%' or lastName like '" + name + "%'";
+            string sql = "select firstName, lastName, email from Employees where firstName like @prefix or lastName like @prefix";
             
             
             using (SqliteConnection connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
 
-                SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
+                // Create a command using the parameterized query
+                SqliteCommand command = new SqliteCommand(sql, connection);
+                // Add the parameter with the necessary wildcard appended
+                command.Parameters.AddWithValue("@prefix", name + "%");
+                // Use the command to create the data adapter
+                SqliteDataAdapter da = new SqliteDataAdapter(command);
                 DataSet ds = new DataSet();
                 da.Fill(ds);
 

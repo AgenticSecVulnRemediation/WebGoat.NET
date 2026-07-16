@@ -27,6 +27,10 @@ namespace OWASP.WebGoat.NET.App_Code
             string comment = string.Empty;
             
             //It's all or nothing here buddy.
+            if (!IsValidFilePath(_filePath))
+            {
+                throw new ArgumentException("Invalid file path specified.");
+            }
             foreach (string line in File.ReadAllLines(_filePath))
             {
                 
@@ -101,6 +105,17 @@ namespace OWASP.WebGoat.NET.App_Code
         public void Remove(string key)
         {
             _settings.Remove(key.ToLower());
+        }
+        
+        private bool IsValidFilePath(string path)
+        {
+            // Check for directory traversal sequences
+            if (path.Contains(".."))
+                return false;
+            // Check for absolute paths. Adjust this check based on your platform requirements.
+            if (Path.IsPathRooted(path))
+                return false;
+            return true;
         }
     }
 }

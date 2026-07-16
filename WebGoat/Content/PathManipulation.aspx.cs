@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.IO;
+using System.Configuration;
 
 namespace OWASP.WebGoat.NET
 {
@@ -50,7 +51,14 @@ namespace OWASP.WebGoat.NET
     	{
 	        try
 	        {
-	            FileStream myFile =	new FileStream(_fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+	            string canonicalPath = Path.GetFullPath(_fullPath);
+            string safeBaseDir = ConfigurationManager.AppSettings["SafeBasePath"]; // TODO: Replace placeholder with actual safe directory path
+            if (!canonicalPath.StartsWith(safeBaseDir, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("Unauthorized file access attempt: " + canonicalPath);
+                throw new UnauthorizedAccessException("Invalid file path.");
+            }
+            FileStream myFile = new FileStream(canonicalPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 	            BinaryReader br = new BinaryReader(myFile);
 	            try
 	            {

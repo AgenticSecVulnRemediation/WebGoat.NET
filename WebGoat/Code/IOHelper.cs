@@ -10,6 +10,10 @@ namespace OWASP.WebGoat.NET
     {
         public static string ReadAllFromFile(string path)
         {
+                        // Validate the input path to prevent directory traversal and absolute paths
+            if (path.Contains("..") || System.IO.Path.IsPathRooted(path)) {
+                throw new System.ArgumentException("Invalid file path"); // TODO: Customize exception handling as required
+            }
             FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Read);
             StreamReader sr = new StreamReader(fs);
             string data = sr.ReadToEnd();

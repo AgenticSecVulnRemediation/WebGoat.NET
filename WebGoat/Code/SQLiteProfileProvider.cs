@@ -8,9 +8,11 @@ using Mono.Data.Sqlite;
 using System.Globalization;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Web.Profile;
 using System.Xml.Serialization;
+using System.Collections.Generic;
 
 namespace TechInfoSystems.Data.SQLite
 {
@@ -840,7 +842,7 @@ namespace TechInfoSystems.Data.SQLite
 				} else {
 					MemoryStream ms = new MemoryStream ((byte[])obj);
 					try {
-						val = (new BinaryFormatter ()).Deserialize (ms);
+						val = (new BinaryFormatter { Binder = new SafeSerializationBinder() }).Deserialize (ms);
 					} finally {
 						ms.Close ();
 					}
@@ -984,7 +986,7 @@ namespace TechInfoSystems.Data.SQLite
 				case SettingsSerializeAs.Binary:
 					MemoryStream ms = new MemoryStream ();
 					try {
-						BinaryFormatter bf = new BinaryFormatter ();
+						BinaryFormatter bf = new BinaryFormatter { Binder = new SafeSerializationBinder() };
 						bf.Serialize (ms, propValue);
 						byte[] buffer = ms.ToArray ();
 						return Convert.ToBase64String (buffer);
@@ -1017,7 +1019,7 @@ namespace TechInfoSystems.Data.SQLite
 
 			MemoryStream ms = new MemoryStream ();
 			try {
-				BinaryFormatter bf = new BinaryFormatter ();
+				BinaryFormatter bf = new BinaryFormatter { Binder = new SafeSerializationBinder() };
 				bf.Serialize (ms, val);
 				return ms.ToArray ();
 			} finally {
@@ -1044,7 +1046,7 @@ namespace TechInfoSystems.Data.SQLite
 					try
 					{
 						ms = new MemoryStream(buf);
-						return (new BinaryFormatter()).Deserialize(ms);
+						return (new BinaryFormatter { Binder = new SafeSerializationBinder() }).Deserialize(ms);
 					}
 					finally
 					{
@@ -1141,4 +1143,20 @@ namespace TechInfoSystems.Data.SQLite
 		#endregion
 
 	}
+    public sealed class SafeSerializationBinder : SerializationBinder {
+        // Define a whitelist of allowed types
+        private static readonly HashSet<string> allowedTypes = new HashSet<string> {
+            "YourNamespace.YourAllowedType1",
+            "YourNamespace.YourAllowedType2"
+            // Add other permitted types here
+        };
+
+        public override Type BindToType(string assemblyName, string typeName) {
+            if (!allowedTypes.Contains(typeName)) {
+                throw new SerializationException($"Deserialization of type {typeName} is not allowed");
+            }
+            return Type.GetType($"{typeName}, {assemblyName}");
+        }
+    }
+
 }

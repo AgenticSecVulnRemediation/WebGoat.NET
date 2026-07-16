@@ -25,6 +25,12 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
             _clientExec = configFile.Get(DbConstants.KEY_CLIENT_EXEC);
             _dbFileName = configFile.Get(DbConstants.KEY_FILE_NAME);
+            // Validate the database file name to prevent path traversal vulnerabilities
+            if (Path.IsPathRooted(_dbFileName) || _dbFileName.Contains(".."))
+            {
+                // TODO: Replace the exception message with a more appropriate message if needed
+                throw new InvalidOperationException("Invalid database file path provided.");
+            }
 
             if (!File.Exists(_dbFileName))
                 SqliteConnection.CreateFile(_dbFileName);

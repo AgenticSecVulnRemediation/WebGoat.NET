@@ -56,10 +56,23 @@ namespace OWASP.WebGoat.NET.App_Code
             
         public void Save()
         {
-            using (FileStream stream = File.Create(_filePath))
+            // Canonicalize the path to handle any encoded or relative path inputs
+            string canonicalPath = Path.GetFullPath(_filePath);
+
+            // Define a trusted base directory; replace 'TRUSTED_DIRECTORY' with the actual safe directory
+            const string TRUSTED_DIRECTORY = "C:\\TrustedDirectory\\"; // TODO: Update the trusted directory path as needed
+
+            // Check that the canonical path is within the trusted directory
+            if (!canonicalPath.StartsWith(TRUSTED_DIRECTORY, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new UnauthorizedAccessException("Invalid file path. Access denied.");
+            }
+
+            // Proceed using the validated canonical path
+            using (FileStream stream = File.Create(canonicalPath))
             {
                 byte[] data = ToByteArray();
-                
+
                 stream.Write(data, 0, data.Length);
             }
         }

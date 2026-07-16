@@ -20,7 +20,8 @@ namespace OWASP.WebGoat.NET
             string userName = txtUsername.Text;
             string password = txtPassword.Text;
 
-            Regex testPassword = new Regex(userName);
+            // Ensure a timeout is specified to prevent ReDoS payloads. Replace 'TimeSpan.FromSeconds(1)' with an appropriate value if necessary.
+            Regex testPassword = new Regex(userName, RegexOptions.None, TimeSpan.FromSeconds(1));
             Match match = testPassword.Match(password);
             if (match.Success)
             {

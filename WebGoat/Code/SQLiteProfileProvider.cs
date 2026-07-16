@@ -1018,6 +1018,7 @@ namespace TechInfoSystems.Data.SQLite
 			MemoryStream ms = new MemoryStream ();
 			try {
 				BinaryFormatter bf = new BinaryFormatter ();
+				bf.Binder = new SafeSerializationBinder();
 				bf.Serialize (ms, val);
 				return ms.ToArray ();
 			} finally {
@@ -1044,7 +1045,9 @@ namespace TechInfoSystems.Data.SQLite
 					try
 					{
 						ms = new MemoryStream(buf);
-						return (new BinaryFormatter()).Deserialize(ms);
+						BinaryFormatter bf = new BinaryFormatter();
+				bf.Binder = new SafeSerializationBinder();
+				return bf.Deserialize(ms);
 					}
 					finally
 					{
@@ -1141,4 +1144,31 @@ namespace TechInfoSystems.Data.SQLite
 		#endregion
 
 	}
+
+// Begin SafeSerializationBinder implementation
+using System;
+using System.Runtime.Serialization;
+
+public class SafeSerializationBinder : SerializationBinder {
+    // Define the whitelist of allowed types
+    private static readonly Type[] allowedTypes = new Type[] {
+        // TODO: Replace with allowed types for your application
+        typeof(AllowedType1),
+        typeof(AllowedType2)
+    };
+
+    public override Type BindToType(string assemblyName, string typeName) {
+        // Resolve the type
+        Type resolvedType = Type.GetType(String.Format("{0}, {1}", typeName, assemblyName));
+        // Check if the resolved type is in the allowed list
+        foreach (Type allowed in allowedTypes) {
+            if (allowed == resolvedType) {
+                return resolvedType;
+            }
+        }
+        throw new SerializationException($"Type '{typeName}' in Assembly '{assemblyName}' is not allowed for deserialization.");
+    }
+}
+// End SafeSerializationBinder implementation
+
 }

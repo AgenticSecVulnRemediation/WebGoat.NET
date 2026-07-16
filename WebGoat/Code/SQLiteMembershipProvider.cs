@@ -640,7 +640,9 @@ namespace TechInfoSystems.Data.SQLite
 						userId = cmd.ExecuteScalar () as string;
 					}
 
-					cmd.CommandText = "DELETE FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+					// TODO: Ensure USER_TB_NAME is from a trusted source or replace with a constant literal
+                    cmd.CommandText = $"DELETE FROM {USER_TB_NAME} WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+                    cmd.Parameters.Clear();
 
 					cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
 					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);

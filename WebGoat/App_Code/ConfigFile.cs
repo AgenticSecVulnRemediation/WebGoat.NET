@@ -18,6 +18,10 @@ namespace OWASP.WebGoat.NET.App_Code
         
         public ConfigFile(string fileName)
         {
+            if (Path.IsPathRooted(fileName) || fileName.Contains(".."))
+            {
+                throw new ArgumentException("Invalid file path provided.");
+            }
             _filePath = fileName;
         }
             

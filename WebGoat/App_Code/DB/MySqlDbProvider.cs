@@ -149,13 +149,17 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             try
             {
                 //get data
-                string sql = "select * from CustomerLogin where email = '" + email + "';";
+                string sql = "select * from CustomerLogin where email = @Email;";
                 
                 using (MySqlConnection connection = new MySqlConnection(_connectionString))
                 {
-                    MySqlDataAdapter da = new MySqlDataAdapter(sql, connection);
-                    DataSet ds = new DataSet();
-                    da.Fill(ds);
+                    using (MySqlCommand cmd = new MySqlCommand(sql, connection))
+                    {
+                        // Bind parameter - Replace '@Email' placeholder with actual email value
+                        cmd.Parameters.AddWithValue("@Email", email);
+                        MySqlDataAdapter da = new MySqlDataAdapter(cmd);
+                        DataSet ds = new DataSet();
+                        da.Fill(ds);
 
                     //check if email address exists
                     if (ds.Tables[0].Rows.Count == 0)

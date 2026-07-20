@@ -8,6 +8,7 @@ using Mono.Data.Sqlite;
 using System.Globalization;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Web.Profile;
 using System.Xml.Serialization;
@@ -840,7 +841,7 @@ namespace TechInfoSystems.Data.SQLite
 				} else {
 					MemoryStream ms = new MemoryStream ((byte[])obj);
 					try {
-						val = (new BinaryFormatter ()).Deserialize (ms);
+						val = (CreateSecureBinaryFormatter ()).Deserialize (ms);
 					} finally {
 						ms.Close ();
 					}
@@ -1017,7 +1018,7 @@ namespace TechInfoSystems.Data.SQLite
 
 			MemoryStream ms = new MemoryStream ();
 			try {
-				BinaryFormatter bf = new BinaryFormatter ();
+				BinaryFormatter bf = CreateSecureBinaryFormatter ();
 				bf.Serialize (ms, val);
 				return ms.ToArray ();
 			} finally {
@@ -1139,6 +1140,22 @@ namespace TechInfoSystems.Data.SQLite
 		}
 
 		#endregion
+
+		private static BinaryFormatter CreateSecureBinaryFormatter() {
+			var bf = new BinaryFormatter();
+			bf.Binder = new SafeSerializationBinder();
+			return bf;
+		}
+
+		private sealed class SafeSerializationBinder : SerializationBinder {
+			public override Type BindToType(string assemblyName, string typeName) {
+				// TODO: Replace the following with the actual whitelist of allowed types
+				if (typeName == "AllowedType1" || typeName == "AllowedType2") {  // add allowed types as needed
+					return Type.GetType($"{typeName}, {assemblyName}");
+				}
+				throw new SerializationException($"Deserialization of type {typeName} is not allowed.");
+			}
+		}
 
 	}
 }

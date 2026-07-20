@@ -4,6 +4,7 @@ using Mono.Data.Sqlite;
 using log4net;
 using System.Reflection;
 using System.IO;
+using System.Security;
 using System.Diagnostics;
 using System.Threading;
 
@@ -25,6 +26,12 @@ namespace OWASP.WebGoat.NET.App_Code.DB
 
             _clientExec = configFile.Get(DbConstants.KEY_CLIENT_EXEC);
             _dbFileName = configFile.Get(DbConstants.KEY_FILE_NAME);
+            // Sanitize the database file name to prevent path traversal
+            string sanitizedFileName = Path.GetFileName(_dbFileName);
+            if (!string.Equals(sanitizedFileName, _dbFileName, StringComparison.Ordinal)) {
+                throw new SecurityException("Invalid file name provided in configuration. File name should not contain path traversal characters.");
+            }
+            _dbFileName = sanitizedFileName;
 
             if (!File.Exists(_dbFileName))
                 SqliteConnection.CreateFile(_dbFileName);

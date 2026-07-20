@@ -808,6 +808,7 @@ namespace TechInfoSystems.Data.SQLite
 
 			using (SqliteCommand cmd = cn.CreateCommand()) {
 				cmd.CommandText = "SELECT UserId FROM " + USER_TB_NAME + " WHERE LoweredUsername = $Username AND ApplicationId = $ApplicationId";
+				// The table name is a constant defined in the provider and is safe from SQL injection.
 
 				cmd.Parameters.AddWithValue ("$Username", username.ToLowerInvariant ());
 				cmd.Parameters.AddWithValue ("$ApplicationId", _membershipApplicationId);
@@ -819,7 +820,8 @@ namespace TechInfoSystems.Data.SQLite
 				if (userId != null) {
 					cmd.CommandText = "DELETE FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
 					cmd.Parameters.Clear ();
-					cmd.Parameters.Add ("$UserId", DbType.String, 36).Value = userId;
+					// Bind userId parameter for DELETE query to mitigate SQL injection risk.
+				cmd.Parameters.Add("$UserId", DbType.String, 36).Value = userId;
 
 					deleteSuccessful = (cmd.ExecuteNonQuery () != 0);
 				}

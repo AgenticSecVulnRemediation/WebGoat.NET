@@ -10,11 +10,17 @@ namespace OWASP.WebGoat.NET
     {
         public static string ReadAllFromFile(string path)
         {
-            FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Read);
-            StreamReader sr = new StreamReader(fs);
-            string data = sr.ReadToEnd();
-            sr.Close();
-            return data;
+            // Validate that the path does not contain directory traversal sequences or absolute paths
+            if (path.Contains("..") || Path.IsPathRooted(path)) {
+                throw new ArgumentException("Invalid file path provided.");
+            }
+            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Read))
+            {
+                using (StreamReader sr = new StreamReader(fs))
+                {
+                    return sr.ReadToEnd();
+                }
+            }
         }
     }
 }

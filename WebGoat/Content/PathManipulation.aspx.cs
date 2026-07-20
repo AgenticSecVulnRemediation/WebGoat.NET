@@ -50,7 +50,15 @@ namespace OWASP.WebGoat.NET
     	{
 	        try
 	        {
-	            FileStream myFile =	new FileStream(_fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+	                            // Validate the _fullPath parameter to prevent path traversal vulnerabilities
+                // TODO: Replace 'C:\\SecureBaseDirectory' with your approved base directory path
+                string secureBaseDir = Path.GetFullPath("C:\\SecureBaseDirectory");
+                string resolvedPath = Path.GetFullPath(_fullPath);
+                if (_fullPath.Contains("..") || !resolvedPath.StartsWith(secureBaseDir, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new UnauthorizedAccessException("Invalid file path.");
+                }
+                FileStream myFile = new FileStream(resolvedPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 	            BinaryReader br = new BinaryReader(myFile);
 	            try
 	            {

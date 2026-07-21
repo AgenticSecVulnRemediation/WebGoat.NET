@@ -50,7 +50,17 @@ namespace OWASP.WebGoat.NET
     	{
 	        try
 	        {
-	            FileStream myFile =	new FileStream(_fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+	                            // Canonicalize the user-supplied path
+                string canonicalPath = Path.GetFullPath(_fullPath);
+                // Define the trusted base directory (update the placeholder as needed)
+                string SAFE_BASE_DIRECTORY = "C:\\TrustedBaseDir";  // TODO: Replace with actual safe directory
+                // Validate that the canonical path starts with the safe directory
+                if (!canonicalPath.StartsWith(SAFE_BASE_DIRECTORY, StringComparison.OrdinalIgnoreCase)) {
+                    // Log the incident and optionally return an error response
+                    throw new UnauthorizedAccessException("Access to the specified path is denied.");
+                }
+	
+                FileStream myFile = new FileStream(canonicalPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 	            BinaryReader br = new BinaryReader(myFile);
 	            try
 	            {

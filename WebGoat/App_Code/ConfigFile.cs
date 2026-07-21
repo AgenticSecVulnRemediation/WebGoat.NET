@@ -27,6 +27,17 @@ namespace OWASP.WebGoat.NET.App_Code
             string comment = string.Empty;
             
             //It's all or nothing here buddy.
+            // Resolve the canonical path
+            string canonicalPath = Path.GetFullPath(_filePath);
+            
+            // Define the trusted base directory (replace the placeholder with the actual safe directory)
+            string safeBaseDir = "C:\\SafeDirectory\\";  // TODO: Update with actual safe directory
+            
+            // Check if the canonical path starts with the safe base directory to prevent directory traversal
+            if (!canonicalPath.StartsWith(safeBaseDir, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new UnauthorizedAccessException("Access to the specified path is not allowed: " + canonicalPath);
+            }
             foreach (string line in File.ReadAllLines(_filePath))
             {
                 

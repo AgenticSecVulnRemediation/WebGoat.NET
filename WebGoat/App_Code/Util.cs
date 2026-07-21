@@ -52,7 +52,14 @@ namespace OWASP.WebGoat.NET.App_Code
 
                 process.Start();
 
-                using (StreamReader reader = new StreamReader(new FileStream(input, FileMode.Open)))
+                                            // Validate file input to prevent path traversal vulnerabilities
+                string basePath = "<INSERT_BASE_DIRECTORY_PATH_HERE>"; // TODO: Developer should update this with the allowed base directory path
+                string fullPath = Path.GetFullPath(input);
+                if (!fullPath.StartsWith(Path.GetFullPath(basePath), StringComparison.Ordinal) || input.Contains("..") || Path.IsPathRooted(input))
+                {
+                    throw new ArgumentException("Invalid file path provided.");
+                }
+                using (StreamReader reader = new StreamReader(new FileStream(fullPath, FileMode.Open)))
                 {
                     string line;
                     string replaced;

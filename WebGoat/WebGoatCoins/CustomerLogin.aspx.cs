@@ -62,6 +62,12 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             if (ticket.IsPersistent)
                 cookie.Expires = ticket.Expiration;
                 
+            // Ensure that the cookie is inaccessible to client-side scripts
+            cookie.HttpOnly = true;
+            // Ensure that the cookie is only sent over HTTPS connections
+            cookie.Secure = true;
+            // Optionally, set the SameSite attribute to provide additional CSRF protection
+            // cookie.SameSite = System.Web.SameSiteMode.Strict; // Uncomment and adjust as necessary
             Response.Cookies.Add(cookie);
             
             string returnUrl = Request.QueryString["ReturnUrl"];

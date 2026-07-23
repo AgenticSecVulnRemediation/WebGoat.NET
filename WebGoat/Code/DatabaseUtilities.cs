@@ -9,6 +9,7 @@ using System.Text;
 using System.Configuration;
 using Mono.Data.Sqlite;
 
+
 namespace OWASP.WebGoat.NET
 {
 	public class DatabaseUtilities
@@ -70,9 +71,14 @@ namespace OWASP.WebGoat.NET
 			RunSQLFromFile (cn, filename);
 		}
 		
-		private string DoNonQuery (String SQL, SqliteConnection conn)
+		private string DoNonQuery (String SQL, SqliteConnection conn, params SqliteParameter[] parameters)
 		{
 			var cmd = new SqliteCommand (SQL, conn);
+			if (parameters != null) {
+				foreach (SqliteParameter param in parameters) {
+					cmd.Parameters.Add(param);
+				}
+			}
 			var output = string.Empty;
 			
 			try {
@@ -231,8 +237,8 @@ namespace OWASP.WebGoat.NET
 
 		public string AddNewPosting (String title, String email, String message)
 		{
-			string sql = "insert into Postings(title, email, message) values ('" + title + "','" + email + "','" + message + "')";
-			string result = DoNonQuery (sql, GetGoatDBConnection ());
+			string sql = "insert into Postings(title, email, message) values (@Title, @Email, @Message)";
+			string result = DoNonQuery(sql, GetGoatDBConnection(), new SqliteParameter("@Title", title), new SqliteParameter("@Email", email), new SqliteParameter("@Message", message));
 			return result;
 		}
 

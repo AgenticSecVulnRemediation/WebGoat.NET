@@ -712,11 +712,13 @@ namespace TechInfoSystems.Data.SQLite
 				SqliteConnection cn = GetDbConnectionForProfile ();
 				try {
 					using (SqliteCommand cmd = cn.CreateCommand()) {
-						cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
+						const string tableName = "[aspnet_Applications]"; // Replace 'YourFixedTableName' with the appropriate table name if needed
+				cmd.CommandText = $"INSERT INTO {tableName} (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
 
 						string profileApplicationId = Guid.NewGuid ().ToString ();
 
-						cmd.Parameters.AddWithValue ("$ApplicationId", profileApplicationId);
+						// Ensure that parameters are safely passed and validated to prevent SQL injection. Verify that none of these parameters (especially if coming from external sources) are improperly manipulated.
+							cmd.Parameters.AddWithValue ("$ApplicationId", profileApplicationId);
 						cmd.Parameters.AddWithValue ("$ApplicationName", _applicationName);
 						cmd.Parameters.AddWithValue ("$Description", String.Empty);
 

@@ -41,6 +41,12 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             
                    
             HttpCookie cookie = new HttpCookie("encr_sec_qu_ans");
+            // Set HttpOnly to prevent client-side script access
+            cookie.HttpOnly = true;
+            // Ensure the cookie is only sent over HTTPS connections
+            cookie.Secure = true;
+            // Optionally, if using a .NET version that supports SameSite, add the following:
+            // cookie.SameSite = SameSiteMode.Strict; // Replace 'Strict' with the appropriate value if needed
 
             //encode twice for more security!
 

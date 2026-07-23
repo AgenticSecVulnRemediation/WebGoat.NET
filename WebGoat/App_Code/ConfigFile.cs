@@ -56,6 +56,9 @@ namespace OWASP.WebGoat.NET.App_Code
             
         public void Save()
         {
+            if (!ValidateFilePath(_filePath)) {
+                throw new InvalidOperationException("Invalid file path provided. Please provide a relative path without directory traversal sequences.");
+            }
             using (FileStream stream = File.Create(_filePath))
             {
                 byte[] data = ToByteArray();
@@ -64,6 +67,19 @@ namespace OWASP.WebGoat.NET.App_Code
             }
         }
             
+        private bool ValidateFilePath(string path) {
+            // Disallow directory traversal by checking for ".."
+            if (path.Contains("..")) {
+                return false;
+            }
+            // Disallow absolute paths (Windows format; adjust for other OS if needed)
+            if (Path.IsPathRooted(path)) {
+                return false;
+            }
+            // Add any other path restrictions as needed
+            return true;
+        }
+
         private byte[] ToByteArray()
         {
             StringBuilder builder = new StringBuilder();

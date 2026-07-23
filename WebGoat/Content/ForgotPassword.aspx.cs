@@ -40,6 +40,10 @@ namespace OWASP.WebGoat.NET
             
                    
             HttpCookie cookie = new HttpCookie("encr_sec_qu_ans");
+            // Set HttpOnly flag to prevent client-side access
+            cookie.HttpOnly = true;
+
+
 
             //encode twice for more security!
 

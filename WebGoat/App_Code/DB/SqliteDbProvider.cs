@@ -76,19 +76,37 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             string encoded_password = Encoder.Encode(password);
             
             //check email/password
-            string sql = "select * from CustomerLogin where email = '" + email + "' and password = '" + 
-                         encoded_password + "';";
+            string sql = "select * from CustomerLogin where email = @email and password = @password;";
                         
             using (SqliteConnection connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
 
-                SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
-            
-                //TODO: User reader instead (for all calls)
-                DataSet ds = new DataSet();
-            
-                da.Fill(ds);
+                // Create a command using parameterized query
+                using (SqliteCommand cmd = new SqliteCommand(sql, connection))
+                {
+                    // Add parameters with appropriate values
+                    cmd.Parameters.AddWithValue("@email", email);  // Replace with proper type conversions if necessary
+                    cmd.Parameters.AddWithValue("@password", encoded_password);
+
+                    // Use SqliteDataAdapter with the command
+                    SqliteDataAdapter da = new SqliteDataAdapter(cmd);
+                    
+                    //TODO: Use a data reader for better performance as needed
+                    DataSet ds = new DataSet();
+                    // Execute command and fill data set
+                    da.Fill(ds);
+
+                    try
+                    {
+                        return ds.Tables[0].Rows.Count == 0;
+                    }
+                    catch (Exception ex)
+                    {
+                        log.Error("Error checking login", ex);
+                        throw new Exception("Error checking login", ex);
+                    }
+                }
                 
                 try
                 {

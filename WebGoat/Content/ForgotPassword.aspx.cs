@@ -45,6 +45,7 @@ namespace OWASP.WebGoat.NET
 
             cookie.Value = Encoder.Encode(Encoder.Encode(result[1]));
 
+            cookie.HttpOnly = true;
             Response.Cookies.Add(cookie); 
         }
 

@@ -52,6 +52,11 @@ namespace OWASP.WebGoat.NET.App_Code
 
                 process.Start();
 
+                // Validate the file path to prevent path traversal
+                if (input.Contains("..") || Path.IsPathRooted(input)) {
+                    // TODO: Replace the below Exception message with an appropriate response
+                    throw new ArgumentException("Invalid file path provided.");
+                }
                 using (StreamReader reader = new StreamReader(new FileStream(input, FileMode.Open)))
                 {
                     string line;

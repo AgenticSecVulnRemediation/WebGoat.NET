@@ -1,7 +1,8 @@
 using Xunit;
-using Moq;
 using System;
+using System.Data;
 using System.Reflection;
+using Mono.Data.Sqlite;
 using TechInfoSystems.Data.SQLite;
 
 namespace TechInfoSystems.Data.SQLite.Tests
@@ -9,38 +10,70 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteMembershipProviderDeleteUserTests
     {
         [Fact]
-        public void DeleteUser_WhenDeleteAllRelatedDataTrue_ClearsParametersBeforeDeleteCommand()
+        public void DeleteUser_DeleteAllRelatedData_DeletesUserAndRelatedRows()
         {
-            // Arrange
-            // Regression test for the fix that ensures cmd.Parameters.Clear() is called before reusing the command for DELETE.
-            // We validate this indirectly by ensuring the method can execute the DELETE path without throwing due to
-            // duplicate parameter names (a common failure when parameters are not cleared).
-
+            // Arrange: Build an in-memory DB with minimal schema and rows.
             var provider = new SQLiteMembershipProvider();
 
-            // Because this provider relies on internal static fields (_connectionString, _applicationId),
-            // set them via reflection for an in-memory database.
-            SetStaticField(typeof(SQLiteMembershipProvider), "_connectionString", "Data Source=:memory:;Version=3;");
-            SetStaticField(typeof(SQLiteMembershipProvider), "_applicationId", Guid.NewGuid().ToString());
+            var cs = "Data Source=:memory:;Version=3;New=True;";
+            var appId = Guid.NewGuid().ToString();
 
-            // Act / Assert
-            // We expect ProviderException/SqliteException is possible due to missing schema; we only want to ensure we
-            // don't fail with an ArgumentException about duplicate parameters (regression from missing Clear()).
-            var ex = Record.Exception(() => provider.DeleteUser("someuser", deleteAllRelatedData: true));
+            SetStaticField(typeof(SQLiteMembershipProvider), "_connectionString", cs);
+            SetStaticField(typeof(SQLiteMembershipProvider), "_applicationId", appId);
 
-            if (ex != null)
+            using (var cn = new SqliteConnection(cs))
             {
-                Assert.DoesNotContain("Parameter", ex.Message, StringComparison.OrdinalIgnoreCase);
-                Assert.DoesNotContain("already exists", ex.Message, StringComparison.OrdinalIgnoreCase);
+                cn.Open();
+                using (var cmd = cn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+CREATE TABLE [aspnet_Users] (UserId TEXT PRIMARY KEY, LoweredUsername TEXT, ApplicationId TEXT);
+CREATE TABLE [aspnet_UsersInRoles] (UserId TEXT);
+CREATE TABLE [aspnet_Profile] (UserId TEXT);
+";
+                    cmd.ExecuteNonQuery();
+
+                    var userId = Guid.NewGuid().ToString();
+                    cmd.CommandText = "INSERT INTO [aspnet_Users](UserId, LoweredUsername, ApplicationId) VALUES ($UserId,$Username,$AppId)";
+                    cmd.Parameters.AddWithValue("$UserId", userId);
+                    cmd.Parameters.AddWithValue("$Username", "someuser");
+                    cmd.Parameters.AddWithValue("$AppId", appId);
+                    cmd.ExecuteNonQuery();
+                    cmd.Parameters.Clear();
+
+                    cmd.CommandText = "INSERT INTO [aspnet_UsersInRoles](UserId) VALUES ($UserId)";
+                    cmd.Parameters.AddWithValue("$UserId", userId);
+                    cmd.ExecuteNonQuery();
+                    cmd.Parameters.Clear();
+
+                    cmd.CommandText = "INSERT INTO [aspnet_Profile](UserId) VALUES ($UserId)";
+                    cmd.Parameters.AddWithValue("$UserId", userId);
+                    cmd.ExecuteNonQuery();
+                }
+
+                // Act
+                var deleted = provider.DeleteUser("SomeUser", deleteAllRelatedData: true);
+
+                // Assert
+                Assert.True(deleted);
+
+                using (var verify = cn.CreateCommand())
+                {
+                    verify.CommandText = "SELECT COUNT(*) FROM [aspnet_Users]";
+                    Assert.Equal(0L, (long)verify.ExecuteScalar());
+                    verify.CommandText = "SELECT COUNT(*) FROM [aspnet_UsersInRoles]";
+                    Assert.Equal(0L, (long)verify.ExecuteScalar());
+                    verify.CommandText = "SELECT COUNT(*) FROM [aspnet_Profile]";
+                    Assert.Equal(0L, (long)verify.ExecuteScalar());
+                }
             }
         }
 
         private static void SetStaticField(Type t, string fieldName, object value)
         {
             var f = t.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic);
-            if (f == null)
-                throw new InvalidOperationException($"Expected field {fieldName} not found on {t.FullName}");
-            f.SetValue(null, value);
+            Assert.NotNull(f);
+            f!.SetValue(null, value);
         }
     }
 }

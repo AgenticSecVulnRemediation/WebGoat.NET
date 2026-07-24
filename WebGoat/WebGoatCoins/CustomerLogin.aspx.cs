@@ -62,6 +62,10 @@ namespace OWASP.WebGoat.NET.WebGoatCoins
             if (ticket.IsPersistent)
                 cookie.Expires = ticket.Expiration;
                 
+            cookie.HttpOnly = true;
+            cookie.Secure = true;
+            cookie.HttpOnly = true; // Prevents client-side scripts from accessing the cookie
+            cookie.Secure = true;   // Ensures cookie is transmitted over HTTPS only
             Response.Cookies.Add(cookie);
             
             string returnUrl = Request.QueryString["ReturnUrl"];

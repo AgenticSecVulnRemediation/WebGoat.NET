@@ -3,6 +3,7 @@ using System.Diagnostics;
 using log4net;
 using System.Reflection;
 using System.IO;
+using System.Security;
 using System.Threading;
 
 namespace OWASP.WebGoat.NET.App_Code
@@ -52,6 +53,11 @@ namespace OWASP.WebGoat.NET.App_Code
 
                 process.Start();
 
+                // Validate the input path to avoid path traversal vulnerabilities
+                if (input.Contains("..") || Path.IsPathRooted(input)) {
+                    // TODO: Replace with appropriate logging or error handling
+                    throw new System.Security.SecurityException("Invalid file path provided.");
+                }
                 using (StreamReader reader = new StreamReader(new FileStream(input, FileMode.Open)))
                 {
                     string line;

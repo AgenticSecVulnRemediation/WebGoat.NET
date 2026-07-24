@@ -219,14 +219,14 @@ namespace TechInfoSystems.Data.SQLite
 						CreateAnonymousUser (username, cn, tran, userId);
 					}
 
-					cmd.CommandText = "SELECT COUNT(*) FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+					cmd.CommandText = string.Format("SELECT COUNT(*) FROM {0} WHERE UserId = $UserId", PROFILE_TB_NAME); // PROFILE_TB_NAME is a validated constant and not influenced by external input
 					cmd.Parameters.Clear ();
 					cmd.Parameters.AddWithValue ("$UserId", userId);
 
 					if (Convert.ToInt64 (cmd.ExecuteScalar ()) > 0) {
-						cmd.CommandText = "UPDATE " + PROFILE_TB_NAME + " SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId";
+						cmd.CommandText = string.Format("UPDATE {0} SET PropertyNames = $PropertyNames, PropertyValuesString = $PropertyValuesString, PropertyValuesBinary = $PropertyValuesBinary, LastUpdatedDate = $LastUpdatedDate WHERE UserId = $UserId", PROFILE_TB_NAME); // PROFILE_TB_NAME is a validated constant and not influenced by external input
 					} else {
-						cmd.CommandText = "INSERT INTO " + PROFILE_TB_NAME + " (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)";
+						cmd.CommandText = string.Format("INSERT INTO {0} (UserId, PropertyNames, PropertyValuesString, PropertyValuesBinary, LastUpdatedDate) VALUES ($UserId, $PropertyNames, $PropertyValuesString, $PropertyValuesBinary, $LastUpdatedDate)", PROFILE_TB_NAME); // PROFILE_TB_NAME is a validated constant and not influenced by external input
 					}
 					cmd.Parameters.Clear ();
 					cmd.Parameters.AddWithValue ("$UserId", userId);

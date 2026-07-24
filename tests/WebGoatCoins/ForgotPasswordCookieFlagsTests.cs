@@ -2,9 +2,10 @@ using System;
 using System.Reflection;
 using System.Web;
 using System.Web.UI.WebControls;
+using Moq;
 using Xunit;
 
-// Assumption: ForgotPassword.aspx.cs code-behind is compiled in OWASP.WebGoat.NET.WebGoatCoins namespace.
+// Assumption: ForgotPassword page code-behind compiled in OWASP.WebGoat.NET.WebGoatCoins namespace.
 using OWASP.WebGoat.NET.WebGoatCoins;
 
 namespace OWASP.WebGoat.NET.WebGoatCoins.Tests
@@ -21,15 +22,14 @@ namespace OWASP.WebGoat.NET.WebGoatCoins.Tests
             var response = new HttpResponse(new System.IO.StringWriter());
             HttpContext.Current = new HttpContext(request, response);
 
-            // Inject required controls
             SetField(page, "txtEmail", new TextBox { Text = "user@example.com" });
             SetField(page, "labelQuestion", new Label());
             SetField(page, "PanelForgotPasswordStep2", new Panel());
             SetField(page, "PanelForgotPasswordStep3", new Panel());
 
-            var mockProvider = new Moq.Mock<OWASP.WebGoat.NET.App_Code.DB.IDbProvider>();
+            var mockProvider = new Mock<OWASP.WebGoat.NET.App_Code.DB.IDbProvider>();
             mockProvider.Setup(p => p.GetSecurityQuestionAndAnswer(It.IsAny<string>()))
-                .Returns(new[] { "q", "a" });
+                .Returns(new[] { "Question", "Answer" });
             SetField(page, "du", mockProvider.Object);
 
             // Act

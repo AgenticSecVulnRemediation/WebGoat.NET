@@ -1355,10 +1355,10 @@ namespace TechInfoSystems.Data.SQLite
 			SqliteConnection cn = GetDBConnectionForMembership ();
 			try {
 				using (SqliteCommand cmd = cn.CreateCommand()) {
-					cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
+					cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES (?,?,?)";
 
 					_applicationId = Guid.NewGuid ().ToString ();
-					cmd.Parameters.AddWithValue ("$ApplicationId", _applicationId);
+					cmd.Parameters.AddWithValue ("ApplicationId", _applicationId);
 					cmd.Parameters.AddWithValue ("ApplicationName", _applicationName);
 					cmd.Parameters.AddWithValue ("Description", String.Empty);
 

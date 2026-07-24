@@ -652,8 +652,12 @@ namespace TechInfoSystems.Data.SQLite
 
 					if (userId != null) {
 						// User exists?
-						cmd.CommandText = "SELECT PropertyNames, PropertyValuesString, PropertyValuesBinary FROM " + PROFILE_TB_NAME + " WHERE UserId = $UserId";
+						// Inline the trusted table name instead of concatenating
+                        
+                                                // Inline the trusted table name instead of concatenating
+                        cmd.CommandText = "SELECT PropertyNames, PropertyValuesString, PropertyValuesBinary FROM [aspnet_Profile] WHERE UserId = $UserId";
 						cmd.Parameters.Clear ();
+						// Use parameterized query to securely pass the user identifier (parameter passed as tuple)
 						cmd.Parameters.AddWithValue ("$UserId", userId);
 
 

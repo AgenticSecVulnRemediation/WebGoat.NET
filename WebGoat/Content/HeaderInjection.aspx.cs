@@ -17,6 +17,10 @@ namespace OWASP.WebGoat.NET
             {
                 HttpCookie cookie = new HttpCookie("UserAddedCookie");
                 cookie.Value = Request.QueryString["Cookie"];
+                // Set HttpOnly flag to prevent client-side access
+                cookie.HttpOnly = true;
+                // Set HttpOnly flag to prevent client-side access
+                cookie.HttpOnly = true;
 
                 Response.Cookies.Add(cookie);
             }

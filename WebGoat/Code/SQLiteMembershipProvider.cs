@@ -7,6 +7,7 @@ using Mono.Data.Sqlite;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System;
 using System.Text.RegularExpressions;
 using System.Web.Security;
 
@@ -510,7 +511,7 @@ namespace TechInfoSystems.Data.SQLite
 				return null;
 			}
 
-			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (password, this.PasswordStrengthRegularExpression)) {
+			if ((this.PasswordStrengthRegularExpression.Length > 0) && !Regex.IsMatch (password, this.PasswordStrengthRegularExpression, RegexOptions.None, TimeSpan.FromMilliseconds(500))) { // Replace 500 with appropriate timeout
 				status = MembershipCreateStatus.InvalidPassword;
 				return null;
 			}

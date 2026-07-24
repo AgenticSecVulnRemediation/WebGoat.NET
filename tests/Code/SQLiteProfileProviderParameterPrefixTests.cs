@@ -1,7 +1,9 @@
 using Xunit;
 using System;
+using System.Data;
+using System.IO;
 using System.Reflection;
-using System.Runtime.Serialization;
+using Mono.Data.Sqlite;
 using TechInfoSystems.Data.SQLite;
 
 namespace TechInfoSystems.Data.SQLite.Tests
@@ -9,30 +11,46 @@ namespace TechInfoSystems.Data.SQLite.Tests
     public class SQLiteProfileProviderParameterPrefixTests
     {
         [Fact]
-        public void DeleteProfile_UsesAtParameterPrefix_ForUsernameAndApplicationId()
+        public void DeleteProfiles_UsesAtParameters_DoesNotThrowDueToUnboundDollarParameters()
         {
             // Arrange
-            // Patch changed parameter prefix from $Username/$ApplicationId to @Username/@ApplicationId.
-            // We validate this change by inspecting the method body text via reflection is not possible.
-            // Instead, we ensure the method can be invoked and that it references the new parameter names
-            // by asserting those names exist in the assembly's metadata string table.
-            // This is a narrow delta test focused only on the changed placeholder strings.
+            // This is a behavioral regression test for the placeholder prefix change.
+            // We create an in-memory DB with only the tables/columns needed by DeleteProfile (called by DeleteProfiles).
 
-            var asm = typeof(SQLiteProfileProvider).Assembly;
-            var allText = asm.ToString();
+            var provider = new SQLiteProfileProvider();
+
+            var cs = "Data Source=:memory:;Version=3;New=True;";
+            SetStaticField(typeof(SQLiteProfileProvider), "_connectionString", cs);
+            SetStaticField(typeof(SQLiteProfileProvider), "_membershipApplicationId", Guid.NewGuid().ToString());
+
+            using var cn = new SqliteConnection(cs);
+            cn.Open();
+            using (var cmd = cn.CreateCommand())
+            {
+                cmd.CommandText = @"
+CREATE TABLE [aspnet_Users] (UserId TEXT PRIMARY KEY, LoweredUsername TEXT, ApplicationId TEXT);
+CREATE TABLE [aspnet_Profile] (UserId TEXT PRIMARY KEY);
+";
+                cmd.ExecuteNonQuery();
+            }
 
             // Act/Assert
-            // The new placeholders should be present as string literals in the compiled assembly.
-            // Note: This is a best-effort unit-level regression guard.
-            Assert.Contains("@Username", GetAssemblyStringBlob(asm), StringComparison.Ordinal);
-            Assert.Contains("@ApplicationId", GetAssemblyStringBlob(asm), StringComparison.Ordinal);
+            // If the SQL still used $Username/$ApplicationId but code binds @Username/@ApplicationId, SQLite would fail with
+            // "parameter not found". We expect it to simply return 0 deletions with the empty dataset.
+            var ex = Record.Exception(() =>
+            {
+                var deleted = provider.DeleteProfiles(new[] { "user-does-not-exist" });
+                Assert.Equal(0, deleted);
+            });
+
+            Assert.Null(ex);
         }
 
-        private static string GetAssemblyStringBlob(Assembly asm)
+        private static void SetStaticField(Type t, string fieldName, object value)
         {
-            // Minimal deterministic extraction: use manifest module name + referenced type names.
-            // This won’t include every literal, but is stable and acts as a regression guard.
-            return asm.ManifestModule.Name + "\n" + string.Join("\n", asm.GetTypes());
+            var f = t.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.NotNull(f);
+            f!.SetValue(null, value);
         }
     }
 }

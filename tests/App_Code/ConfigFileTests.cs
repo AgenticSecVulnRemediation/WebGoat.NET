@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Xunit;
 
-// Assumption: production namespace is OWASP.WebGoat.NET.App_Code.
 using OWASP.WebGoat.NET.App_Code;
 
 namespace OWASP.WebGoat.NET.App_Code.Tests

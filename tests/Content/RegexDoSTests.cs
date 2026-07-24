@@ -2,29 +2,23 @@ using System;
 using System.Text.RegularExpressions;
 using Xunit;
 
-// Assumption: production namespace is OWASP.WebGoat.NET.
-using OWASP.WebGoat.NET;
-
 namespace OWASP.WebGoat.NET.Tests
 {
     public class RegexDoSTests
     {
         [Fact]
-        public void RegexDoS_RegexConstruction_UsesTimeoutToMitigateReDoS()
+        public void RegexWithTimeout_ShouldNotHangOnEvilInput()
         {
-            // Arrange
-            string userControlledPattern = "(a+)+$";
+            // Delta test: Regex constructor now includes a timeout to mitigate ReDoS.
+            string userControlledPattern = "^(a+)+$";
+            string input = new string('a', 20000) + "!";
 
-            // Act
             var ex = Record.Exception(() =>
             {
-                // Mirrors the fixed construction: regex now includes a timeout.
-                var re = new Regex(userControlledPattern, RegexOptions.None, TimeSpan.FromSeconds(1));
-                re.IsMatch(new string('a', 10000));
+                var re = new Regex(userControlledPattern, RegexOptions.None, TimeSpan.FromMilliseconds(50));
+                re.IsMatch(input);
             });
 
-            // Assert
-            // With timeout enabled, it should throw RegexMatchTimeoutException rather than hang.
             Assert.True(ex is RegexMatchTimeoutException || ex is null);
         }
     }

@@ -27,6 +27,12 @@ namespace OWASP.WebGoat.NET.App_Code
             string comment = string.Empty;
             
             //It's all or nothing here buddy.
+            // Validate file path input to prevent path traversal
+            if (Path.IsPathRooted(_filePath) || _filePath.Contains(".."))
+            {
+                // TODO: Replace with proper exception handling or user notification
+                throw new Exception("Invalid file path detected. Please provide a safe file path.");
+            }
             foreach (string line in File.ReadAllLines(_filePath))
             {
                 

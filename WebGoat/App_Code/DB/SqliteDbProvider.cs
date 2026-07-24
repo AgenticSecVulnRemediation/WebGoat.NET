@@ -501,13 +501,39 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             {
                 connection.Open();
 
-                sql = "select * from Categories" + catClause;
-                da = new SqliteDataAdapter(sql, connection);
-                da.Fill(ds, "categories");
+                if (catNumber >= 1) {
+                    sql = "select * from Categories where catNumber = @catNumber";
+                    using (SqliteCommand cmdCat = new SqliteCommand(sql, connection))
+                    {
+                        cmdCat.Parameters.AddWithValue("@catNumber", catNumber);
+                        da = new SqliteDataAdapter(cmdCat);
+                        da.Fill(ds, "categories");
+                    }
+                } else {
+                    sql = "select * from Categories";
+                    using (SqliteCommand cmdCat = new SqliteCommand(sql, connection))
+                    {
+                        da = new SqliteDataAdapter(cmdCat);
+                        da.Fill(ds, "categories");
+                    }
+                }
 
-                sql = "select * from Products" + catClause;
-                da = new SqliteDataAdapter(sql, connection);
-                da.Fill(ds, "products");
+                if (catNumber >= 1) {
+                    sql = "select * from Products where catNumber = @catNumber";
+                    using (SqliteCommand cmdProd = new SqliteCommand(sql, connection))
+                    {
+                        cmdProd.Parameters.AddWithValue("@catNumber", catNumber);
+                        da = new SqliteDataAdapter(cmdProd);
+                        da.Fill(ds, "products");
+                    }
+                } else {
+                    sql = "select * from Products";
+                    using (SqliteCommand cmdProd = new SqliteCommand(sql, connection))
+                    {
+                        da = new SqliteDataAdapter(cmdProd);
+                        da.Fill(ds, "products");
+                    }
+                }
 
 
                 //category / products relationship

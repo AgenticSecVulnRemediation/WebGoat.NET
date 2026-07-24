@@ -50,7 +50,12 @@ namespace OWASP.WebGoat.NET
     	{
 	        try
 	        {
-	            FileStream myFile =	new FileStream(_fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+	                            // Validate _fullPath to prevent path traversal attacks
+                if (_fullPath.Contains("..") || (Path.IsPathRooted(_fullPath) && !_fullPath.StartsWith("<allowedBasePath>")))
+                {
+                    throw new ArgumentException("Invalid file path provided.");
+                }
+                FileStream myFile =	new FileStream(_fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 	            BinaryReader br = new BinaryReader(myFile);
 	            try
 	            {

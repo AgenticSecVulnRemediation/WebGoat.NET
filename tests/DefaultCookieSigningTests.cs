@@ -1,25 +1,17 @@
 using System;
-using System.Security.Cryptography;
-using System.Text;
+using System.Reflection;
 using Xunit;
-
-// Assumption: production namespace is OWASP.WebGoat.NET.
-using OWASP.WebGoat.NET;
 
 namespace OWASP.WebGoat.NET.Tests
 {
     public class DefaultCookieSigningTests
     {
         [Fact]
-        public void VerifyServerCookie_WhenSignatureInvalid_ReturnsNull()
+        public void VerifyServerCookie_PrivateHelperExists_AfterSigningChange()
         {
-            // Arrange
-            var page = (Default)System.Runtime.Serialization.FormatterServices
-                .GetUninitializedObject(typeof(Default));
+            var method = typeof(OWASP.WebGoat.NET.Default)
+                .GetMethod("VerifyServerCookie", BindingFlags.Instance | BindingFlags.NonPublic);
 
-            // Act/Assert
-            // Method is private; ensure it exists after fix.
-            var method = typeof(Default).GetMethod("VerifyServerCookie", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             Assert.NotNull(method);
         }
     }

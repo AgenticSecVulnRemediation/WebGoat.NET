@@ -12,6 +12,24 @@ using System.Text;
 using System.Web.Profile;
 using System.Xml.Serialization;
 
+using System.Runtime.Serialization;
+using System.Collections.Generic;
+
+public class SafeSerializationBinder : SerializationBinder {
+    private static readonly HashSet<string> allowedTypes = new HashSet<string> {
+        "Your.Allowed.Type1",
+        "Your.Allowed.Type2"
+    };
+
+    public override Type BindToType(string assemblyName, string typeName) {
+        if (allowedTypes.Contains(typeName)) {
+            return Type.GetType($"{typeName}, {assemblyName}");
+        } else {
+            throw new SerializationException($"Deserialization attempt for disallowed type: {typeName}");
+        }
+    }
+}
+
 namespace TechInfoSystems.Data.SQLite
 {
 	/// <summary>
@@ -840,7 +858,9 @@ namespace TechInfoSystems.Data.SQLite
 				} else {
 					MemoryStream ms = new MemoryStream ((byte[])obj);
 					try {
-						val = (new BinaryFormatter ()).Deserialize (ms);
+						BinaryFormatter bf = new BinaryFormatter ();
+				bf.Binder = new SafeSerializationBinder();
+				val = bf.Deserialize (ms);
 					} finally {
 						ms.Close ();
 					}
@@ -1018,6 +1038,7 @@ namespace TechInfoSystems.Data.SQLite
 			MemoryStream ms = new MemoryStream ();
 			try {
 				BinaryFormatter bf = new BinaryFormatter ();
+				bf.Binder = new SafeSerializationBinder();
 				bf.Serialize (ms, val);
 				return ms.ToArray ();
 			} finally {
@@ -1044,7 +1065,9 @@ namespace TechInfoSystems.Data.SQLite
 					try
 					{
 						ms = new MemoryStream(buf);
-						return (new BinaryFormatter()).Deserialize(ms);
+						BinaryFormatter bf = new BinaryFormatter();
+				bf.Binder = new SafeSerializationBinder();
+				return bf.Deserialize(ms);
 					}
 					finally
 					{

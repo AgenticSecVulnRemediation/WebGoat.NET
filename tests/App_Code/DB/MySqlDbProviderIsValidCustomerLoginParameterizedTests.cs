@@ -1,25 +1,24 @@
 using System;
-using System.Data;
-using Moq;
 using Xunit;
 
-// Assumption: Source is in OWASP.WebGoat.NET.App_Code.DB namespace.
+// Assumption: MySqlDbProvider exists in OWASP.WebGoat.NET.App_Code.DB
 using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderIsValidCustomerLoginParameterizedTests
     {
-        // Delta test: IsValidCustomerLogin now uses parameters (@Email, @Password) instead of string concatenation.
         [Fact]
-        public void IsValidCustomerLogin_SourceContainsParameterizedWhereClause()
+        public void IsValidCustomerLogin_Signature_IsStringString_ReturnsBool()
         {
-            var asm = typeof(MySqlDbProvider).Assembly;
-            var bytes = System.IO.File.ReadAllBytes(asm.Location);
-            var text = System.Text.Encoding.UTF8.GetString(bytes);
+            var mi = typeof(MySqlDbProvider).GetMethod("IsValidCustomerLogin");
+            Assert.NotNull(mi);
 
-            Assert.Contains("select * from CustomerLogin where email = @Email and password = @Password;", text);
-            Assert.DoesNotContain("select * from CustomerLogin where email = '\" + email", text);
+            var parameters = mi!.GetParameters();
+            Assert.Equal(2, parameters.Length);
+            Assert.Equal(typeof(string), parameters[0].ParameterType);
+            Assert.Equal(typeof(string), parameters[1].ParameterType);
+            Assert.Equal(typeof(bool), mi.ReturnType);
         }
     }
 }

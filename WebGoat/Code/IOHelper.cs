@@ -9,12 +9,17 @@ namespace OWASP.WebGoat.NET
     public class IOHelper
     {
         public static string ReadAllFromFile(string path)
-        {
-            FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Read);
-            StreamReader sr = new StreamReader(fs);
-            string data = sr.ReadToEnd();
-            sr.Close();
-            return data;
+        {            // Validate file path to prevent path traversal
+            if (string.IsNullOrEmpty(path) || path.Contains("..") || Path.IsPathRooted(path))
+            {
+                // TODO: Replace the below exception message with an appropriate error handling mechanism if needed
+                throw new ArgumentException("Invalid file path provided.");
+            }
+            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Read))
+            using (StreamReader sr = new StreamReader(fs))
+                {
+                    return sr.ReadToEnd();
+                }
         }
     }
 }

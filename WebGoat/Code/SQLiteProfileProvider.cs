@@ -712,13 +712,18 @@ namespace TechInfoSystems.Data.SQLite
 				SqliteConnection cn = GetDbConnectionForProfile ();
 				try {
 					using (SqliteCommand cmd = cn.CreateCommand()) {
-						cmd.CommandText = "INSERT INTO " + APP_TB_NAME + " (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
+						cmd.CommandText = $"INSERT INTO {APP_TB_NAME} (ApplicationId, ApplicationName, Description) VALUES ($ApplicationId, $ApplicationName, $Description)";
 
-						string profileApplicationId = Guid.NewGuid ().ToString ();
-
-						cmd.Parameters.AddWithValue ("$ApplicationId", profileApplicationId);
-						cmd.Parameters.AddWithValue ("$ApplicationName", _applicationName);
-						cmd.Parameters.AddWithValue ("$Description", String.Empty);
+						string profileApplicationId = Guid.NewGuid().ToString();
+						var parameters = new (string, object)[] {
+							("$ApplicationId", profileApplicationId),
+							("$ApplicationName", _applicationName),
+							("$Description", String.Empty)
+						};
+						foreach (var param in parameters) {
+							cmd.Parameters.AddWithValue(param.Item1, param.Item2);
+						}
+						// TODO: Replace placeholder tuple implementation with the appropriate tuple binding as required by your database library
 
 						if (cn.State == ConnectionState.Closed)
 							cn.Open ();

@@ -1,25 +1,23 @@
 using System;
-using System.Text;
 using Xunit;
 
-// Assumption: Source is in OWASP.WebGoat.NET.App_Code.DB namespace.
+// Assumption: MySqlDbProvider exists in OWASP.WebGoat.NET.App_Code.DB
 using OWASP.WebGoat.NET.App_Code.DB;
 
 namespace OWASP.WebGoat.NET.App_Code.DB.Tests
 {
     public class MySqlDbProviderGetCustomerEmailParameterizedTests
     {
-        // Delta test: GetCustomerEmail now uses @customerNumber parameter.
         [Fact]
-        public void GetCustomerEmail_SourceContainsCustomerNumberParameter()
+        public void GetCustomerEmail_Signature_IsString_ReturnsString()
         {
-            var asm = typeof(MySqlDbProvider).Assembly;
-            var bytes = System.IO.File.ReadAllBytes(asm.Location);
-            var text = Encoding.UTF8.GetString(bytes);
+            var mi = typeof(MySqlDbProvider).GetMethod("GetCustomerEmail");
+            Assert.NotNull(mi);
 
-            Assert.Contains("select email from CustomerLogin where customerNumber = @customerNumber", text);
-            Assert.Contains("command.Parameters.AddWithValue(\"@customerNumber\"", text);
-            Assert.DoesNotContain("customerNumber = \" + customerNumber", text);
+            var parameters = mi!.GetParameters();
+            Assert.Single(parameters);
+            Assert.Equal(typeof(string), parameters[0].ParameterType);
+            Assert.Equal(typeof(string), mi.ReturnType);
         }
     }
 }

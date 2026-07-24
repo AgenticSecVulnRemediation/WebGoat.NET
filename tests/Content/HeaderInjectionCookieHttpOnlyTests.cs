@@ -1,11 +1,9 @@
 using System;
 using System.Reflection;
 using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 using Xunit;
 
-// Assumption: Source is in OWASP.WebGoat.NET namespace.
+// Assumption: HeaderInjection page code-behind compiled in OWASP.WebGoat.NET namespace.
 using OWASP.WebGoat.NET;
 
 namespace OWASP.WebGoat.NET.Tests
@@ -18,13 +16,11 @@ namespace OWASP.WebGoat.NET.Tests
             // Arrange
             var page = new HeaderInjection();
 
-            // Create a minimal HttpContext to capture Response cookies.
-            var request = new HttpRequest("", "http://localhost/HeaderInjection.aspx", "Cookie=test");
+            var request = new HttpRequest("", "http://localhost/HeaderInjection.aspx", "Cookie=abc");
             var response = new HttpResponse(new System.IO.StringWriter());
             HttpContext.Current = new HttpContext(request, response);
 
             // Act
-            // Invoke protected Page_Load via reflection.
             var mi = typeof(HeaderInjection).GetMethod("Page_Load", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.NotNull(mi);
             mi!.Invoke(page, new object[] { page, EventArgs.Empty });

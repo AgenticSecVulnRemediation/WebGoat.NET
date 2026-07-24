@@ -132,34 +132,40 @@ namespace OWASP.WebGoat.NET.App_Code.DB
             try
             {
                 //get data
-                string sql = "select * from CustomerLogin where email = '" + email + "';";
+                string sql = "select * from CustomerLogin where email = @Email;";
                 
                 using (SqliteConnection connection = new SqliteConnection(_connectionString))
                 {
                     connection.Open();
-
-                    SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
-                    DataSet ds = new DataSet();
-                    da.Fill(ds);
-
-                    //check if email address exists
-                    if (ds.Tables[0].Rows.Count == 0)
+                    using (SqliteCommand cmd = new SqliteCommand(sql, connection))
                     {
-                        error_message = "Email Address Not Found!";
-                        return error_message;
-                    }
+                        // Bind the parameter. Replace the placeholder value if needed.
+                        cmd.Parameters.AddWithValue("@Email", email);
+                        using (SqliteDataAdapter da = new SqliteDataAdapter(cmd))
+                        {
+                            DataSet ds = new DataSet();
+                            da.Fill(ds);
 
-                    string encoded_password = ds.Tables[0].Rows[0]["Password"].ToString();
-                    string decoded_password = Encoder.Decode(encoded_password);
+                            //check if email address exists
+                            if (ds.Tables[0].Rows.Count == 0)
+                            {
+                                error_message = "Email Address Not Found!";
+                                return error_message;
+                            }
 
-                    if (password.Trim().ToLower() != decoded_password.Trim().ToLower())
-                    {
-                        error_message = "Password Not Valid For This Email Address!";
-                    }
-                    else
-                    {
-                        //login successful
-                        error_message = null;
+                            string encoded_password = ds.Tables[0].Rows[0]["Password"].ToString();
+                            string decoded_password = Encoder.Decode(encoded_password);
+
+                            if (password.Trim().ToLower() != decoded_password.Trim().ToLower())
+                            {
+                                error_message = "Password Not Valid For This Email Address!";
+                            }
+                            else
+                            {
+                                //login successful
+                                error_message = null;
+                            }
+                        }
                     }
                 }
                 

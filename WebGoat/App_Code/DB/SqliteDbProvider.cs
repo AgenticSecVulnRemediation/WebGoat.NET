@@ -349,20 +349,28 @@ namespace OWASP.WebGoat.NET.App_Code.DB
                     connection.Open();
 
                     //get data
-                    string sql = "select * from CustomerLogin where email = '" + email + "';";
-                    SqliteDataAdapter da = new SqliteDataAdapter(sql, connection);
-                    DataSet ds = new DataSet();
-                    da.Fill(ds);
-
-                    //check if email address exists
-                    if (ds.Tables[0].Rows.Count == 0)
+                    string sql = "select * from CustomerLogin where email = @email;";
+                    // Create a command with parameterized query
+                    using (SqliteCommand cmd = connection.CreateCommand())
                     {
-                        result = "Email Address Not Found!";
-                    }
+                        cmd.CommandText = sql;
+                        cmd.Parameters.AddWithValue("@email", email); // TODO: Verify that the 'email' variable is properly sanitized or validated upstream
+                        SqliteDataAdapter da = new SqliteDataAdapter(cmd);
+                        DataSet ds = new DataSet();
+                        da.Fill(ds);
 
-                    string encoded_password = ds.Tables[0].Rows[0]["Password"].ToString();
-                    string decoded_password = Encoder.Decode(encoded_password);
-                    result = decoded_password;
+                        //check if email address exists
+                        if (ds.Tables[0].Rows.Count == 0)
+                        {
+                            result = "Email Address Not Found!";
+                        }
+                        else
+                        {
+                            string encoded_password = ds.Tables[0].Rows[0]["Password"].ToString();
+                            string decoded_password = Encoder.Decode(encoded_password);
+                            result = decoded_password;
+                        }
+                    }
                 }
             }
             catch (Exception ex)

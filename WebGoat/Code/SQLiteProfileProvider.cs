@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
 using System.Configuration.Provider;
@@ -8,6 +9,7 @@ using Mono.Data.Sqlite;
 using System.Globalization;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Web.Profile;
 using System.Xml.Serialization;
@@ -17,6 +19,22 @@ namespace TechInfoSystems.Data.SQLite
 	/// <summary>
 	/// Provides a Profile implementation whose data is stored in a SQLite database.
 	/// </summary>
+	private sealed class RestrictedBinder : SerializationBinder {
+		// Define a whitelist of allowed types
+		private static readonly HashSet<string> allowedTypes = new HashSet<string> {
+			"Namespace.AllowedType1",
+			"Namespace.AllowedType2"
+			// Add additional allowed types here
+		};
+
+		public override Type BindToType(string assemblyName, string typeName) {
+			if (!allowedTypes.Contains(typeName)) {
+				throw new SerializationException($"Deserialization of type {typeName} is not allowed.");
+			}
+			return Type.GetType(string.Format("{0}, {1}", typeName, assemblyName));
+		}
+	}
+
 	public sealed class SQLiteProfileProvider : ProfileProvider
 	{
 		#region Private Fields
@@ -1044,7 +1062,9 @@ namespace TechInfoSystems.Data.SQLite
 					try
 					{
 						ms = new MemoryStream(buf);
-						return (new BinaryFormatter()).Deserialize(ms);
+						BinaryFormatter bf = new BinaryFormatter();
+					bf.Binder = new RestrictedBinder();
+					return bf.Deserialize(ms);
 					}
 					finally
 					{

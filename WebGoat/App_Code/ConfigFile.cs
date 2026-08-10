@@ -56,6 +56,10 @@ namespace OWASP.WebGoat.NET.App_Code
             
         public void Save()
         {
+            // Validate _filePath to prevent path traversal
+            if (_filePath.Contains("..") || Path.IsPathRooted(_filePath)) {
+                throw new ArgumentException("Invalid file path provided.");
+            }
             using (FileStream stream = File.Create(_filePath))
             {
                 byte[] data = ToByteArray();

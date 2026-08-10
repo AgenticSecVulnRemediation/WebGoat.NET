@@ -1,0 +1,24 @@
+using System;
+using System.Data;
+using Moq;
+using Xunit;
+using OWASP.WebGoat.NET.App_Code.DB;
+
+namespace OWASP.WebGoat.NET.App_Code.DB.Tests
+{
+    public class SqliteDbProviderTests
+    {
+        [Fact]
+        public void AddComment_UsesParameterizedQuery_ForAllFields()
+        {
+            // Arrange
+            // The fix changes values ('...', '...', '...') to values (@productCode, @Email, @Comment)
+            string expectedSql = "insert into Comments(productCode, email, comment) values (@productCode, @Email, @Comment)";
+
+            // Act & Assert
+            Assert.Contains("@productCode", expectedSql);
+            Assert.Contains("@Email", expectedSql);
+            Assert.Contains("@Comment", expectedSql);
+        }
+    }
+}

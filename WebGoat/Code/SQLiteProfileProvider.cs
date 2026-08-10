@@ -840,7 +840,9 @@ namespace TechInfoSystems.Data.SQLite
 				} else {
 					MemoryStream ms = new MemoryStream ((byte[])obj);
 					try {
-						val = (new BinaryFormatter ()).Deserialize (ms);
+						BinaryFormatter bf = new BinaryFormatter();
+				bf.Binder = new SafeBinder(); // Use custom binder to restrict deserialization
+				val = bf.Deserialize(ms);
 					} finally {
 						ms.Close ();
 					}
@@ -1141,4 +1143,18 @@ namespace TechInfoSystems.Data.SQLite
 		#endregion
 
 	}
+
+	using System.Runtime.Serialization;
+
+	public class SafeBinder : SerializationBinder {
+		public override Type BindToType(string assemblyName, string typeName) {
+			// TODO: Update the allowed types list below as appropriate for your application
+			if (typeName == "YourAllowedType") {
+				return Type.GetType(string.Format("{0}, {1}", typeName, assemblyName));
+			}
+			// Block any types that are not explicitly allowed
+			throw new SerializationException($"Deserialization of type {typeName} from assembly {assemblyName} is not allowed.");
+		}
+	}
+
 }

@@ -27,6 +27,10 @@ namespace OWASP.WebGoat.NET.App_Code
             string comment = string.Empty;
             
             //It's all or nothing here buddy.
+            // Validate that _filePath does not contain directory traversal sequences or is an absolute path
+            if (_filePath.Contains("..") || Path.IsPathRooted(_filePath)) {
+                throw new ArgumentException("Invalid file path provided. Replace this placeholder message with an appropriate handling mechanism.");
+            }
             foreach (string line in File.ReadAllLines(_filePath))
             {
                 

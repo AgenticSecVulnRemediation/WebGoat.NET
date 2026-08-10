@@ -238,10 +238,10 @@ namespace TechInfoSystems.Data.SQLite
 					cmd.ExecuteNonQuery ();
 
 					// Update activity field
-					cmd.CommandText = "UPDATE " + USER_TB_NAME + " SET LastActivityDate = $LastActivityDate WHERE UserId = $UserId";
+					cmd.CommandText = "UPDATE " + USER_TB_NAME + " SET LastActivityDate = @LastActivityDate WHERE UserId = @UserId";
 					cmd.Parameters.Clear ();
-					cmd.Parameters.AddWithValue ("$LastActivityDate", DateTime.UtcNow);
-					cmd.Parameters.AddWithValue ("$UserId", userId);
+					cmd.Parameters.AddWithValue ("@LastActivityDate", DateTime.UtcNow);
+					cmd.Parameters.AddWithValue ("@UserId", userId);
 					cmd.ExecuteNonQuery ();
 
 					if (tran != null)
